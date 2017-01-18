@@ -2,7 +2,6 @@ import argparse
 import json
 import os
 import sys
-import getopt
 
 from jupyter_client.kernelspec import KernelSpecManager
 from IPython.utils.tempdir import TemporaryDirectory

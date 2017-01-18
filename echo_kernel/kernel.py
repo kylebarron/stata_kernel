@@ -5,7 +5,11 @@ class EchoKernel(Kernel):
     implementation_version = '1.0'
     language = 'no-op'
     language_version = '0.1'
-    language_info = {'mimetype': 'text/plain'}
+    language_info = {
+        'name': 'Any text',
+        'mimetype': 'text/plain',
+        'file_extension': '.txt',
+    }
     banner = "Echo kernel - as useful as a parrot"
 
     def do_execute(self, code, silent, store_history=True, user_expressions=None,
