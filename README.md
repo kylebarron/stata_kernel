@@ -7,7 +7,7 @@
 To install, run:
 
 ```
-$ pip install git+https://github.com/kylebarron/stata-kernel
+$ pip install git+https://github.com/kylebarron/stata_kernel
 $ python -m stata_kernel.install
 ```
 
