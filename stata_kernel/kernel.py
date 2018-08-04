@@ -1,7 +1,7 @@
 from ipykernel.kernelbase import Kernel
 
 class StataKernel(Kernel):
-    implementation = 'stata-kernel'
+    implementation = 'stata_kernel'
     implementation_version = '0.1'
     language = 'stata'
     language_version = '0.1'
