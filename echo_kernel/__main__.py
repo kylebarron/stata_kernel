@@ -1,4 +1,4 @@
 from ipykernel.kernelapp import IPKernelApp
-from . import EchoKernel
+from . import StataKernel
 
-IPKernelApp.launch_instance(kernel_class=EchoKernel)
+IPKernelApp.launch_instance(kernel_class=StataKernel)

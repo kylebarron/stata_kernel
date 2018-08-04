@@ -1,16 +1,16 @@
 from ipykernel.kernelbase import Kernel
 
-class EchoKernel(Kernel):
-    implementation = 'Echo'
-    implementation_version = '1.0'
-    language = 'no-op'
+class StataKernel(Kernel):
+    implementation = 'stata-kernel'
+    implementation_version = '0.1'
+    language = 'stata'
     language_version = '0.1'
     language_info = {
-        'name': 'Any text',
-        'mimetype': 'text/plain',
-        'file_extension': '.txt',
+        'name': 'stata',
+        'mimetype': 'text/x-stata',
+        'file_extension': '.do',
     }
-    banner = "Echo kernel - as useful as a parrot"
+    banner = "Stata kernel"
 
     def do_execute(self, code, silent, store_history=True, user_expressions=None,
                    allow_stdin=False):

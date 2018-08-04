@@ -2,4 +2,4 @@
 
 __version__ = '1.1'
 
-from .kernel import EchoKernel
+from .kernel import StataKernel

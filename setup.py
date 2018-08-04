@@ -4,14 +4,14 @@ with open('README.rst') as f:
     readme = f.read()
 
 setup(
-    name='echo_kernel',
+    name='stata_kernel',
     version='1.1',
-    packages=['echo_kernel'],
+    packages=['stata_kernel'],
     description='Simple example kernel for Jupyter',
     long_description=readme,
     author='Jupyter Development Team',
     author_email='jupyter@googlegroups.com',
-    url='https://github.com/jupyter/echo_kernel',
+    url='https://github.com/kylebarron/stata-kernel',
     install_requires=[
         'jupyter_client', 'IPython', 'ipykernel'
     ],
