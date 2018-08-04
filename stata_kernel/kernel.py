@@ -1,3 +1,5 @@
+import re
+import pexpect
 from ipykernel.kernelbase import Kernel
 
 class StataKernel(Kernel):
@@ -12,10 +14,25 @@ class StataKernel(Kernel):
     }
     banner = "Stata kernel"
 
+    def __init__(self, *args, **kwargs):
+        super(StataKernel, self).__init__(*args, **kwargs)
+
+        path = '/Applications/Stata/StataSE.app/Contents/MacOS/stata-se'
+        self.child = pexpect.spawn(path)
+        # Wait/scroll to initial dot prompt
+        self.child.expect('\r\n\.')
+
     def do_execute(self, code, silent, store_history=True, user_expressions=None,
                    allow_stdin=False):
+
+        rc, res = self.run_shell(code)
+        stream_content = {'text': res}
+        if rc:
+            stream_content['name'] = 'stderr'
+        else:
+            stream_content['name'] = 'stdout'
+
         if not silent:
-            stream_content = {'name': 'stdout', 'text': code}
             self.send_response(self.iopub_socket, 'stream', stream_content)
 
         return {'status': 'ok',
@@ -24,3 +41,27 @@ class StataKernel(Kernel):
                 'payload': [],
                 'user_expressions': {},
                }
+
+    def run_shell(self, code):
+
+        # Split user code into lines
+        code = re.sub(r'\r\n', r'\n', code)
+        lines = code.split('\n')
+        results = []
+        for line in lines:
+            self.child.sendline(line)
+            self.child.expect('\r\n\.')
+            res = self.child.before.decode('utf-8')
+
+            # Remove input command, up to first \r\n
+            res = re.sub(r'^.+\r\n', '', res)
+
+            # Check error
+            err = re.search(r'\r\nr\((\d+)\);', res)
+            if err:
+                # print(err.group(1), res)
+                return err.group(1), res
+
+            results.append(res)
+
+        return '', '\n'.join(results)
