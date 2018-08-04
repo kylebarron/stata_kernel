@@ -1,17 +1,17 @@
 from distutils.core import setup
 
-with open('README.rst') as f:
+with open('README.md') as f:
     readme = f.read()
 
 setup(
     name='stata_kernel',
     version='1.1',
     packages=['stata_kernel'],
-    description='Simple example kernel for Jupyter',
+    description='Stata kernel for Jupyter',
     long_description=readme,
-    author='Jupyter Development Team',
-    author_email='jupyter@googlegroups.com',
-    url='https://github.com/kylebarron/stata-kernel',
+    author='Kyle Barron',
+    author_email='barronk@mit.edu',
+    url='https://github.com/kylebarron/stata_kernel',
     install_requires=[
         'jupyter_client', 'IPython', 'ipykernel'
     ],
