@@ -134,12 +134,12 @@ class StataKernel(Kernel):
             self.child.sendline(line)
             if has_blocks:
                 try:
-                    self.child.expect('\r\n  \d\.', timeout=0.1)
+                    self.child.expect('\r\n  \d\. ', timeout=0.1)
                     continue
                 except pexpect.TIMEOUT:
                     pass
 
-            self.child.expect('(?<=\r\n)\r\n\.')
+            self.child.expect('(?<=\r\n)\r\n\. ')
             res = self.child.before.decode('utf-8')
 
             # Remove input command, up to first \r\n
