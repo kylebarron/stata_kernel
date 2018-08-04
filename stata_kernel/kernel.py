@@ -50,6 +50,15 @@ class StataKernel(Kernel):
                 'user_expressions': {},
                }
 
+    def do_shutdown(self, restart):
+        """Shutdown the Stata session
+
+        Shutdown the kernel. You only need to handle your own clean up - the
+        kernel machinery will take care of cleaning up its own things before
+        stopping.
+        """
+        self.child.sendline('exit, clear')
+
     def run_shell(self, code):
 
         # Split user code into lines
@@ -78,12 +87,9 @@ class StataKernel(Kernel):
         """Remove block and end-of-line comments from code
 
         From:
-
-
         https://stackoverflow.com/questions/24518020/comprehensive-regexp-to-remove-javascript-comments
         Using the "Final Boss Fight" at the bottom.
         Otherwise it fails on `di 5 / 5 // hello`
-
         """
         return re.sub(
              r'((["\'])(?:\\[\s\S]|.)*?\2|(?:[^\w\s]|^)\s*\/(?![*\/])(?:\\.|\[(?:\\.|.)\]|.)*?\/(?=[gmiy]{0,4}\s*(?![*\/])(?:\W|$)))|\/\/\/.*?\r?\n\s*|\/\/.*?$|\/\*[\s\S]*?\*\/',
