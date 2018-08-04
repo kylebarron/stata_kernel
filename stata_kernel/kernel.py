@@ -109,6 +109,11 @@ class StataKernel(Kernel):
         exists a block in the code, then I check for 0.1 s after every line to
         see if there is a loop continuation line.
 
+        The regex that I expect on is '(?<=\r\n)\r\n\.'. This is necessary
+        instead of '\r\n.' because the latter would have issues after `di "."`.
+        Since the kernel always shows two end of lines before a dot prompt, this
+        is fine.
+
         NOTE will need to set timeout to None once sure that running is stable.
         Otherwise running a task longer than 30s would timeout.
 
@@ -134,7 +139,7 @@ class StataKernel(Kernel):
                 except pexpect.TIMEOUT:
                     pass
 
-            self.child.expect('\r\n\.')
+            self.child.expect('(?<=\r\n)\r\n\.')
             res = self.child.before.decode('utf-8')
 
             # Remove input command, up to first \r\n
