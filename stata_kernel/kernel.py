@@ -32,6 +32,7 @@ class StataKernel(Kernel):
     def do_execute(self, code, silent, store_history=True, user_expressions=None,
                    allow_stdin=False):
 
+        code = self.remove_comments(code)
         rc, res = self.run_shell(code)
         stream_content = {'text': res}
         if rc:
@@ -72,3 +73,19 @@ class StataKernel(Kernel):
             results.append(res)
 
         return '', '\n'.join(results)
+
+    def remove_comments(self, code):
+        """Remove block and end-of-line comments from code
+
+        From:
+
+
+        https://stackoverflow.com/questions/24518020/comprehensive-regexp-to-remove-javascript-comments
+        Using the "Final Boss Fight" at the bottom.
+        Otherwise it fails on `di 5 / 5 // hello`
+
+        """
+        return re.sub(
+             r'((["\'])(?:\\[\s\S]|.)*?\2|(?:[^\w\s]|^)\s*\/(?![*\/])(?:\\.|\[(?:\\.|.)\]|.)*?\/(?=[gmiy]{0,4}\s*(?![*\/])(?:\W|$)))|\/\/\/.*?\r?\n\s*|\/\/.*?$|\/\*[\s\S]*?\*\/',
+             '\\1', code)
+
