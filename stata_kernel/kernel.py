@@ -58,8 +58,64 @@ class StataKernel(Kernel):
         stopping.
         """
         self.child.sendline('exit, clear')
+        return {'restart': restart}
+
+    def do_is_complete(self, code):
+        """Decide if command has completed
+
+        I permit users to use /// line continuations. Otherwise, the only
+        incomplete text should be unmatched braces. I use the fact that braces
+        cannot be followed by text when opened or preceded or followed by text
+        when closed.
+
+        """
+        code = code.strip()
+        if code.endswith('///'):
+            return {
+                'status': 'incomplete',
+                'indent': '    '}
+
+        lines = re.sub(r'\r\n', r'\n', code).split('\n')
+        lines = [x.strip() for x in lines]
+        open_br = len([x for x in lines if x.endswith('{')])
+        closed_br = len([x for x in lines if x.startswith('}')])
+        if open_br > closed_br:
+            return {
+                'status': 'incomplete',
+                'indent': '    '}
+
+        return {'status': 'complete'}
 
     def run_shell(self, code):
+        """Run Stata command in shell
+
+        I split the code into lines because that makes it easier to work with
+        pexpect.expect. Even if you paste several lines in, Stata's shell still
+        shows the prompt, i.e. `\r\n.` several times. So if I expect for that
+        prompt, I'll only scroll to the first line continuation by default. It's
+        impossible to get all the continuation prompts without knowing how many
+        separate commands there are, because some commands in Stata take a long
+        time. Therefore it's imperative to split the code into lines.
+
+        However splitting the code into lines makes it harder to support for
+        loops. This is because if I split on \n and send the first line, I don't
+        get the line continuation prompt back. I fix this by assuming that the
+        Stata executable will provide the loop continuation prompt very quickly,
+        since all it needs to do is parse if the command has ended. So if there
+        exists a block in the code, then I check for 0.1 s after every line to
+        see if there is a loop continuation line.
+
+        NOTE will need to set timeout to None once sure that running is stable.
+        Otherwise running a task longer than 30s would timeout.
+
+        Args:
+            code (str): code to run in Stata
+
+        Returns:
+            results from Stata shell
+        """
+
+        has_blocks = re.search(r'\{[^\}]+?\}', code)
 
         # Split user code into lines
         code = re.sub(r'\r\n', r'\n', code)
@@ -67,6 +123,13 @@ class StataKernel(Kernel):
         results = []
         for line in lines:
             self.child.sendline(line)
+            if has_blocks:
+                try:
+                    self.child.expect('\r\n  \d\.', timeout=0.1)
+                    continue
+                except pexpect.TIMEOUT:
+                    pass
+
             self.child.expect('\r\n\.')
             res = self.child.before.decode('utf-8')
 
