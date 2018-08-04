@@ -1,5 +1,6 @@
 import re
 import pexpect
+import string
 from ipykernel.kernelbase import Kernel
 
 class StataKernel(Kernel):
@@ -12,7 +13,6 @@ class StataKernel(Kernel):
         'mimetype': 'text/x-stata',
         'file_extension': '.do',
     }
-    banner = "Stata kernel"
 
     def __init__(self, *args, **kwargs):
         super(StataKernel, self).__init__(*args, **kwargs)
@@ -21,6 +21,13 @@ class StataKernel(Kernel):
         self.child = pexpect.spawn(path)
         # Wait/scroll to initial dot prompt
         self.child.expect('\r\n\.')
+
+        # Set banner to Stata's shell header
+        banner = self.child.before.decode('utf-8')
+        banner = ''.join([x for x in banner if x in string.printable])
+
+        # Remove extra characters before first \r\n
+        self.banner = re.sub(r'^.*\r\n', '', banner)
 
     def do_execute(self, code, silent, store_history=True, user_expressions=None,
                    allow_stdin=False):
