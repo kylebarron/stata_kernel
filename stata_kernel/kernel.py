@@ -43,6 +43,9 @@ class StataKernel(Kernel):
         if not silent:
             self.send_response(self.iopub_socket, 'stream', stream_content)
 
+        if rc:
+            return {'status': 'error', 'execution_count': self.execution_count}
+
         return {'status': 'ok',
                 # The base class increments the execution count
                 'execution_count': self.execution_count,
