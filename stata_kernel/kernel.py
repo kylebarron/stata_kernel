@@ -29,7 +29,11 @@ class StataKernel(Kernel):
         # Remove extra characters before first \r\n
         self.banner = re.sub(r'^.*\r\n', '', banner)
 
-    def do_execute(self, code, silent, store_history=True, user_expressions=None,
+    def do_execute(self,
+                   code,
+                   silent,
+                   store_history=True,
+                   user_expressions=None,
                    allow_stdin=False):
 
         code = self.remove_comments(code)
@@ -46,12 +50,13 @@ class StataKernel(Kernel):
         if rc:
             return {'status': 'error', 'execution_count': self.execution_count}
 
-        return {'status': 'ok',
-                # The base class increments the execution count
-                'execution_count': self.execution_count,
-                'payload': [],
-                'user_expressions': {},
-               }
+        return {
+            'status': 'ok',
+            # The base class increments the execution count
+            'execution_count': self.execution_count,
+            'payload': [],
+            'user_expressions': {},
+        }
 
     def do_shutdown(self, restart):
         """Shutdown the Stata session
@@ -74,18 +79,14 @@ class StataKernel(Kernel):
         """
         code = code.strip()
         if code.endswith('///'):
-            return {
-                'status': 'incomplete',
-                'indent': '    '}
+            return {'status': 'incomplete', 'indent': '    '}
 
         lines = re.sub(r'\r\n', r'\n', code).split('\n')
         lines = [x.strip() for x in lines]
         open_br = len([x for x in lines if x.endswith('{')])
         closed_br = len([x for x in lines if x.startswith('}')])
         if open_br > closed_br:
-            return {
-                'status': 'incomplete',
-                'indent': '    '}
+            return {'status': 'incomplete', 'indent': '    '}
 
         return {'status': 'complete'}
 
@@ -158,6 +159,5 @@ class StataKernel(Kernel):
         Otherwise it fails on `di 5 / 5 // hello`
         """
         return re.sub(
-             r'((["\'])(?:\\[\s\S]|.)*?\2|(?:[^\w\s]|^)\s*\/(?![*\/])(?:\\.|\[(?:\\.|.)\]|.)*?\/(?=[gmiy]{0,4}\s*(?![*\/])(?:\W|$)))|\/\/\/.*?\r?\n\s*|\/\/.*?$|\/\*[\s\S]*?\*\/',
-             '\\1', code)
-
+            r'((["\'])(?:\\[\s\S]|.)*?\2|(?:[^\w\s]|^)\s*\/(?![*\/])(?:\\.|\[(?:\\.|.)\]|.)*?\/(?=[gmiy]{0,4}\s*(?![*\/])(?:\W|$)))|\/\/\/.*?\r?\n\s*|\/\/.*?$|\/\*[\s\S]*?\*\/',
+            '\\1', code)
