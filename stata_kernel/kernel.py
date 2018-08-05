@@ -314,7 +314,7 @@ class StataKernel(Kernel):
 
         res = run(['osascript', '-e', cmd], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
         if res.stderr.decode('utf-8'):
-            raise OSError(res.stderr.decode('utf-8'))
+            raise OSError(res.stderr.decode('utf-8') + '\nInput: ' + cmd)
         stdout = res.stdout.decode('utf-8').strip()
 
         # Coerce types
