@@ -291,7 +291,7 @@ class StataKernel(Kernel):
         """
 
         if platform.system() == 'Windows':
-            return getattr(self.stata, 'cmd_name')(value, **kwargs)
+            return getattr(self.stata, cmd_name)(value, **kwargs)
 
         app_name = re.search(r'/?([\w-]+)$', self.stata_path).group(1)
         app_dict = {
