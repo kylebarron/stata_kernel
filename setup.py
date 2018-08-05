@@ -13,7 +13,7 @@ setup(
     author_email='barronk@mit.edu',
     url='https://github.com/kylebarron/stata_kernel',
     install_requires=[
-        'jupyter_client', 'IPython', 'ipykernel'
+        'jupyter_client', 'IPython', 'ipykernel', 'pexpect>=4.6.0'
     ],
     classifiers=[
         'Intended Audience :: Developers',
