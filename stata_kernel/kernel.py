@@ -1,3 +1,4 @@
+import os
 import re
 import pexpect
 import string
@@ -24,7 +25,7 @@ class StataKernel(Kernel):
         self.graphs = {}
 
         config = ConfigParser()
-        config.read('/Users/kyle/.stata_kernel.conf')
+        config.read(os.path.expanduser('~/.stata_kernel.conf'))
         if platform.system() == 'Windows':
             self.child = pexpect.popen_spawn.PopenSpawn(
                 config['stata_kernel']['stata_path'])
