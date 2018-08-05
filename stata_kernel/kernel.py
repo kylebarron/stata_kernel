@@ -40,7 +40,7 @@ class StataKernel(Kernel):
             self.eol = '\n'
         # self.batch = config['stata_kernel']['batch']
 
-        if self.execution_mode == 'automation':
+        if self.execution_mode.lower() == 'automation':
             # Activate Stata
             if platform.system() == 'Windows':
                 self.stata = win32com.client.Dispatch("stata.StataOLEApp")
