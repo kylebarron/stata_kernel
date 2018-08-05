@@ -2,8 +2,10 @@ import re
 import pexpect
 import string
 import platform
-from ipykernel.kernelbase import Kernel
+from dateutil.parser import parse
 from configparser import ConfigParser
+from ipykernel.kernelbase import Kernel
+
 
 class StataKernel(Kernel):
     implementation = 'stata_kernel'
@@ -18,6 +20,8 @@ class StataKernel(Kernel):
 
     def __init__(self, *args, **kwargs):
         super(StataKernel, self).__init__(*args, **kwargs)
+
+        self.graphs = {}
 
         config = ConfigParser()
         config.read('/Users/kyle/.stata_kernel.conf')
@@ -56,6 +60,33 @@ class StataKernel(Kernel):
         if not silent:
             self.send_response(self.iopub_socket, 'stream', stream_content)
 
+            if obj.get('check_graphs'):
+                graphs_to_get = self.check_graphs()
+                graphs_to_get = list(set(graphs_to_get))
+                all_graphs = []
+                for graph in graphs_to_get:
+                    g = self.get_graph(graph)
+                    all_graphs.append(g)
+
+                for graph in all_graphs:
+                    content = {
+                        # This dict may contain different MIME representations
+                        # of the output.
+                        'data': {
+                            'text/plain': 'text',
+                            'image/svg+xml': graph
+                        },
+
+                        # We can specify the image size in the metadata field.
+                        'metadata': {
+                            'width': 600,
+                            'height': 400
+                        }
+                    }
+
+                    # We send the display_data message with the contents.
+                    self.send_response(self.iopub_socket, 'display_data',
+                                       content)
         if rc:
             return {'status': 'error', 'execution_count': self.execution_count}
 
@@ -162,8 +193,57 @@ class StataKernel(Kernel):
             results.append(res)
 
         obj = {'err': '', 'res': results}
+
+        graph_keywords = [
+            r'gr(a|ap|aph)?', r'tw(o|ow|owa|oway)?',
+            r'sc(a|at|att|atte|atter)?', r'line'
+        ]
+        graph_keywords = r'\b(' + '|'.join(graph_keywords) + r')\b'
+        if re.search(graph_keywords, code):
+            obj['check_graphs'] = True
+
         return obj
 
+    def check_graphs(self):
+        cur_names = self.run_shell('graph dir')['res'][0]
+        cur_names = cur_names.strip().split(' ')
+        cur_names = [x.strip() for x in cur_names]
+        graphs_to_get = []
+        for name in cur_names:
+            if not self.graphs.get(name):
+                graphs_to_get.append(name)
+                continue
+
+            self.run_shell('cap graph describe ' + name)
+            stamp = self.run_shell('di r(command_date) " " r(command_time)')[
+                'res'][0].strip()
+            stamp = parse(stamp)
+            if stamp > self.graphs.get(name):
+                graphs_to_get.append(name)
+
+        return graphs_to_get
+
+    def get_graph(self, name):
+        # Export graph to file
+        self.run_shell('cap mkdir .stata_kernel_images')
+        cmd = 'graph export .stata_kernel_images/' + name + '.svg , '
+        cmd += 'name(' + name + ') as(svg)'
+        self.run_shell(cmd)
+
+        # Get file location
+        cwd = self.run_shell('pwd')['res'][0].strip()
+
+        # Read image
+        with open(cwd + '/.stata_kernel_images/' + name + '.svg') as f:
+            img = f.read()
+
+        # Get timestamp of graph and save to dict
+        self.run_shell('cap graph describe ' + name)
+        stamp = self.run_shell('di r(command_date) " " r(command_time)')[
+            'res'][0].strip()
+        self.graphs[name] = parse(stamp)
+
+        return img
     def remove_comments(self, code):
         """Remove block and end-of-line comments from code
 
