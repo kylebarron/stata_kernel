@@ -300,7 +300,7 @@ class StataKernel(Kernel):
         cmd = 'tell application "{}" to {}'.format(app_name, cmd_name)
         # NOTE I _think_ this correctly escapes strings for AppleScript
         if value is not None:
-            cmd += ' "{}"'.format(re.sub(r'\\"', r'\\\\"', value))
+            cmd += ' "{}"'.format(re.sub(r'\\"', r'\\\\"', str(value)))
         if kwargs:
             for key, val in kwargs.items():
                 if isinstance(val, bool):
