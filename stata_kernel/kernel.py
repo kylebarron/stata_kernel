@@ -34,10 +34,6 @@ class StataKernel(Kernel):
         config.read(os.path.expanduser('~/.stata_kernel.conf'))
         self.execution_mode = config['stata_kernel']['execution_mode']
         self.stata_path = config['stata_kernel']['stata_path']
-        if platform.system == 'Windows':
-            self.eol = '\r\n'
-        else:
-            self.eol = '\n'
         # self.batch = config['stata_kernel']['batch']
 
         if self.execution_mode.lower() == 'automation':
@@ -262,8 +258,8 @@ class StataKernel(Kernel):
 
         # Save output to log file
         log_path = os.getcwd() + '/.stata_kernel_log.log'
-        code = 'log using `"{}"\', replace text nomsg{}{}'.format(log_path, self.eol, code)
-        code = code.rstrip() + self.eol + 'cap log close'
+        code = 'log using `"{}"\', replace text nomsg{}{}'.format(log_path, os.linesep, code)
+        code = code.rstrip() + os.linesep + 'cap log close'
 
         keywords = [
             r'pr(o|og|ogr|ogra|ogram)?', r'while',
@@ -345,7 +341,7 @@ class StataKernel(Kernel):
         """Get results from log file
         """
 
-        code_l = code.split(self.eol)
+        code_l = code.split(os.linesep)
         # The `log using` line doesn't show up in the output
         code_l = code_l[1:]
         # But the `cap log close` does
@@ -380,14 +376,14 @@ class StataKernel(Kernel):
         res = [lines[begin_inds[x]:end_inds[x]] for x in range(len(begin_inds))]
         # First join on a single EOL the lines within each code block. Then join
         # on a double EOL between each code block.
-        res_joined = (self.eol + self.eol).join([self.eol.join(x) for x in res])
+        res_joined = (os.linesep + os.linesep).join([os.linesep.join(x) for x in res])
 
         # Fix output when the Stata window is too narrow.
         # For all lines beginning with `> `, move to the end of previous line
-        if (self.eol + '> ') not in res_joined:
+        if (os.linesep + '> ') not in res_joined:
             return res_joined
 
-        lines = res_joined.split(self.eol)
+        lines = res_joined.split(os.linesep)
         inds = [ind for ind, x in enumerate(lines) if x.startswith('> ')]
         # Reverse list to accommodate when there are two `> ` lines in a row
         for ind in inds[::-1]:
@@ -396,7 +392,7 @@ class StataKernel(Kernel):
             else:
                 lines[ind - 1] += lines[ind][2:]
 
-        return self.eol.join([x for ind, x in enumerate(lines) if ind not in inds])
+        return os.linesep.join([x for ind, x in enumerate(lines) if ind not in inds])
 
     def check_graphs(self):
         cur_names = self.run_shell('graph dir')['res'][0]
