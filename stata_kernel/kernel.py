@@ -374,7 +374,23 @@ class StataKernel(Kernel):
         res = [lines[begin_inds[x]:end_inds[x]] for x in range(len(begin_inds))]
         # First join on a single EOL the lines within each code block. Then join
         # on a double EOL between each code block.
-        return (self.eol + self.eol).join([self.eol.join(x) for x in res])
+        res_joined = (self.eol + self.eol).join([self.eol.join(x) for x in res])
+
+        # Fix output when the Stata window is too narrow.
+        # For all lines beginning with `> `, move to the end of previous line
+        if (self.eol + '> ') not in res_joined:
+            return res_joined
+
+        lines = res_joined.split(self.eol)
+        inds = [ind for ind, x in enumerate(lines) if x.startswith('> ')]
+        # Reverse list to accommodate when there are two `> ` lines in a row
+        for ind in inds[::-1]:
+            if re.search(r'^> \s+', lines[ind]):
+                lines[ind - 1] += re.sub(r'^>\s+', ' ', lines[ind])
+            else:
+                lines[ind - 1] += lines[ind][2:]
+
+        return self.eol.join([x for ind, x in enumerate(lines) if ind not in inds])
 
     def check_graphs(self):
         cur_names = self.run_shell('graph dir')['res'][0]
