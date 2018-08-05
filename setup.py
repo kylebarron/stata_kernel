@@ -14,7 +14,7 @@ setup(
     url='https://github.com/kylebarron/stata_kernel',
     install_requires=[
         'jupyter_client', 'IPython', 'ipykernel', 'pexpect>=4.6.0',
-        'dateutil>=2.7.3'
+        'python-dateutil>=2.7.3'
     ],
     classifiers=[
         'Intended Audience :: Developers',
