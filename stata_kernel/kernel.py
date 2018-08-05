@@ -47,7 +47,7 @@ class StataKernel(Kernel):
         obj = self.run_shell(code)
         rc = obj.get('err')
         res = obj.get('res')
-        stream_content = {'text': res}
+        stream_content = {'text': '\n'.join(res)}
         if rc:
             stream_content['name'] = 'stderr'
         else:
@@ -161,7 +161,7 @@ class StataKernel(Kernel):
 
             results.append(res)
 
-        obj = {'err': '', 'res': '\n'.join(results)}
+        obj = {'err': '', 'res': results}
         return obj
 
     def remove_comments(self, code):
