@@ -50,6 +50,12 @@ class StataKernel(Kernel):
             # TODO: Change directory to that of running code
             # Hide Stata Window
             self.run_automation_cmd(cmd_name='UtilShowStata', value=1)
+
+            # Set window size to prevent overflowing lines of log file
+            if platform.system() == 'Darwin':
+                cmd = 'set bounds of front window to {1, 1, 1280, 900}'
+                self.run_automation_cmd(cmd_name=cmd)
+
             self.run_automation_cmd(cmd_name='DoCommand', value='set more off')
             self.banner = 'Jupyter kernel for Stata'
 
