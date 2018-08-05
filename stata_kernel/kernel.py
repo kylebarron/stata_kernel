@@ -55,7 +55,9 @@ class StataKernel(Kernel):
         obj = self.run_shell(code)
         rc = obj.get('err')
         res = obj.get('res')
-        stream_content = {'text': '\n'.join(res)}
+        res_text = '\n'.join(res)
+        res_text = ''.join([x for x in res_text if x in string.printable])
+        stream_content = {'text': res_text.rstrip()}
         if rc:
             stream_content['name'] = 'stderr'
         else:
