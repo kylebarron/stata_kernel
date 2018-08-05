@@ -34,7 +34,6 @@ class StataKernel(Kernel):
         config.read(os.path.expanduser('~/.stata_kernel.conf'))
         self.execution_mode = config['stata_kernel']['execution_mode']
         self.stata_path = config['stata_kernel']['stata_path']
-        self.app_name = re.search(r'/?([\w-]+)$', self.stata_path).group(1)
         if platform.system == 'Windows':
             self.eol = '\r\n'
         else:
@@ -291,7 +290,14 @@ class StataKernel(Kernel):
         if platform.system() == 'Windows':
             return getattr(self.stata, 'cmd_name')(value, **kwargs)
 
-        cmd = 'tell application "{}" to {}'.format(self.app_name, cmd_name)
+        app_name = re.search(r'/?([\w-]+)$', self.stata_path).group(1)
+        app_dict = {
+            'stata-mp': 'StataMP',
+            'stata-se': 'StataSE',
+            'stata-ic': 'StataIC'}
+        app_name = app_dict.get(app_name, app_name)
+
+        cmd = 'tell application "{}" to {}'.format(app_name, cmd_name)
         # NOTE I _think_ this correctly escapes strings for AppleScript
         if value is not None:
             cmd += ' "{}"'.format(re.sub(r'\\"', r'\\\\"', value))
