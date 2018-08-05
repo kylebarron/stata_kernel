@@ -192,7 +192,7 @@ class StataKernel(Kernel):
             # Check error
             err = re.search(r'\r\nr\((\d+)\);', res)
             if err:
-                return {'err': err.group(1), 'res': res}
+                return {'err': err.group(1), 'res': [res]}
 
             results.append(res)
 
