@@ -25,3 +25,9 @@ Open the file `.stata_kernel.conf` in your home directory and set the value of
 ```
 $ jupyter console --kernel stata
 ```
+
+## Examples
+
+![Jupyter Notebook](./img/jupyter_notebook.png)
+
+![Jupyter Console](./img/jupyter_console.png)
