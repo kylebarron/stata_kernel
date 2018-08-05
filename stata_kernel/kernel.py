@@ -1,6 +1,7 @@
 import re
 import pexpect
 import string
+import platform
 from ipykernel.kernelbase import Kernel
 from configparser import ConfigParser
 
@@ -20,7 +21,11 @@ class StataKernel(Kernel):
 
         config = ConfigParser()
         config.read('/Users/kyle/.stata_kernel.conf')
-        self.child = pexpect.spawn(config['stata_kernel']['stata_path'])
+        if platform.system() == 'Windows':
+            self.child = pexpect.popen_spawn.PopenSpawn(
+                config['stata_kernel']['stata_path'])
+        else:
+            self.child = pexpect.spawn(config['stata_kernel']['stata_path'])
         # Wait/scroll to initial dot prompt
         self.child.expect('\r\n\.')
 
