@@ -12,6 +12,19 @@ kernel_json = {
     "language": "stata",
 }
 
+conf_default = f"""\
+[stata_kernel]
+
+# Path to stata executable. If you type this in your terminal, it should start
+# the Stata console
+stata_path = stata
+
+# The manner in which the kernel connects to Stata. The default is 'console',
+# which monitors the Stata console. In the future another mode, 'automation',
+# may be added to connect with the Stata GUI on Windows and macOS computers
+execution_mode = console
+"""
+
 def install_my_kernel_spec(user=True, prefix=None):
     with TemporaryDirectory() as td:
         os.chmod(td, 0o755) # Starts off as 700, not user readable
@@ -21,6 +34,10 @@ def install_my_kernel_spec(user=True, prefix=None):
 
         print('Installing Jupyter kernel spec')
         KernelSpecManager().install_kernel_spec(td, 'stata', user=user, replace=True, prefix=prefix)
+
+def install_conf():
+    with open(os.path.expanduser('~/.stata_kernel.conf'), 'w') as f:
+        f.write(conf_default)
 
 def _is_root():
     try:
@@ -45,6 +62,7 @@ def main(argv=None):
         args.user = True
 
     install_my_kernel_spec(user=args.user, prefix=args.prefix)
+    install_conf()
 
 if __name__ == '__main__':
     main()

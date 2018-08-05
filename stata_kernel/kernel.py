@@ -2,6 +2,7 @@ import re
 import pexpect
 import string
 from ipykernel.kernelbase import Kernel
+from configparser import ConfigParser
 
 class StataKernel(Kernel):
     implementation = 'stata_kernel'
@@ -17,8 +18,9 @@ class StataKernel(Kernel):
     def __init__(self, *args, **kwargs):
         super(StataKernel, self).__init__(*args, **kwargs)
 
-        path = '/Applications/Stata/StataSE.app/Contents/MacOS/stata-se'
-        self.child = pexpect.spawn(path)
+        config = ConfigParser()
+        config.read('/Users/kyle/.stata_kernel.conf')
+        self.child = pexpect.spawn(config['stata_kernel']['stata_path'])
         # Wait/scroll to initial dot prompt
         self.child.expect('\r\n\.')
 
