@@ -51,6 +51,7 @@ class StataKernel(Kernel):
             # Hide Stata Window
             self.run_automation_cmd(cmd_name='UtilShowStata', value=1)
             self.run_automation_cmd(cmd_name='DoCommand', value='set more off')
+            self.banner = 'Jupyter kernel for Stata'
 
         else:
             self.child = pexpect.spawn(self.stata_path)
