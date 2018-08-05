@@ -1,11 +1,17 @@
 import os
 import re
-import pexpect
 import string
+import pexpect
 import platform
+import subprocess
+
+from subprocess import run
 from dateutil.parser import parse
 from configparser import ConfigParser
 from ipykernel.kernelbase import Kernel
+
+if platform.system() == 'Windows':
+    import win32com.client
 
 
 class StataKernel(Kernel):
@@ -26,23 +32,41 @@ class StataKernel(Kernel):
 
         config = ConfigParser()
         config.read(os.path.expanduser('~/.stata_kernel.conf'))
-        if platform.system() == 'Windows':
-            self.child = pexpect.popen_spawn.PopenSpawn(
-                config['stata_kernel']['stata_path'])
+        self.execution_mode = config['stata_kernel']['execution_mode']
+        self.stata_path = config['stata_kernel']['stata_path']
+        self.app_name = re.search(r'/?([\w-]+)$', self.stata_path).group(1)
+        if platform.system == 'Windows':
+            self.eol = '\r\n'
         else:
-            self.child = pexpect.spawn(config['stata_kernel']['stata_path'])
-        # Wait/scroll to initial dot prompt
-        self.child.expect('\r\n\.')
+            self.eol = '\n'
+        # self.batch = config['stata_kernel']['batch']
 
-        # Set banner to Stata's shell header
-        banner = self.child.before.decode('utf-8')
-        banner = ''.join([x for x in banner if x in string.printable])
+        if self.execution_mode == 'automation':
+            # Activate Stata
+            if platform.system() == 'Windows':
+                self.stata = win32com.client.Dispatch("stata.StataOLEApp")
+            else:
+                self.run_automation_cmd(cmd_name='activate')
 
-        # Remove extra characters before first \r\n
-        self.banner = re.sub(r'^.*\r\n', '', banner)
+            # TODO: Change directory to that of running code
+            # Hide Stata Window
+            self.run_automation_cmd(cmd_name='UtilShowStata', value=1)
+            self.run_automation_cmd(cmd_name='DoCommand', value='set more off')
 
-        # Set more off
-        self.run_shell('set more off')
+        else:
+            self.child = pexpect.spawn(self.stata_path)
+            # Wait/scroll to initial dot prompt
+            self.child.expect('\r\n\.')
+
+            # Set banner to Stata's shell header
+            banner = self.child.before.decode('utf-8')
+            banner = ''.join([x for x in banner if x in string.printable])
+
+            # Remove extra characters before first \r\n
+            self.banner = re.sub(r'^.*\r\n', '', banner)
+
+            # Set more off
+            self.run_shell('set more off')
 
     def do_execute(self,
                    code,
@@ -50,15 +74,24 @@ class StataKernel(Kernel):
                    store_history=True,
                    user_expressions=None,
                    allow_stdin=False):
+        """Execute user code.
+
+        This is the function that Jupyter calls to run code. Must return a
+        dictionary as described here:
+        https://jupyter-client.readthedocs.io/en/stable/messaging.html#execution-results
+
+        """
 
         code = self.remove_comments(code)
-        obj = self.run_shell(code)
-        rc = obj.get('err')
-        res = obj.get('res')
-        res_text = '\n'.join(res)
+        if self.execution_mode == 'automation':
+            obj = self.do_automation(code)
+        else:
+            obj = self.run_shell(code)
+        res_text = obj.get('res')
+        # Only return printable characters
         res_text = ''.join([x for x in res_text if x in string.printable])
         stream_content = {'text': res_text.rstrip()}
-        if rc:
+        if obj.get('err'):
             stream_content['name'] = 'stderr'
         else:
             stream_content['name'] = 'stdout'
@@ -93,7 +126,7 @@ class StataKernel(Kernel):
                     # We send the display_data message with the contents.
                     self.send_response(self.iopub_socket, 'display_data',
                                        content)
-        if rc:
+        if obj.get('err'):
             return {'status': 'error', 'execution_count': self.execution_count}
 
         return {
@@ -111,7 +144,10 @@ class StataKernel(Kernel):
         kernel machinery will take care of cleaning up its own things before
         stopping.
         """
-        self.child.sendline('exit, clear')
+        if self.execution_mode == 'automation':
+            self.run_automation_cmd('DoCommandAsync', 'exit, clear')
+        else:
+            self.child.sendline('exit, clear')
         return {'restart': restart}
 
     def do_is_complete(self, code):
@@ -194,11 +230,11 @@ class StataKernel(Kernel):
             # Check error
             err = re.search(r'\r\nr\((\d+)\);', res)
             if err:
-                return {'err': err.group(1), 'res': [res]}
+                return {'err': err.group(1), 'res': res}
 
             results.append(res)
 
-        obj = {'err': '', 'res': results}
+        obj = {'err': '', 'res': '\n'.join(results)}
 
         graph_keywords = [
             r'gr(a|ap|aph)?', r'tw(o|ow|owa|oway)?',
@@ -209,6 +245,129 @@ class StataKernel(Kernel):
             obj['check_graphs'] = True
 
         return obj
+
+    def do_automation(self, code):
+        """Run Stata command in GUI window using Stata Automation
+
+        If the command doesn't use `program`, `while`, `forvalues`, `foreach`,
+        `input`, or `exit`, I run it using DoCommand. This means that I don't
+        have to poll for when the command has completed.
+        """
+
+        # Save output to log file
+        log_path = os.getcwd() + '/.stata_kernel_log.log'
+        code = 'log using `"{}"\', replace text nomsg{}{}'.format(log_path, self.eol, code)
+        code = code.rstrip() + self.eol + 'cap log close'
+
+        keywords = [
+            r'pr(o|og|ogr|ogra|ogram)?', r'while',
+            r'forv(a|al|alu|alue|alues)?', r'foreach', r'inp(u|ut)?',
+            r'e(x|xi|xit)?'
+        ]
+        keywords = r'\b(' + '|'.join(keywords) + r')\b'
+        if re.search(keywords, code):
+            is_async = True
+            rc = self.do_automation_async(code)
+        else:
+            is_async = False
+            rc = self.run_automation_cmd(cmd_name='DoCommand', value=code)
+
+        res = self.get_log(code, log_path, is_async)
+        return {'err': rc, 'res': res}
+
+    def do_automation_async(self, code):
+        """Run Stata command in GUI window using DoCommandAsync
+        """
+        return ''
+
+    def run_automation_cmd(self, cmd_name, value=None, **kwargs):
+        """Execute `cmd_name` in a cross-platform manner
+
+        - There are a few commands that take no arguments. For these, leave `value` as None and pass nothing for `kwargs`.
+        - Most commands take one argument. For these, pass a `value`.
+        - A couple commands take extra arguments. For these, use `kwargs`.
+        """
+
+        if platform.system() == 'Windows':
+            return getattr(self.stata, 'cmd_name')(value, **kwargs)
+
+        cmd = 'tell application "{}" to {}'.format(self.app_name, cmd_name)
+        # NOTE I _think_ this correctly escapes strings for AppleScript
+        if value is not None:
+            cmd += ' "{}"'.format(re.sub(r'\\"', r'\\\\"', value))
+        if kwargs:
+            for key, val in kwargs.items():
+                if isinstance(val, bool):
+                    if val:
+                        cmd += ' with {}'.format(key)
+                    else:
+                        cmd += ' without {}'.format(key)
+                elif isinstance(val, int):
+                    cmd += ' {} {}'.format(key, val)
+
+        res = run(['osascript', '-e', cmd], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+        if res.stderr.decode('utf-8'):
+            raise OSError(res.stderr.decode('utf-8'))
+        stdout = res.stdout.decode('utf-8').strip()
+
+        # Coerce types
+        return self.resolve_return_type(cmd_name, stdout)
+
+    def resolve_return_type(self, cmd_name, stdout):
+        """Resolve return type from osascript to Python object
+        """
+        # Try to coerce stdout into Python type
+        if stdout == 'true':
+            return True
+        if stdout == 'false':
+            return False
+        try:
+            return int(stdout)
+        except ValueError:
+            pass
+
+        return stdout
+
+    def get_log(self, code, log_path, is_async):
+        """Get results from log file
+        """
+
+        code_l = code.split(self.eol)
+        # The `log using` line doesn't show up in the output
+        code_l = code_l[1:]
+        # But the `cap log close` does
+        code_l.append('cap log close')
+
+        with open(log_path) as f:
+            lines = f.readlines()
+
+        # Take off newline character
+        lines = [l[:-1] for l in lines]
+
+        # Remove code lines
+        if is_async:
+            # Add `. ` to code lines
+            code_l = ['. ' + x for x in code_l]
+
+        # Find indicies of code lines
+        inds = [ind for ind, x in enumerate(lines) if x in code_l]
+        begin_inds = [x + 1 for x in inds][:-1]
+
+        if is_async:
+            # The empty lines immediately prior to code lines are added and
+            # aren't result lines.
+            empty_inds = [x - 1 for x in inds]
+            for x in empty_inds:
+                assert lines[x] == ''
+
+            end_inds = empty_inds[1:]
+        else:
+            end_inds = inds[1:]
+
+        res = [lines[begin_inds[x]:end_inds[x]] for x in range(len(begin_inds))]
+        # First join on a single EOL the lines within each code block. Then join
+        # on a double EOL between each code block.
+        return (self.eol + self.eol).join([self.eol.join(x) for x in res])
 
     def check_graphs(self):
         cur_names = self.run_shell('graph dir')['res'][0]
@@ -250,6 +409,7 @@ class StataKernel(Kernel):
         self.graphs[name] = parse(stamp)
 
         return img
+
     def remove_comments(self, code):
         """Remove block and end-of-line comments from code
 

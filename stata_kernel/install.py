@@ -2,6 +2,7 @@ import argparse
 import json
 import os
 import sys
+import platform
 
 from jupyter_client.kernelspec import KernelSpecManager
 from IPython.utils.tempdir import TemporaryDirectory
@@ -12,7 +13,12 @@ kernel_json = {
     "language": "stata",
 }
 
-conf_default = f"""\
+if platform.system() == 'Windows':
+    execution_mode = 'automation'
+else:
+    execution_mode = 'console'
+
+conf_default = """\
 [stata_kernel]
 
 # Path to stata executable. If you type this in your terminal, it should start
@@ -22,8 +28,8 @@ stata_path = stata
 # The manner in which the kernel connects to Stata. The default is 'console',
 # which monitors the Stata console. In the future another mode, 'automation',
 # may be added to connect with the Stata GUI on Windows and macOS computers
-execution_mode = console
-"""
+execution_mode = {}
+""".format(execution_mode)
 
 def install_my_kernel_spec(user=True, prefix=None):
     with TemporaryDirectory() as td:
