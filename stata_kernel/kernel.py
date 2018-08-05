@@ -41,6 +41,9 @@ class StataKernel(Kernel):
         # Remove extra characters before first \r\n
         self.banner = re.sub(r'^.*\r\n', '', banner)
 
+        # Set more off
+        self.run_shell('set more off')
+
     def do_execute(self,
                    code,
                    silent,

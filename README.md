@@ -26,6 +26,12 @@ Open the file `.stata_kernel.conf` in your home directory and set the value of
 $ jupyter console --kernel stata
 ```
 
+## Troubleshooting
+
+If you're having trouble connecting to the kernel, try typing `set more off,
+permanently` into a different instance of Stata on the same machine and for the
+same user. It seems the program has some issues dealing with `--more--`.
+
 ## Examples
 
 ![Jupyter Notebook](./img/jupyter_notebook.png)
