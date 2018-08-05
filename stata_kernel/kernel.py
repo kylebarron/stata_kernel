@@ -44,7 +44,9 @@ class StataKernel(Kernel):
                    allow_stdin=False):
 
         code = self.remove_comments(code)
-        rc, res = self.run_shell(code)
+        obj = self.run_shell(code)
+        rc = obj.get('err')
+        res = obj.get('res')
         stream_content = {'text': res}
         if rc:
             stream_content['name'] = 'stderr'
@@ -155,12 +157,12 @@ class StataKernel(Kernel):
             # Check error
             err = re.search(r'\r\nr\((\d+)\);', res)
             if err:
-                # print(err.group(1), res)
-                return err.group(1), res
+                return {'err': err.group(1), 'res': res}
 
             results.append(res)
 
-        return '', '\n'.join(results)
+        obj = {'err': '', 'res': '\n'.join(results)}
+        return obj
 
     def remove_comments(self, code):
         """Remove block and end-of-line comments from code
