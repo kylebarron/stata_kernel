@@ -1,6 +1,5 @@
 import os
 import re
-import string
 import platform
 import subprocess
 
@@ -16,6 +15,22 @@ if platform.system() == 'Windows':
     from win32api import WinExec
 else:
     import pexpect
+
+ansi_regex = r'\x1b(' \
+             r'(\[\??\d+[hl])|' \
+             r'([=<>a-kzNM78])|' \
+             r'([\(\)][a-b0-2])|' \
+             r'(\[\d{0,2}[ma-dgkjqi])|' \
+             r'(\[\d+;\d+[hfy]?)|' \
+             r'(\[;?[hf])|' \
+             r'(#[3-68])|' \
+             r'([01356]n)|' \
+             r'(O[mlnp-z]?)|' \
+             r'(/Z)|' \
+             r'(\d+)|' \
+             r'(\[\?\d;\d0c)|' \
+             r'(\d;\dR))'
+ansi_escape = re.compile(ansi_regex, flags=re.IGNORECASE)
 
 
 class StataKernel(Kernel):
@@ -80,7 +95,7 @@ class StataKernel(Kernel):
 
             # Set banner to Stata's shell header
             banner = '\n'.join(banner)
-            banner = ''.join([x for x in banner if x in string.printable])
+            banner = ansi_escape.sub('', banner)
 
             # Remove extra characters before first \r\n
             self.banner = re.sub(r'^.*\r\n', '', banner)
@@ -115,8 +130,9 @@ class StataKernel(Kernel):
         else:
             obj = self.run_shell(code)
         res_text = obj.get('res')
-        # Only return printable characters
-        res_text = ''.join([x for x in res_text if x in string.printable])
+        # Remove ANSI escape sequences. These are weird pieces of text added by
+        # some shells
+        res_text = ansi_escape.sub('', res_text)
         stream_content = {'text': res_text.rstrip()}
         if obj.get('err'):
             stream_content['name'] = 'stderr'
