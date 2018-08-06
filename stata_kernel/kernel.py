@@ -41,20 +41,15 @@ class StataKernel(Kernel):
             if platform.system() == 'Windows':
                 self.stata = win32com.client.Dispatch("stata.StataOLEApp")
                 window = win32gui.GetForegroundWindow()
+                win32gui.MoveWindow(window, 0, 0, 1920, 1080, True)
+                self.run_automation_cmd(cmd_name='UtilShowStata', value=2)
             else:
                 self.run_automation_cmd(cmd_name='activate')
-
-            # TODO: Change directory to that of running code
-            # Hide Stata Window
-            self.run_automation_cmd(cmd_name='UtilShowStata', value=1)
-
-            # Set window size to prevent overflowing lines of log file
-            if platform.system() == 'Darwin':
+                self.run_automation_cmd(cmd_name='UtilShowStata', value=1)
                 cmd = 'set bounds of front window to {1, 1, 1280, 900}'
                 self.run_automation_cmd(cmd_name=cmd)
-            else:
-                win32gui.MoveWindow(window, 0, 0, 1920, 1080, True)
 
+            # TODO: Change directory to that of running code
             self.run_automation_cmd(cmd_name='DoCommand', value='set more off')
             self.banner = 'Jupyter kernel for Stata'
 
