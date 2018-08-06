@@ -23,8 +23,6 @@ This is also a pure Jupyter kernel, whereas `ipystata` is a Jupyter "magic" with
 **Console**
 ![Jupyter Console](./img/jupyter_console.png)
 
-Difference between this and ipystata
-
 ## Installation
 
 ### Prerequisites
@@ -84,12 +82,7 @@ The main ways to use this are through a Jupyter notebook or within an enhanced c
 $ jupyter console --kernel stata
 ```
 
-## Troubleshooting
-
-If you're having trouble connecting to the kernel and your execution mode is set
-to `console`, try typing `set more off, permanently` into a different instance
-of Stata on the same machine and for the same user. It seems the program has
-some issues dealing with `--more--`.
+<!-- ## Troubleshooting -->
 
 ## To do
 
