@@ -505,7 +505,7 @@ class StataKernel(Kernel):
                     x for ind, x in enumerate(lines) if ind not in inds])}
 
     def check_graphs(self):
-        cur_names = self.do('graph dir')['res'][0]
+        cur_names = self.do('graph dir')['res']
         cur_names = cur_names.strip().split(' ')
         cur_names = [x.strip() for x in cur_names]
         graphs_to_get = []
@@ -524,14 +524,12 @@ class StataKernel(Kernel):
         return graphs_to_get
 
     def get_graph(self, name):
+        cwd = os.getcwd()
         # Export graph to file
-        self.do('cap mkdir .stata_kernel_images')
-        cmd = 'graph export .stata_kernel_images/' + name + '.svg , '
-        cmd += 'name(' + name + ') as(svg)'
+        self.do('cap mkdir `"{}/.stata_kernel_images"\''.format(cwd))
+        cmd = 'graph export `"{}/.stata_kernel_images/{}.svg"\' , '.format(cwd, name)
+        cmd += 'name({}) as(svg)'.format(name)
         self.do(cmd)
-
-        # Get file location
-        cwd = self.do('pwd')['res'][0].strip()
 
         # Read image
         with open(cwd + '/.stata_kernel_images/' + name + '.svg') as f:
@@ -539,8 +537,7 @@ class StataKernel(Kernel):
 
         # Get timestamp of graph and save to dict
         self.do('cap graph describe ' + name)
-        stamp = self.do('di r(command_date) " " r(command_time)')['res'][
-            0].strip()
+        stamp = self.do('di r(command_date) " " r(command_time)')['res'].strip()
         self.graphs[name] = parse(stamp)
 
         return img
