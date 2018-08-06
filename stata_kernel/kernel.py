@@ -12,7 +12,7 @@ from ipykernel.kernelbase import Kernel
 
 if platform.system() == 'Windows':
     import win32com.client
-
+    import win32gui
 
 class StataKernel(Kernel):
     implementation = 'stata_kernel'
@@ -40,6 +40,7 @@ class StataKernel(Kernel):
             # Activate Stata
             if platform.system() == 'Windows':
                 self.stata = win32com.client.Dispatch("stata.StataOLEApp")
+                window = win32gui.GetForegroundWindow()
             else:
                 self.run_automation_cmd(cmd_name='activate')
 
@@ -51,6 +52,8 @@ class StataKernel(Kernel):
             if platform.system() == 'Darwin':
                 cmd = 'set bounds of front window to {1, 1, 1280, 900}'
                 self.run_automation_cmd(cmd_name=cmd)
+            else:
+                win32gui.MoveWindow(window, 0, 0, 1920, 1080, True)
 
             self.run_automation_cmd(cmd_name='DoCommand', value='set more off')
             self.banner = 'Jupyter kernel for Stata'
