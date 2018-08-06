@@ -287,6 +287,8 @@ class StataKernel(Kernel):
                 for l in lines:
                     rc = self.run_automation_cmd(cmd_name='DoCommand', value=l)
                     if rc != 0:
+                        # If error, still close log file
+                        rc = self.run_automation_cmd(cmd_name='DoCommand', value=lines[-1])
                         break
 
         res = self.get_log(code, log_path, is_async)
