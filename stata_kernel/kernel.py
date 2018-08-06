@@ -16,6 +16,7 @@ if platform.system() == 'Windows':
     import win32gui
     from win32api import WinExec
 
+
 class StataKernel(Kernel):
     implementation = 'stata_kernel'
     implementation_version = '0.1'
@@ -24,8 +25,7 @@ class StataKernel(Kernel):
     language_info = {
         'name': 'stata',
         'mimetype': 'text/x-stata',
-        'file_extension': '.do',
-    }
+        'file_extension': '.do'}
 
     def __init__(self, *args, **kwargs):
         super(StataKernel, self).__init__(*args, **kwargs)
@@ -36,10 +36,8 @@ class StataKernel(Kernel):
         config.read(os.path.expanduser('~/.stata_kernel.conf'))
         self.execution_mode = config['stata_kernel']['execution_mode']
         self.stata_path = config['stata_kernel']['stata_path']
-        # self.batch = config['stata_kernel']['batch']
 
         if self.execution_mode.lower() == 'automation':
-            # Activate Stata
             if platform.system() == 'Windows':
                 # The WinExec step is necessary for some reason to make graphs
                 # work. Stata can't be launched directly with Dispatch()
@@ -74,12 +72,13 @@ class StataKernel(Kernel):
             # Set more off
             self.run_shell('set more off')
 
-    def do_execute(self,
-                   code,
-                   silent,
-                   store_history=True,
-                   user_expressions=None,
-                   allow_stdin=False):
+    def do_execute(
+            self,
+            code,
+            silent,
+            store_history=True,
+            user_expressions=None,
+            allow_stdin=False):
         """Execute user code.
 
         This is the function that Jupyter calls to run code. Must return a
@@ -91,8 +90,7 @@ class StataKernel(Kernel):
         code = self.remove_comments(code)
         graph_keywords = [
             r'gr(a|ap|aph)?', r'tw(o|ow|owa|oway)?',
-            r'sc(a|at|att|atte|atter)?', r'line'
-        ]
+            r'sc(a|at|att|atte|atter)?', r'line']
         graph_keywords = r'\b(' + '|'.join(graph_keywords) + r')\b'
         check_graphs = re.search(graph_keywords, code)
 
@@ -126,19 +124,16 @@ class StataKernel(Kernel):
                         # of the output.
                         'data': {
                             'text/plain': 'text',
-                            'image/svg+xml': graph
-                        },
+                            'image/svg+xml': graph},
 
                         # We can specify the image size in the metadata field.
                         'metadata': {
                             'width': 600,
-                            'height': 400
-                        }
-                    }
+                            'height': 400}}
 
                     # We send the display_data message with the contents.
-                    self.send_response(self.iopub_socket, 'display_data',
-                                       content)
+                    self.send_response(
+                        self.iopub_socket, 'display_data', content)
         if obj.get('err'):
             return {'status': 'error', 'execution_count': self.execution_count}
 
@@ -147,8 +142,7 @@ class StataKernel(Kernel):
             # The base class increments the execution count
             'execution_count': self.execution_count,
             'payload': [],
-            'user_expressions': {},
-        }
+            'user_expressions': {}}
 
     def do_shutdown(self, restart):
         """Shutdown the Stata session
@@ -266,14 +260,14 @@ class StataKernel(Kernel):
 
         # Save output to log file
         log_path = os.getcwd() + '/.stata_kernel_log.log'
-        code = 'log using `"{}"\', replace text nomsg{}{}'.format(log_path, os.linesep, code)
+        code = 'log using `"{}"\', replace text nomsg{}{}'.format(
+            log_path, os.linesep, code)
         code = code.rstrip() + os.linesep + 'cap log close'
 
         keywords = [
             r'pr(o|og|ogr|ogra|ogram)?', r'while',
             r'forv(a|al|alu|alue|alues)?', r'foreach', r'inp(u|ut)?',
-            r'e(x|xi|xit)?'
-        ]
+            r'e(x|xi|xit)?']
         keywords = r'\b(' + '|'.join(keywords) + r')\b'
         if re.search(keywords, code):
             is_async = True
@@ -293,7 +287,8 @@ class StataKernel(Kernel):
                     rc = self.run_automation_cmd(cmd_name='DoCommand', value=l)
                     if rc != 0:
                         # If error, still close log file
-                        rc = self.run_automation_cmd(cmd_name='DoCommand', value=lines[-1])
+                        rc = self.run_automation_cmd(
+                            cmd_name='DoCommand', value=lines[-1])
                         break
 
         obj = self.get_log(code, log_path, is_async)
@@ -346,7 +341,9 @@ class StataKernel(Kernel):
                 elif isinstance(val, int):
                     cmd += ' {} {}'.format(key, val)
 
-        res = run(['osascript', '-e', cmd], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+        res = run(['osascript', '-e', cmd],
+                  stdout=subprocess.PIPE,
+                  stderr=subprocess.PIPE)
         if res.stderr.decode('utf-8'):
             raise OSError(res.stderr.decode('utf-8') + '\nInput: ' + cmd)
         stdout = res.stdout.decode('utf-8').strip()
@@ -408,12 +405,14 @@ class StataKernel(Kernel):
 
         # For the async execution, remove any lines that are `. ` or `  \d.    `
         for i, block in enumerate(res):
-            block_new = [l for l in block if not re.search(r'^((\. )|(  \d+\.    ))', l)]
+            block_new = [
+                l for l in block if not re.search(r'^((\. )|(  \d+\.    ))', l)]
             res[i] = block_new
 
         # First join on a single EOL the lines within each code block. Then join
         # on a double EOL between each code block.
-        res_joined = (os.linesep + os.linesep).join([os.linesep.join(x) for x in res])
+        res_joined = (os.linesep + os.linesep).join([
+            os.linesep.join(x) for x in res])
 
         # Fix output when the Stata window is too narrow.
         # For all lines beginning with `> `, move to the end of previous line
@@ -429,7 +428,12 @@ class StataKernel(Kernel):
             else:
                 lines[ind - 1] += lines[ind][2:]
 
-        return {'err': rc, 'res': os.linesep.join([x for ind, x in enumerate(lines) if ind not in inds])}
+        return {
+            'err':
+                rc,
+            'res':
+                os.linesep.join([
+                    x for ind, x in enumerate(lines) if ind not in inds])}
 
     def check_graphs(self):
         cur_names = self.do('graph dir')['res'][0]
@@ -442,8 +446,8 @@ class StataKernel(Kernel):
                 continue
 
             self.do('cap graph describe ' + name)
-            stamp = self.do('di r(command_date) " " r(command_time)')[
-                'res'][0].strip()
+            stamp = self.do('di r(command_date) " " r(command_time)')['res'][
+                0].strip()
             stamp = parse(stamp)
             if stamp > self.graphs.get(name):
                 graphs_to_get.append(name)
@@ -466,8 +470,8 @@ class StataKernel(Kernel):
 
         # Get timestamp of graph and save to dict
         self.do('cap graph describe ' + name)
-        stamp = self.do('di r(command_date) " " r(command_time)')[
-            'res'][0].strip()
+        stamp = self.do('di r(command_date) " " r(command_time)')['res'][
+            0].strip()
         self.graphs[name] = parse(stamp)
 
         return img
