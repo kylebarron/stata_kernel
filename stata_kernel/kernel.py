@@ -16,6 +16,7 @@ if platform.system() == 'Windows':
 else:
     import pexpect
 
+# Regex from: https://stackoverflow.com/a/45448194
 ansi_regex = r'\x1b(' \
              r'(\[\??\d+[hl])|' \
              r'([=<>a-kzNM78])|' \
