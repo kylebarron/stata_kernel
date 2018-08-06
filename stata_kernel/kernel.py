@@ -340,7 +340,9 @@ class StataKernel(Kernel):
             # actually seems that using `\r\n`  gives an extra empty line in the
             # output.
             if platform.system() == 'Darwin':
-                rc = self.run_automation_cmd(cmd_name='DoCommand', value=code)
+                rc = self.run_automation_cmd(cmd_name='DoCommand', value=code, stopOnError=True)
+                if rc == 1:
+                    self.run_automation_cmd(cmd_name='DoCommand', value='cap log close')
             else:
                 lines = code.split(os.linesep)
                 for l in lines:
@@ -405,7 +407,11 @@ class StataKernel(Kernel):
                   stdout=subprocess.PIPE,
                   stderr=subprocess.PIPE)
         if res.stderr:
-            raise OSError(res.stderr + '\nInput: ' + cmd)
+            stderr = res.stderr.decode('utf-8')
+            if 'the command resulted in non-zero return code' in stderr:
+                return 1
+            else:
+                raise OSError(res.stderr.decode('utf-8') + '\nInput: ' + cmd)
         stdout = res.stdout.strip()
 
         # Coerce types
