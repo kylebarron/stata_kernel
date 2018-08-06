@@ -63,20 +63,20 @@ class StataKernel(Kernel):
             # It tries to find the dot prompt immediately; otherwise it assumes
             # there's a `more` stopping it, and presses `q` until the more has
             # gone away.
-            self.child = pexpect.spawn(self.stata_path)
+            self.child = pexpect.spawn(self.stata_path, encoding='utf-8')
             banner = []
             try:
                 self.child.expect('\r\n\.', timeout=0.2)
-                banner.append(self.child.before.decode('utf-8'))
+                banner.append(self.child.before)
             except pexpect.TIMEOUT:
                 try:
                     while True:
                         self.child.expect('more', timeout=0.1)
-                        banner.append(self.child.before.decode('utf-8'))
+                        banner.append(self.child.before)
                         self.child.send('q')
                 except pexpect.TIMEOUT:
                     self.child.expect('\r\n\.')
-                    banner.append(self.child.before.decode('utf-8'))
+                    banner.append(self.child.before)
 
             # Set banner to Stata's shell header
             banner = '\n'.join(banner)
@@ -270,7 +270,7 @@ class StataKernel(Kernel):
                     pass
 
             self.child.expect('(?<=\r\n)\r\n\. ')
-            res = self.child.before.decode('utf-8')
+            res = self.child.before
 
             # Remove input command, up to first \r\n
             res = re.sub(r'^.+\r\n', '', res)
@@ -378,9 +378,9 @@ class StataKernel(Kernel):
         res = run(['osascript', '-e', cmd],
                   stdout=subprocess.PIPE,
                   stderr=subprocess.PIPE)
-        if res.stderr.decode('utf-8'):
-            raise OSError(res.stderr.decode('utf-8') + '\nInput: ' + cmd)
-        stdout = res.stdout.decode('utf-8').strip()
+        if res.stderr:
+            raise OSError(res.stderr + '\nInput: ' + cmd)
+        stdout = res.stdout.strip()
 
         # Coerce types
         return self.resolve_return_type(cmd_name, stdout)
