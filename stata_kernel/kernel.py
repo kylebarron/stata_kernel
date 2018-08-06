@@ -170,11 +170,24 @@ class StataKernel(Kernel):
         if code.endswith('///'):
             return {'status': 'incomplete', 'indent': '    '}
 
-        lines = re.sub(r'\r\n', r'\n', code).split('\n')
-        lines = [x.strip() for x in lines]
-        open_br = len([x for x in lines if x.endswith('{')])
-        closed_br = len([x for x in lines if x.startswith('}')])
-        if open_br > closed_br:
+        lines = [x.strip() for x in code.split('\n')]
+        n_open = len([x for x in lines if x.endswith('{')])
+        n_closed = len([x for x in lines if x.startswith('}')])
+        if n_open > n_closed:
+            return {'status': 'incomplete', 'indent': '    '}
+
+        open_pr = r'^\s*(pr(ogram|ogra|ogr|og|o)?)\s+(de(fine|fin|fi|f)?\s+)?'
+        closed_pr = r'^\s*end\s*'
+        n_open = len([x for x in lines if re.search(open_pr, x)])
+        n_closed = len([x for x in lines if re.search(closed_pr, x)])
+        if n_open > n_closed:
+            return {'status': 'incomplete', 'indent': '    '}
+
+        open_input = r'^\s*inp(u|ut)?'
+        closed_input = r'^\s*end\s*'
+        n_open = len([x for x in lines if re.search(open_input, x)])
+        n_closed = len([x for x in lines if re.search(closed_input, x)])
+        if n_open > n_closed:
             return {'status': 'incomplete', 'indent': '    '}
 
         return {'status': 'complete'}
@@ -220,7 +233,12 @@ class StataKernel(Kernel):
             results from Stata shell
         """
 
-        has_blocks = re.search(r'\{[^\}]+?\}', code)
+        keywords = [
+            r'pr(o|og|ogr|ogra|ogram)?', r'while',
+            r'forv(a|al|alu|alue|alues)?', r'foreach', r'inp(u|ut)?',
+            r'e(x|xi|xit)?']
+        keywords = r'\b(' + '|'.join(keywords) + r')\b'
+        has_blocks = re.search(keywords, code)
 
         # Split user code into lines
         code = re.sub(r'\r\n', r'\n', code)
