@@ -296,12 +296,20 @@ class StataKernel(Kernel):
                         rc = self.run_automation_cmd(cmd_name='DoCommand', value=lines[-1])
                         break
 
-        res = self.get_log(code, log_path, is_async)
+        obj = self.get_log(code, log_path, is_async)
+        res = obj.get('res')
+        if is_async:
+            rc = obj.get('err')
         return {'err': rc, 'res': res}
 
     def do_automation_async(self, code):
         """Run Stata command in GUI window using DoCommandAsync
         """
+        self.run_automation_cmd(cmd_name='DoCommandAsync', value=code)
+        finished = 0
+        while not finished:
+            sleep(0.25)
+            finished = self.run_automation_cmd('UtilIsStataFree')
         return ''
 
     def run_automation_cmd(self, cmd_name, value=None, **kwargs):
@@ -313,6 +321,8 @@ class StataKernel(Kernel):
         """
 
         if platform.system() == 'Windows':
+            if value is None:
+                return getattr(self.stata, cmd_name)()
             return getattr(self.stata, cmd_name)(value, **kwargs)
 
         app_name = re.search(r'/?([\w-]+)$', self.stata_path).group(1)
@@ -363,39 +373,44 @@ class StataKernel(Kernel):
         """Get results from log file
         """
 
-        code_l = code.split(os.linesep)
+        code_l = code.split('\n')
+        # Remove '\r' from the right side of strings
+        code_l = [x.rstrip('\r') for x in code_l]
         # The `log using` line doesn't show up in the output
         code_l = code_l[1:]
-        # But the `cap log close` does
-        code_l.append('cap log close')
 
         with open(log_path) as f:
             lines = f.readlines()
 
+        # If necessary check log for errors
+        rc = None
+        if is_async:
+            rc_regex = re.compile(r'^r\(\d+\);$').search
+            err = [x for x in lines if rc_regex(x)]
+            if err:
+                rc = rc_regex(err[0]).group(0)
+
         # Take off newline character
         lines = [l[:-1] for l in lines]
 
-        # Remove code lines
+        # Add `. ` to code lines so they can be matched and removed
         if is_async:
-            # Add `. ` to code lines
             code_l = ['. ' + x for x in code_l]
 
-        # Find indicies of code lines
+        # Find indices of code lines
         inds = [ind for ind, x in enumerate(lines) if x in code_l]
         begin_inds = [x + 1 for x in inds][:-1]
+        end_inds = inds[1:]
 
-        if is_async:
-            # The empty lines immediately prior to code lines are added and
-            # aren't result lines.
-            empty_inds = [x - 1 for x in inds]
-            for x in empty_inds:
-                assert lines[x] == ''
-
-            end_inds = empty_inds[1:]
-        else:
-            end_inds = inds[1:]
-
+        # Make a list of lists, where each inner list comprises a block of lines
+        # from a single command
         res = [lines[begin_inds[x]:end_inds[x]] for x in range(len(begin_inds))]
+
+        # For the async execution, remove any lines that are `. ` or `  \d.    `
+        for i, block in enumerate(res):
+            block_new = [l for l in block if not re.search(r'^((\. )|(  \d+\.    ))', l)]
+            res[i] = block_new
+
         # First join on a single EOL the lines within each code block. Then join
         # on a double EOL between each code block.
         res_joined = (os.linesep + os.linesep).join([os.linesep.join(x) for x in res])
@@ -403,7 +418,7 @@ class StataKernel(Kernel):
         # Fix output when the Stata window is too narrow.
         # For all lines beginning with `> `, move to the end of previous line
         if (os.linesep + '> ') not in res_joined:
-            return res_joined
+            return {'err': rc, 'res': res_joined}
 
         lines = res_joined.split(os.linesep)
         inds = [ind for ind, x in enumerate(lines) if x.startswith('> ')]
@@ -414,7 +429,7 @@ class StataKernel(Kernel):
             else:
                 lines[ind - 1] += lines[ind][2:]
 
-        return os.linesep.join([x for ind, x in enumerate(lines) if ind not in inds])
+        return {'err': rc, 'res': os.linesep.join([x for ind, x in enumerate(lines) if ind not in inds])}
 
     def check_graphs(self):
         cur_names = self.do('graph dir')['res'][0]
