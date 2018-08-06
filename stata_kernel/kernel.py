@@ -1,7 +1,6 @@
 import os
 import re
 import string
-import pexpect
 import platform
 import subprocess
 
@@ -15,6 +14,8 @@ if platform.system() == 'Windows':
     import win32com.client
     import win32gui
     from win32api import WinExec
+else:
+    import pexpect
 
 
 class StataKernel(Kernel):
