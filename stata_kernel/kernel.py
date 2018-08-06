@@ -59,12 +59,27 @@ class StataKernel(Kernel):
             self.banner = 'Jupyter kernel for Stata'
 
         else:
+            # Spawn stata console and then wait/scroll to initial dot prompt.
+            # It tries to find the dot prompt immediately; otherwise it assumes
+            # there's a `more` stopping it, and presses `q` until the more has
+            # gone away.
             self.child = pexpect.spawn(self.stata_path)
-            # Wait/scroll to initial dot prompt
-            self.child.expect('\r\n\.')
+            banner = []
+            try:
+                self.child.expect('\r\n\.', timeout=0.2)
+                banner.append(self.child.before.decode('utf-8'))
+            except pexpect.TIMEOUT:
+                try:
+                    while True:
+                        self.child.expect('more', timeout=0.1)
+                        banner.append(self.child.before.decode('utf-8'))
+                        self.child.send('q')
+                except pexpect.TIMEOUT:
+                    self.child.expect('\r\n\.')
+                    banner.append(self.child.before.decode('utf-8'))
 
             # Set banner to Stata's shell header
-            banner = self.child.before.decode('utf-8')
+            banner = '\n'.join(banner)
             banner = ''.join([x for x in banner if x in string.printable])
 
             # Remove extra characters before first \r\n
