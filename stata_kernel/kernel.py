@@ -170,7 +170,7 @@ class StataKernel(Kernel):
         if self.execution_mode == 'automation':
             self.run_automation_cmd('DoCommandAsync', 'exit, clear')
         else:
-            self.child.sendline('exit, clear')
+            self.child.close(force=True)
         return {'restart': restart}
 
     def do_is_complete(self, code):
