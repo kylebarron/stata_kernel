@@ -5,6 +5,7 @@ import pexpect
 import platform
 import subprocess
 
+from time import sleep
 from subprocess import run
 from dateutil.parser import parse
 from configparser import ConfigParser
@@ -13,6 +14,7 @@ from ipykernel.kernelbase import Kernel
 if platform.system() == 'Windows':
     import win32com.client
     import win32gui
+    from win32api import WinExec
 
 class StataKernel(Kernel):
     implementation = 'stata_kernel'
@@ -39,6 +41,10 @@ class StataKernel(Kernel):
         if self.execution_mode.lower() == 'automation':
             # Activate Stata
             if platform.system() == 'Windows':
+                # The WinExec step is necessary for some reason to make graphs
+                # work. Stata can't be launched directly with Dispatch()
+                WinExec(self.stata_path)
+                sleep(0.25)
                 self.stata = win32com.client.Dispatch("stata.StataOLEApp")
                 window = win32gui.GetForegroundWindow()
                 win32gui.MoveWindow(window, 0, 0, 1920, 1080, True)
@@ -83,6 +89,13 @@ class StataKernel(Kernel):
         """
 
         code = self.remove_comments(code)
+        graph_keywords = [
+            r'gr(a|ap|aph)?', r'tw(o|ow|owa|oway)?',
+            r'sc(a|at|att|atte|atter)?', r'line'
+        ]
+        graph_keywords = r'\b(' + '|'.join(graph_keywords) + r')\b'
+        check_graphs = re.search(graph_keywords, code)
+
         if self.execution_mode == 'automation':
             obj = self.do_automation(code)
         else:
@@ -99,7 +112,7 @@ class StataKernel(Kernel):
         if not silent:
             self.send_response(self.iopub_socket, 'stream', stream_content)
 
-            if obj.get('check_graphs'):
+            if check_graphs:
                 graphs_to_get = self.check_graphs()
                 graphs_to_get = list(set(graphs_to_get))
                 all_graphs = []
@@ -172,6 +185,13 @@ class StataKernel(Kernel):
 
         return {'status': 'complete'}
 
+    def do(self, code):
+        """A wrapper for the platform-dependent run functions"""
+        if self.execution_mode == 'console':
+            return self.run_shell(code)
+        else:
+            return self.do_automation(code)
+
     def run_shell(self, code):
         """Run Stata command in shell
 
@@ -234,17 +254,7 @@ class StataKernel(Kernel):
 
             results.append(res)
 
-        obj = {'err': '', 'res': '\n'.join(results)}
-
-        graph_keywords = [
-            r'gr(a|ap|aph)?', r'tw(o|ow|owa|oway)?',
-            r'sc(a|at|att|atte|atter)?', r'line'
-        ]
-        graph_keywords = r'\b(' + '|'.join(graph_keywords) + r')\b'
-        if re.search(graph_keywords, code):
-            obj['check_graphs'] = True
-
-        return obj
+        return {'err': '', 'res': '\n'.join(results)}
 
     def do_automation(self, code):
         """Run Stata command in GUI window using Stata Automation
@@ -407,7 +417,7 @@ class StataKernel(Kernel):
         return os.linesep.join([x for ind, x in enumerate(lines) if ind not in inds])
 
     def check_graphs(self):
-        cur_names = self.run_shell('graph dir')['res'][0]
+        cur_names = self.do('graph dir')['res'][0]
         cur_names = cur_names.strip().split(' ')
         cur_names = [x.strip() for x in cur_names]
         graphs_to_get = []
@@ -416,8 +426,8 @@ class StataKernel(Kernel):
                 graphs_to_get.append(name)
                 continue
 
-            self.run_shell('cap graph describe ' + name)
-            stamp = self.run_shell('di r(command_date) " " r(command_time)')[
+            self.do('cap graph describe ' + name)
+            stamp = self.do('di r(command_date) " " r(command_time)')[
                 'res'][0].strip()
             stamp = parse(stamp)
             if stamp > self.graphs.get(name):
@@ -427,21 +437,21 @@ class StataKernel(Kernel):
 
     def get_graph(self, name):
         # Export graph to file
-        self.run_shell('cap mkdir .stata_kernel_images')
+        self.do('cap mkdir .stata_kernel_images')
         cmd = 'graph export .stata_kernel_images/' + name + '.svg , '
         cmd += 'name(' + name + ') as(svg)'
-        self.run_shell(cmd)
+        self.do(cmd)
 
         # Get file location
-        cwd = self.run_shell('pwd')['res'][0].strip()
+        cwd = self.do('pwd')['res'][0].strip()
 
         # Read image
         with open(cwd + '/.stata_kernel_images/' + name + '.svg') as f:
             img = f.read()
 
         # Get timestamp of graph and save to dict
-        self.run_shell('cap graph describe ' + name)
-        stamp = self.run_shell('di r(command_date) " " r(command_time)')[
+        self.do('cap graph describe ' + name)
+        stamp = self.do('di r(command_date) " " r(command_time)')[
             'res'][0].strip()
         self.graphs[name] = parse(stamp)
 
