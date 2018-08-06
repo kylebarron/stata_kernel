@@ -1,0 +1,22 @@
+# EditorConfig is awesome: https://EditorConfig.org
+
+# top-most EditorConfig file
+root = true
+
+# Defaults for all files
+[*]
+end_of_line = lf
+insert_final_newline = true
+charset = utf-8
+trim_trailing_whitespace = true
+indent_style = space
+indent_size = 4
+
+# 2 space indentation
+[*.{js,R,r}]
+indent_size = 2
+
+# Tab indentation (no size specified)
+[Makefile]
+indent_style = tab
+trim_trailing_whitespace = false
