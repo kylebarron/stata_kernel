@@ -259,6 +259,15 @@ class StataKernel(Kernel):
         # Split user code into lines
         code = re.sub(r'\r\n', r'\n', code)
         lines = code.split('\n')
+
+        # Remove leading and trailing whitespace from lines. This shouldn't
+        # matter because Stata doesn't give a semantic meaning to whitespace.
+        lines = [x.strip() for x in lines]
+
+        # Make sure no empty lines. If empty line, there's no blank line in the
+        # stata window between the dot prompts, so the current expect regex
+        # fails.
+        lines = [x for x in lines if x != '']
         results = []
         for line in lines:
             self.child.sendline(line)
@@ -269,7 +278,7 @@ class StataKernel(Kernel):
                 except pexpect.TIMEOUT:
                     pass
 
-            self.child.expect('(?<=\r\n)\r\n\. ')
+            self.child.expect('(?<=(\r\n)|(\x1b=))\r\n\. ', timeout=3)
             res = self.child.before
 
             # Remove input command, up to first \r\n
