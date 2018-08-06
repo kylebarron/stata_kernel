@@ -294,7 +294,7 @@ class StataKernel(Kernel):
 
         # Save output to log file
         log_path = os.getcwd() + '/.stata_kernel_log.log'
-        code = 'log using `"{}"\', replace text nomsg{}{}'.format(
+        code = 'log using `"{}"\', replace text{}{}'.format(
             log_path, os.linesep, code)
         code = code.rstrip() + os.linesep + 'cap log close'
 
@@ -412,6 +412,9 @@ class StataKernel(Kernel):
 
         with open(log_path) as f:
             lines = f.readlines()
+
+        # Remove log header. I assume it's always 5 lines.
+        lines = lines[5:]
 
         # If necessary check log for errors
         rc = None
