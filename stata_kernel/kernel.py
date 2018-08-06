@@ -272,7 +272,19 @@ class StataKernel(Kernel):
             rc = self.do_automation_async(code)
         else:
             is_async = False
-            rc = self.run_automation_cmd(cmd_name='DoCommand', value=code)
+            # On Windows, I need to run one line of code at a time through
+            # DoCommand. For some reason, code with embedded newlines only works
+            # with DoCommandAsync. For that I can use either `\r` or `\n`. It
+            # actually seems that using `\r\n`  gives an extra empty line in the
+            # output.
+            if platform.system() == 'Darwin':
+                rc = self.run_automation_cmd(cmd_name='DoCommand', value=code)
+            else:
+                lines = code.split(os.linesep)
+                for l in lines:
+                    rc = self.run_automation_cmd(cmd_name='DoCommand', value=l)
+                    if rc != 0:
+                        break
 
         res = self.get_log(code, log_path, is_async)
         return {'err': rc, 'res': res}
