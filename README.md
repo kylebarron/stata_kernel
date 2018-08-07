@@ -52,7 +52,7 @@ $ pip install git+https://github.com/kylebarron/stata_kernel --ignore-install pe
 
 ## Configuration
 
-The configuration file is named `.stata_kernel.conf` and is located in your home directory. You need to set the path to your Stata executable before running the kernel.
+The configuration file is named `.stata_kernel.conf` and is located in your home directory. On Windows, this attempts to find the path to your Stata executable. Otherwise, you need to set the path to your Stata executable before running the kernel.
 
 - `stata_path`: The path to your Stata executable.
 

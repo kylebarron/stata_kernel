@@ -12,24 +12,6 @@ kernel_json = {
     "display_name": "Stata",
     "language": "stata", }
 
-if platform.system() == 'Windows':
-    execution_mode = 'automation'
-else:
-    execution_mode = 'console'
-
-conf_default = """\
-[stata_kernel]
-
-# Path to stata executable. If you type this in your terminal, it should start
-# the Stata console
-stata_path = stata
-
-# The manner in which the kernel connects to Stata. The default is 'console',
-# which monitors the Stata console. In the future another mode, 'automation',
-# may be added to connect with the Stata GUI on Windows and macOS computers
-execution_mode = {}
-""".format(execution_mode)
-
 
 def install_my_kernel_spec(user=True, prefix=None):
     with TemporaryDirectory() as td:
@@ -44,8 +26,49 @@ def install_my_kernel_spec(user=True, prefix=None):
 
 
 def install_conf():
+    if platform.system() == 'Windows':
+        execution_mode = 'automation'
+    else:
+        execution_mode = 'console'
+
+    stata_path = 'stata'
+    if platform.system() == 'Windows':
+        stata_path = win_find_path()
+    conf_default = """\
+    [stata_kernel]
+
+    # Path to stata executable. If you type this in your terminal, it should start
+    # the Stata console
+    stata_path = {}
+
+    # The manner in which the kernel connects to Stata. The default is 'console',
+    # which monitors the Stata console. In the future another mode, 'automation',
+    # may be added to connect with the Stata GUI on Windows and macOS computers
+    execution_mode = {}
+    """.format(stata_path, execution_mode)
+
     with open(os.path.expanduser('~/.stata_kernel.conf'), 'w') as f:
         f.write(conf_default)
+
+
+def win_find_path():
+    import winreg
+    reg = winreg.ConnectRegistry(None, winreg.HKEY_CLASSES_ROOT)
+    subkeys = [
+        r'Stata15Do\shell\do\command'
+        r'Stata14Do\shell\do\command'
+        r'Stata13Do\shell\do\command'
+        r'Stata12Do\shell\do\command']
+
+    fpath = ''
+    for subkey in subkeys:
+        try:
+            key = winreg.OpenKey(reg, subkey)
+            fpath = winreg.QueryValue(key, None).split('"')[1]
+        except FileNotFoundError:
+            pass
+        if fpath:
+            break
 
 
 def _is_root():
