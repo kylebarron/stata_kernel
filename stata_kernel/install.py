@@ -55,10 +55,8 @@ def win_find_path():
     import winreg
     reg = winreg.ConnectRegistry(None, winreg.HKEY_CLASSES_ROOT)
     subkeys = [
-        r'Stata15Do\shell\do\command'
-        r'Stata14Do\shell\do\command'
-        r'Stata13Do\shell\do\command'
-        r'Stata12Do\shell\do\command']
+        r'Stata15Do\shell\do\command', r'Stata14Do\shell\do\command',
+        r'Stata13Do\shell\do\command', r'Stata12Do\shell\do\command']
 
     fpath = ''
     for subkey in subkeys:
@@ -69,6 +67,7 @@ def win_find_path():
             pass
         if fpath:
             break
+    return fpath
 
 
 def _is_root():
