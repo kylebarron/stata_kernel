@@ -16,6 +16,10 @@ This is also a pure Jupyter kernel, whereas `ipystata` is a Jupyter "magic" with
 
 ### Examples
 
+**Atom**
+
+![Atom](./img/atom.png)
+
 **Jupyter notebook**
 
 ![Jupyter Notebook](./img/jupyter_notebook.png)
@@ -73,11 +77,21 @@ The configuration file is named `.stata_kernel.conf` and is located in your home
 
 ## Using the Stata kernel
 
-The main ways to use this are through a Jupyter notebook or within an enhanced console. Soon it will work through [Hydrogen](https://github.com/nteract/hydrogen) as well.
+The main ways to use this are through Jupyter notebook, Atom, or an enhanced console.
 
-**Jupyter Notebook**: You can start the Jupyter Notebook server by running `jupyter notebook` in your terminal or command prompt. The *New* menu in the notebook should show an option for a Stata notebook.
+### Jupyter Notebook
 
-**Console**: To use it as a console, run:
+You can start the Jupyter Notebook server by running `jupyter notebook` in your terminal or command prompt. The *New* menu in the notebook should show an option for a Stata notebook.
+
+### Atom
+
+Download the [Atom text editor](https://atom.io) and install the [Hydrogen package](https://atom.io/packages/hydrogen), and [language-stata](https://atom.io/packages/language-stata) syntax highlighting package.
+
+Open a `.do` file and run <kbd>Ctrl</kbd>-<kbd>Enter</kbd> to start the Stata kernel.
+
+### Console
+
+To use it as a console, run:
 ```
 $ jupyter console --kernel stata
 ```
@@ -86,7 +100,5 @@ $ jupyter console --kernel stata
 
 ## To do
 
-- [ ] Fix image issues with Windows
-- [ ] Fix Hydrogen issue
 - [ ] Support autocompletions based on the variables, macros, and return objects currently in memory.
 - [ ] Improve syntax highlighting
