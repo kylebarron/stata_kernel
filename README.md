@@ -3,6 +3,19 @@
 `stata_kernel` is a Jupyter kernel for Stata; It works on Windows, macOS, and
 Linux.
 
+- [Comparison with ipystata](#comparison-with-ipystata)
+- [Installation](#installation)
+    - [Prerequisites](#prerequisites)
+    - [Package Install](#package-install)
+- [Configuration](#configuration)
+- [Using the Stata kernel](#using-the-stata-kernel)
+    - [Jupyter Notebook](#jupyter-notebook)
+    - [Atom](#atom)
+    - [Console](#console)
+- [Limitations](#limitations)
+- [Troubleshooting](#troubleshooting)
+- [To do](#to-do)
+
 Atom             |  Jupyter Notebook
 :-------------------------:|:-------------------------:
 ![Atom](./img/atom.png)    |  ![Jupyter Notebook](./img/jupyter_notebook.png)
@@ -25,11 +38,10 @@ This is also a pure Jupyter kernel, whereas `ipystata` is a Jupyter "magic" with
 
 - **Python**. In order to install the kernel, Python >= 3.5 needs to be installed. I suggest installing the [Anaconda distribution](https://www.anaconda.com/download/), which doesn't require administrator privileges and is simple to install. If you want to use less disk space, install [Miniconda](https://conda.io/miniconda.html), which includes few packages other than Python.
 - **Windows only:**
-    - Install [pywin32](https://github.com/mhammond/pywin32/releases/tag/latest), which lets Python talk to Stata. Choose the `.exe` file that matches the version of Python you have installed and 64/32-bit nature of your computer. If you have a 64-bit computer and have Python 3.6 installed, you would download and run the file:
-
-        ```
-        pywin32-{release number}.win-amd64-py3.6.exe
-        ```
+    - Install [pywin32](https://github.com/mhammond/pywin32/releases/latest), which lets Python talk to Stata. Choose the version of Python you have installed:
+        - [Python 3.5](https://github.com/mhammond/pywin32/releases/download/b223/pywin32-223.win-amd64-py3.5.exe)
+        - [Python 3.6](https://github.com/mhammond/pywin32/releases/download/b223/pywin32-223.win-amd64-py3.6.exe)
+        - [Python 3.7](https://github.com/mhammond/pywin32/releases/download/b223/pywin32-223.win-amd64-py3.7.exe)
     - [Link the Stata Automation library](https://www.stata.com/automation/#install). The Stata executable is most likely in the folder `C:\Program Files (x86)\Stata15`.
 
         1. In the installation directory, right-click on the Stata executable, for example, StataSE.exe. Choose "Create Shortcut".
@@ -45,10 +57,6 @@ $ pip install stata_kernel
 $ python -m stata_kernel.install
 ```
 
-If the `pip install` step gives you an error like "DEPRECATION: Uninstalling a distutils installed project (pexpect) has been deprecated", try
-```
-$ pip install git+https://github.com/kylebarron/stata_kernel --ignore-install pexpect
-```
 
 ## Configuration
 
@@ -92,12 +100,17 @@ Example:
 
 <img style="max-width: 500px; height: auto; " src="./img/jupyter_console.png" />
 
-<!-- ## Troubleshooting -->
-
 ## Limitations
 
 - If you make multiple graphs within the same block of code, you need to give them different names with the `name()` argument, or only one will show up.
 - Currently can only make one image per minute on Windows/Mac unless you give different names for each graph with `name()`. This will be fixed soon.
+
+## Troubleshooting
+
+If the `pip install` step gives you an error like "DEPRECATION: Uninstalling a distutils installed project (pexpect) has been deprecated", try
+```
+$ pip install git+https://github.com/kylebarron/stata_kernel --ignore-install pexpect
+```
 
 ## To do
 
