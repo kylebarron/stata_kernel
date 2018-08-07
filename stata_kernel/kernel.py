@@ -126,56 +126,56 @@ class StataKernel(Kernel):
         graph_keywords = r'\b(' + '|'.join(graph_keywords) + r')\b'
         check_graphs = re.search(graph_keywords, code)
 
-        if self.execution_mode == 'automation':
-            obj = self.do_automation(code)
-        else:
-            obj = self.run_shell(code)
-        res_text = obj.get('res')
-        # Remove ANSI escape sequences. These are weird pieces of text added by
-        # some shells
-        res_text = ansi_escape.sub('', res_text)
-        stream_content = {'text': res_text.rstrip()}
+        obj = self.do(code)
+        res = obj.get('res').rstrip()
+        stream_content = {'text': res}
+
+        # The base class increments the execution count
+        return_obj = {'execution_count': self.execution_count}
         if obj.get('err'):
+            return_obj['status'] = 'error'
             stream_content['name'] = 'stderr'
         else:
+            return_obj['status'] = 'ok'
+            return_obj['payload'] = []
+            return_obj['user_expressions'] = {}
             stream_content['name'] = 'stdout'
 
-        if not silent:
+        if silent:
+            return return_obj
+
+        # At the moment, can only send either an image _or_ text to support
+        # Hydrogen
+        # Only send a response if there's text
+        if res.strip():
             self.send_response(self.iopub_socket, 'stream', stream_content)
+            return return_obj
 
-            if check_graphs:
-                graphs_to_get = self.check_graphs()
-                graphs_to_get = list(set(graphs_to_get))
-                all_graphs = []
-                for graph in graphs_to_get:
-                    g = self.get_graph(graph)
-                    all_graphs.append(g)
+        if check_graphs:
+            graphs_to_get = self.check_graphs()
+            graphs_to_get = list(set(graphs_to_get))
+            all_graphs = []
+            for graph in graphs_to_get:
+                g = self.get_graph(graph)
+                all_graphs.append(g)
 
-                for graph in all_graphs:
-                    content = {
-                        # This dict may contain different MIME representations
-                        # of the output.
-                        'data': {
-                            'text/plain': 'text',
-                            'image/svg+xml': graph},
+            for graph in all_graphs:
+                content = {
+                    # This dict may contain different MIME representations
+                    # of the output.
+                    'data': {
+                        'text/plain': 'text',
+                        'image/svg+xml': graph},
 
-                        # We can specify the image size in the metadata field.
-                        'metadata': {
-                            'width': 600,
-                            'height': 400}}
+                    # We can specify the image size in the metadata field.
+                    'metadata': {
+                        'width': 600,
+                        'height': 400}}
 
-                    # We send the display_data message with the contents.
-                    self.send_response(
-                        self.iopub_socket, 'display_data', content)
-        if obj.get('err'):
-            return {'status': 'error', 'execution_count': self.execution_count}
+                # We send the display_data message with the contents.
+                self.send_response(self.iopub_socket, 'display_data', content)
 
-        return {
-            'status': 'ok',
-            # The base class increments the execution count
-            'execution_count': self.execution_count,
-            'payload': [],
-            'user_expressions': {}}
+        return return_obj
 
     def do_shutdown(self, restart):
         """Shutdown the Stata session
@@ -228,9 +228,14 @@ class StataKernel(Kernel):
     def do(self, code):
         """A wrapper for the platform-dependent run functions"""
         if self.execution_mode == 'console':
-            return self.run_shell(code)
+            obj = self.run_shell(code)
         else:
-            return self.do_automation(code)
+            obj = self.do_automation(code)
+
+        # Remove ANSI escape sequences. These are weird pieces of text added by
+        # some shells
+        obj['res'] = ansi_escape.sub('', obj['res'])
+        return obj
 
     def run_shell(self, code):
         """Run Stata command in shell
@@ -340,9 +345,11 @@ class StataKernel(Kernel):
             # actually seems that using `\r\n`  gives an extra empty line in the
             # output.
             if platform.system() == 'Darwin':
-                rc = self.run_automation_cmd(cmd_name='DoCommand', value=code, stopOnError=True)
+                rc = self.run_automation_cmd(
+                    cmd_name='DoCommand', value=code, stopOnError=True)
                 if rc == 1:
-                    self.run_automation_cmd(cmd_name='DoCommand', value='cap log close')
+                    self.run_automation_cmd(
+                        cmd_name='DoCommand', value='cap log close')
             else:
                 lines = code.split(os.linesep)
                 for l in lines:
@@ -537,7 +544,8 @@ class StataKernel(Kernel):
         cwd = os.getcwd()
         # Export graph to file
         self.do('cap mkdir `"{}/.stata_kernel_images"\''.format(cwd))
-        cmd = 'graph export `"{}/.stata_kernel_images/{}.svg"\' , '.format(cwd, name)
+        cmd = 'graph export `"{}/.stata_kernel_images/{}.svg"\' , '.format(
+            cwd, name)
         cmd += 'name({}) as(svg) replace'.format(name)
         self.do(cmd)
 
