@@ -514,31 +514,38 @@ class StataKernel(Kernel):
                 graphs_to_get.append(name)
                 continue
 
-            self.do('cap graph describe ' + name)
-            stamp = self.do('di r(command_date) " " r(command_time)')['res'][
-                0].strip()
-            stamp = parse(stamp)
+            stamp = self.get_graph_timestamp(name)
             if stamp > self.graphs.get(name):
                 graphs_to_get.append(name)
 
         return graphs_to_get
+
+    def get_graph_timestamp(self, name):
+        # Get timestamp of graph and save to dict
+        res = self.do('graph describe ' + name)['res']
+        lines = res.split('\n')
+        stamp = [x for x in lines if 'created' in x]
+        # I.e. non-English Stata
+        if not stamp:
+            stamp = lines[5][13:].strip()
+        else:
+            stamp = stamp[0][13:].strip()
+
+        return parse(stamp)
 
     def get_graph(self, name):
         cwd = os.getcwd()
         # Export graph to file
         self.do('cap mkdir `"{}/.stata_kernel_images"\''.format(cwd))
         cmd = 'graph export `"{}/.stata_kernel_images/{}.svg"\' , '.format(cwd, name)
-        cmd += 'name({}) as(svg)'.format(name)
+        cmd += 'name({}) as(svg) replace'.format(name)
         self.do(cmd)
 
         # Read image
         with open(cwd + '/.stata_kernel_images/' + name + '.svg') as f:
             img = f.read()
 
-        # Get timestamp of graph and save to dict
-        self.do('cap graph describe ' + name)
-        stamp = self.do('di r(command_date) " " r(command_time)')['res'].strip()
-        self.graphs[name] = parse(stamp)
+        self.graphs[name] = self.get_graph_timestamp(name)
 
         return img
 
