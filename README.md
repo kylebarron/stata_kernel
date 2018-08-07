@@ -88,13 +88,16 @@ To use it as a console, run:
 $ jupyter console --kernel stata
 ```
 
-<img src="./img/jupyter_console.png" width="640" height="480"/>
+Example:
+
+<img style="max-width: 500px; height: auto; " src="./img/jupyter_console.png" />
 
 <!-- ## Troubleshooting -->
 
 ## Limitations
 
-- Currently
+- If you make multiple graphs within the same block of code, you need to give them different names with the `name()` argument, or only one will show up.
+- Currently can only make one image per minute on Windows/Mac unless you give different names for each graph with `name()`. This will be fixed soon.
 
 ## To do
 
