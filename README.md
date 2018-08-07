@@ -41,7 +41,7 @@ This is also a pure Jupyter kernel, whereas `ipystata` is a Jupyter "magic" with
 To install the kernel, run:
 
 ```
-$ pip install git+https://github.com/kylebarron/stata_kernel
+$ pip install stata_kernel
 $ python -m stata_kernel.install
 ```
 
