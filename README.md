@@ -5,13 +5,20 @@ Linux.
 
 ### Examples
 
-**Atom**
+Atom             |  Jupyter Notebook
+:-------------------------:|:-------------------------:
+![Atom](./img/atom.png)    |  ![Jupyter Notebook](./img/jupyter_notebook.png)
+
+
+<img src="./img/atom.png" width="1119"/> <img src="./img/jupyter_notebook.png" width="1709"/>
+
+<!-- **Atom**
 
 ![Atom](./img/atom.png)
 
 **Jupyter notebook**
 
-![Jupyter Notebook](./img/jupyter_notebook.png)
+![Jupyter Notebook](./img/jupyter_notebook.png) -->
 
 **Console**
 ![Jupyter Console](./img/jupyter_console.png)
@@ -97,6 +104,10 @@ $ jupyter console --kernel stata
 ```
 
 <!-- ## Troubleshooting -->
+
+## Limitations
+
+- Currently
 
 ## To do
 
