@@ -3,25 +3,10 @@
 `stata_kernel` is a Jupyter kernel for Stata; It works on Windows, macOS, and
 Linux.
 
-### Examples
-
 Atom             |  Jupyter Notebook
 :-------------------------:|:-------------------------:
 ![Atom](./img/atom.png)    |  ![Jupyter Notebook](./img/jupyter_notebook.png)
 
-
-<img src="./img/atom.png" width="1119"/> <img src="./img/jupyter_notebook.png" width="1709"/>
-
-<!-- **Atom**
-
-![Atom](./img/atom.png)
-
-**Jupyter notebook**
-
-![Jupyter Notebook](./img/jupyter_notebook.png) -->
-
-**Console**
-![Jupyter Console](./img/jupyter_console.png)
 
 ### Comparison with [ipystata](https://github.com/TiesdeKok/ipystata)
 
@@ -102,6 +87,8 @@ To use it as a console, run:
 ```
 $ jupyter console --kernel stata
 ```
+
+<img src="./img/jupyter_console.png" width="640" height="480"/>
 
 <!-- ## Troubleshooting -->
 
