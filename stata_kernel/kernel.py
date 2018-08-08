@@ -9,6 +9,8 @@ from dateutil.parser import parse
 from configparser import ConfigParser
 from ipykernel.kernelbase import Kernel
 
+from .code_manager import CodeManager
+
 if platform.system() == 'Windows':
     import win32com.client
     import win32gui
@@ -119,7 +121,8 @@ class StataKernel(Kernel):
 
         """
 
-        code = self.remove_comments(code)
+        cm = CodeManager(code)
+        code = cm.remove_comments()
         graph_keywords = [
             r'gr(a|ap|aph)?', r'tw(o|ow|owa|oway)?',
             r'sc(a|at|att|atte|atter)?', r'line']
@@ -263,6 +266,8 @@ class StataKernel(Kernel):
 
         NOTE will need to set timeout to None once sure that running is stable.
         Otherwise running a task longer than 30s would timeout.
+
+        NOTE I need to send lines in semantic chunks, not one at a time.
 
         Args:
             code (str): code to run in Stata
@@ -556,15 +561,3 @@ class StataKernel(Kernel):
         self.graphs[name] = self.get_graph_timestamp(name)
 
         return img
-
-    def remove_comments(self, code):
-        """Remove block and end-of-line comments from code
-
-        From:
-        https://stackoverflow.com/questions/24518020/comprehensive-regexp-to-remove-javascript-comments
-        Using the "Final Boss Fight" at the bottom.
-        Otherwise it fails on `di 5 / 5 // hello`
-        """
-        return re.sub(
-            r'((["\'])(?:\\[\s\S]|.)*?\2|(?:[^\w\s]|^)\s*\/(?![*\/])(?:\\.|\[(?:\\.|.)\]|.)*?\/(?=[gmiy]{0,4}\s*(?![*\/])(?:\W|$)))|\/\/\/.*?\r?\n\s*|\/\/.*?$|\/\*[\s\S]*?\*\/',
-            '\\1', code)
