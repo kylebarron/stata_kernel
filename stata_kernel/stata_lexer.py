@@ -9,7 +9,7 @@ class StataLexer(RegexLexer):
     I only need accurate handling of comment, string, and line-continuation
     environments
     """
-    flags = re.IGNORECASE | re.DOTALL
+    flags = re.MULTILINE | re.DOTALL
     tokens = {
         'root': [
             # Later, add include('#delimit;') here
