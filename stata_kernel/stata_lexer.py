@@ -23,7 +23,7 @@ class StataLexer(RegexLexer):
             (r'\{', Token.MatchingBracket.Other, '#push'),
             (r'\}', Token.MatchingBracket.Other, '#pop'),
             include('comments'),
-            include('strings'),
+            include('strings-inside-blocks'),
             (r'.', Token.MatchingBracket.Other)
         ],
         'comments': [
@@ -63,23 +63,38 @@ class StataLexer(RegexLexer):
         ],
         'program': [
             include('comments'),
-            include('strings'),
+            include('strings-inside-blocks'),
             (r'^\s*end\b', Token.MatchingBracket.Other, '#pop'),
             (r'.', Token.MatchingBracket.Other)
         ],
         'strings': [
             # `"compound string"'
-            (r'`"', String.Other, 'string-compound'),
+            (r'`"', Text, 'string-compound'),
             # "string"
-            (r'(?<!`)"', String.Double, 'string-regular'),
+            (r'(?<!`)"', Text, 'string-regular'),
+        ],
+        'strings-inside-blocks': [
+            # `"compound string"'
+            (r'`"', Token.MatchingBracket.Other, 'string-compound-inside-blocks'),
+            # "string"
+            (r'(?<!`)"', Token.MatchingBracket.Other, 'string-regular-inside-blocks'),
         ],
         'string-compound': [
-            (r'`"', String.Other, '#push'),
-            (r'"\'', String.Other, '#pop'),
-            (r'.', String.Other)
+            (r'`"', Text, '#push'),
+            (r'"\'', Text, '#pop'),
+            (r'.', Text)
         ],
         'string-regular': [
-            (r'(")(?!\')|(?=\n)', String.Double, '#pop'),
-            (r'.', String.Double)
+            (r'(")(?!\')|(?=\n)', Text, '#pop'),
+            (r'.', Text)
+        ],
+        'string-compound-inside-blocks': [
+            (r'`"', Token.MatchingBracket.Other, '#push'),
+            (r'"\'', Token.MatchingBracket.Other, '#pop'),
+            (r'.', Token.MatchingBracket.Other)
+        ],
+        'string-regular-inside-blocks': [
+            (r'(")(?!\')|(?=\n)', Token.MatchingBracket.Other, '#pop'),
+            (r'.', Token.MatchingBracket.Other)
         ]
     }
