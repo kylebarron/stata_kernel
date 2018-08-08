@@ -34,7 +34,8 @@ class StataLexer(RegexLexer):
             (r'.', Comment.Multiline),
         ],
         'comments-star': [
-            (r'///.*?\n', Comment.Single, 'comments-triple-slash'),
+            (r'///.*?\n', Comment.Single,
+                ('#pop', 'comments-triple-slash')),
             (r'(^//|(?<=\s)//)(?!/)', Comment.Single,
                 ('#pop', 'comments-double-slash')),
             (r'/\*', Comment.Multiline, 'comments-block'),
@@ -44,6 +45,8 @@ class StataLexer(RegexLexer):
         ],
         'comments-triple-slash': [
             (r'.(?=\n)', Comment.Special, '#pop'),
+            # A // breaks out of a comment for the rest of the line
+            (r'//.*?(?=\n)', Comment.Single, '#pop'),
             (r'.', Comment.Special),
         ],
         'comments-double-slash': [

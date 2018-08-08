@@ -112,7 +112,7 @@ def test_line_continuation_comment_after_star_comment():
         (Comment.Single, ' '),
         (Comment.Single, '///\n'),
         (Comment.Special, 'a'),
-        (Comment.Single, '\n')]
+        (Text, '\n')]
     assert tokens == expected
 
 def test_line_continuation_ignored_after_inline_comment():
@@ -170,6 +170,28 @@ def test_nesting_of_multiline_comments():
         (Comment.Multiline, 'a'),
         (Comment.Multiline, '\n'),
         (Comment.Multiline, '*/'),
+        (Text, '\n'),
+        (Text, 'a'),
+        (Text, '\n')]
+    assert tokens == expected
+
+def test_inline_comment_breaks_line_continuation_comment():
+    """
+    ```stata
+    * Line continuation ///
+    // Breaks line continuation ///
+    di "Printed 1"
+    ```
+    """
+    code = '* a ///\n// a ///\na'
+    tokens = get_tokens(code)
+    expected = [
+        (Comment.Single, '*'),
+        (Comment.Single, ' '),
+        (Comment.Single, 'a'),
+        (Comment.Single, ' '),
+        (Comment.Single, '///\n'),
+        (Comment.Single, '// a ///'),
         (Text, '\n'),
         (Text, 'a'),
         (Text, '\n')]
