@@ -1,7 +1,6 @@
 import re
 from pygments.lexer import RegexLexer, include
-from pygments.token import Comment, String, Text
-
+from pygments.token import Comment, String, Text, Token
 
 class StataLexer(RegexLexer):
     """Modified Pygments Stata Lexer
@@ -15,9 +14,16 @@ class StataLexer(RegexLexer):
             # Later, add include('#delimit;') here
             include('comments'),
             include('strings'),
+            (r'(cap(t|tu|tur|ture)?|qui(e|et|etl|etly)?|n(o|oi|ois|oisi|oisil|oisily))\s*:?\s*\{', Token.MatchingBracket.Other, 'cap-noi-qui-chunk'),
             (r'.', Text),
         ],
-        # For either string type, highlight macros as macros
+        'cap-noi-qui-chunk': [
+            (r'\{', Token.MatchingBracket.Other, '#push'),
+            (r'\}', Token.MatchingBracket.Other, '#pop'),
+            include('comments'),
+            include('strings'),
+            (r'.', Token.MatchingBracket.Other)
+        ],
         'comments': [
             (r'(^//|(?<=\s)//)(?!/)', Comment.Single, 'comments-double-slash'),
             (r'^\s*\*', Comment.Single, 'comments-star'),

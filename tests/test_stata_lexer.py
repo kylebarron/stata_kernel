@@ -252,3 +252,92 @@ def test_multiline_comment_inside_string():
         (Token.Literal.String.Double, '"'),
         (Token.Text, '\n')]
     assert tokens == expected
+
+def test_inline_comment_inside_string():
+    code = 'di "//"'
+    tokens = get_tokens(code)
+    expected = [
+        (Token.Text, 'd'),
+        (Token.Text, 'i'),
+        (Token.Text, ' '),
+        (Token.Literal.String.Double, '"'),
+        (Token.Literal.String.Double, '/'),
+        (Token.Literal.String.Double, '/'),
+        (Token.Literal.String.Double, '"'),
+        (Token.Text, '\n')]
+    assert tokens == expected
+
+def test_star_comment_inside_string():
+    code = 'a "*"'
+    tokens = get_tokens(code)
+    expected = [
+        (Token.Text, 'a'),
+        (Token.Text, ' '),
+        (Token.Literal.String.Double, '"'),
+        (Token.Literal.String.Double, '*'),
+        (Token.Literal.String.Double, '"'),
+        (Token.Text, '\n')]
+    assert tokens == expected
+
+def test_cap_chunk():
+    code = 'cap {\n a\n}'
+    tokens = get_tokens(code)
+    expected = [
+        (Token.MatchingBracket.Other, 'cap {'),
+        (Token.MatchingBracket.Other, '\n'),
+        (Token.MatchingBracket.Other, ' '),
+        (Token.MatchingBracket.Other, 'a'),
+        (Token.MatchingBracket.Other, '\n'),
+        (Token.MatchingBracket.Other, '}'),
+        (Token.Text, '\n')]
+    assert tokens == expected
+
+def test_cap_chunk_recursive():
+    code = 'cap {\n{\n a\n}\n}'
+    tokens = get_tokens(code)
+    expected = [
+        (Token.MatchingBracket.Other, 'cap {'),
+        (Token.MatchingBracket.Other, '\n'),
+        (Token.MatchingBracket.Other, '{'),
+        (Token.MatchingBracket.Other, '\n'),
+        (Token.MatchingBracket.Other, ' '),
+        (Token.MatchingBracket.Other, 'a'),
+        (Token.MatchingBracket.Other, '\n'),
+        (Token.MatchingBracket.Other, '}'),
+        (Token.MatchingBracket.Other, '\n'),
+        (Token.MatchingBracket.Other, '}'),
+        (Token.Text, '\n')]
+    assert tokens == expected
+
+def test_cap_chunk_with_inner_line_comment():
+    code = 'cap {\n*{\n a\n}'
+    tokens = get_tokens(code)
+    expected = [
+        (Token.MatchingBracket.Other, 'cap {'),
+        (Token.MatchingBracket.Other, '\n'),
+        (Token.Comment.Single, '*'),
+        (Token.Comment.Single, '{'),
+        (Token.MatchingBracket.Other, '\n'),
+        (Token.MatchingBracket.Other, ' '),
+        (Token.MatchingBracket.Other, 'a'),
+        (Token.MatchingBracket.Other, '\n'),
+        (Token.MatchingBracket.Other, '}'),
+        (Token.Text, '\n')]
+    assert tokens == expected
+
+def test_cap_chunk_with_inner_multiline_comment():
+    code = 'cap {\n/*{*/\n a\n}'
+    tokens = get_tokens(code)
+    expected = [
+        (Token.MatchingBracket.Other, 'cap {'),
+        (Token.MatchingBracket.Other, '\n'),
+        (Token.Comment.Multiline, '/*'),
+        (Token.Comment.Multiline, '{'),
+        (Token.Comment.Multiline, '*/'),
+        (Token.MatchingBracket.Other, '\n'),
+        (Token.MatchingBracket.Other, ' '),
+        (Token.MatchingBracket.Other, 'a'),
+        (Token.MatchingBracket.Other, '\n'),
+        (Token.MatchingBracket.Other, '}'),
+        (Token.Text, '\n')]
+    assert tokens == expected

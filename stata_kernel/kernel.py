@@ -264,6 +264,8 @@ class StataKernel(Kernel):
         NOTE will need to set timeout to None once sure that running is stable.
         Otherwise running a task longer than 30s would timeout.
 
+        NOTE I need to send lines in semantic chunks, not one at a time.
+
         Args:
             code (str): code to run in Stata
 
