@@ -270,7 +270,7 @@ class TestMultilineComments(object):
         assert tokens == expected
 
 class TestLineContinuationComments(object):
-    def test_lc1(self):
+    def test1(self):
         code = 'a ///\na'
         tokens = get_tokens(code)
         expected = [
@@ -281,6 +281,55 @@ class TestLineContinuationComments(object):
             (Token.Text, 'a'),
             (Token.Text, '\n')]
         assert tokens == expected
+
+    def test2(self):
+        code = 'a///\na'
+        tokens = get_tokens(code)
+        expected = [
+            (Token.Text, 'a'),
+            (Token.Text, '/'),
+            (Token.Text, '/'),
+            (Token.Text, '/'),
+            (Token.Text, '\n'),
+            (Token.Text, 'a'),
+            (Token.Text, '\n')]
+        assert tokens == expected
+
+    def test3(self):
+        code = '///\na'
+        tokens = get_tokens(code)
+        expected = [
+            (Token.Comment.Special, '///'),
+            (Token.Comment.Special, '\n'),
+            (Token.Text, 'a'),
+            (Token.Text, '\n')]
+        assert tokens == expected
+
+
+class TestSingleLineComments(object):
+    def test1(self):
+        code = 'di//*\n*/1'
+        tokens = get_tokens(code)
+        expected = [
+            (Token.Text, 'd'),
+            (Token.Text, 'i'),
+            (Token.Text, '/'),
+            (Token.Comment.Multiline, '/*'),
+            (Token.Comment.Multiline, '\n'),
+            (Token.Comment.Multiline, '*/'),
+            (Token.Text, '1'),
+            (Token.Text, '\n')]
+        assert tokens == expected
+
+    def test2(self):
+        code = '//\n'
+        tokens = get_tokens(code)
+        expected = [
+            (Token.Comment.Single, '//'),
+            (Token.Comment.Single, '\n')]
+        assert tokens == expected
+
+
 
 class TestStrings(object):
     def test_multiline_comment_inside_string(self):
