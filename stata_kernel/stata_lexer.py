@@ -28,7 +28,7 @@ class StataLexer(RegexLexer):
             (r'(^//|(?<=\s)//)(?!/)', Comment.Single, 'comments-double-slash'),
             (r'^\s*\*', Comment.Single, 'comments-star'),
             (r'/\*', Comment.Multiline, 'comments-block'),
-            (r'(^///|(?<=\s)///).', Comment.Special, 'comments-triple-slash')
+            (r'(^///|(?<=\s)///)', Comment.Special, 'comments-triple-slash')
         ],
         'comments-block': [
             (r'/\*', Comment.Multiline, '#push'),

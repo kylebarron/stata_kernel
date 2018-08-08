@@ -218,8 +218,15 @@ class TestCommentsFromStataList(object):
         expected = [
             (Token.Text, 'a'),
             (Token.Text, ' '),
-            (Token.Comment.Special, '///\n'),
-            (Token.Comment.Single, '// a ///'),
+            (Token.Comment.Special, '///'),
+            (Token.Comment.Special, '\n'),
+            (Token.Comment.Single, '//'),
+            (Token.Comment.Single, ' '),
+            (Token.Comment.Single, 'a'),
+            (Token.Comment.Single, ' '),
+            (Token.Comment.Single, '/'),
+            (Token.Comment.Single, '/'),
+            (Token.Comment.Single, '/'),
             (Token.Text, '\n'),
             (Token.Text, 'a'),
             (Token.Text, '\n')]
@@ -244,6 +251,33 @@ class TestMultilineComments(object):
             (Token.Comment.Multiline, '\n'),
             (Token.Comment.Multiline, '*/'),
             (Token.Text, ' '),
+            (Token.Text, 'a'),
+            (Token.Text, '\n')]
+        assert tokens == expected
+
+    def test_multiline1(self):
+        code = 'a/* a */a'
+        tokens = get_tokens(code)
+        expected = [
+            (Token.Text, 'a'),
+            (Token.Comment.Multiline, '/*'),
+            (Token.Comment.Multiline, ' '),
+            (Token.Comment.Multiline, 'a'),
+            (Token.Comment.Multiline, ' '),
+            (Token.Comment.Multiline, '*/'),
+            (Token.Text, 'a'),
+            (Token.Text, '\n')]
+        assert tokens == expected
+
+class TestLineContinuationComments(object):
+    def test_lc1(self):
+        code = 'a ///\na'
+        tokens = get_tokens(code)
+        expected = [
+            (Token.Text, 'a'),
+            (Token.Text, ' '),
+            (Token.Comment.Special, '///'),
+            (Token.Comment.Special, '\n'),
             (Token.Text, 'a'),
             (Token.Text, '\n')]
         assert tokens == expected
