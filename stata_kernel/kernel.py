@@ -72,8 +72,6 @@ class StataKernel(Kernel):
                 cmd = 'set bounds of front window to {1, 1, 1280, 900}'
                 self.run_automation_cmd(cmd_name=cmd)
 
-            # TODO: Change directory to that of running code
-            self.run_automation_cmd(cmd_name='DoCommand', value='set more off')
             self.banner = 'Jupyter kernel for Stata'
 
         else:
@@ -97,14 +95,11 @@ class StataKernel(Kernel):
                     banner.append(self.child.before)
 
             # Set banner to Stata's shell header
-            banner = '\n'.join(banner)
-            banner = ansi_escape.sub('', banner)
+            self.banner = ansi_escape.sub('', '\n'.join(banner))
 
-            # Remove extra characters before first \r\n
-            self.banner = re.sub(r'^.*\r\n', '', banner)
-
-            # Set more off
-            self.run_shell('set more off')
+        # Set more off
+        self.do('cd `"{}"\''.format(os.getcwd()))
+        self.do('set more off')
 
     def do_execute(
             self,
