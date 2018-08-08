@@ -14,10 +14,12 @@ class StataLexer(RegexLexer):
             # Later, add include('#delimit;') here
             include('comments'),
             include('strings'),
-            (r'(cap(t|tu|tur|ture)?|qui(e|et|etl|etly)?|n(o|oi|ois|oisi|oisil|oisily))\s*:?\s*\{', Token.MatchingBracket.Other, 'cap-noi-qui-chunk'),
+            (r'^.*?\{', Token.MatchingBracket.Other, 'block'),
+            (r'^\s*(pr(ogram|ogra|ogr|og|o)?)\s+(?!di|dr|l)(de(fine|fin|fi|f)?\s+)?', Token.MatchingBracket.Other, 'program'),
+            (r'^\s*inp(u|ut)?', Token.MatchingBracket.Other, 'program'),
             (r'.', Text),
         ],
-        'cap-noi-qui-chunk': [
+        'block': [
             (r'\{', Token.MatchingBracket.Other, '#push'),
             (r'\}', Token.MatchingBracket.Other, '#pop'),
             include('comments'),
@@ -58,6 +60,12 @@ class StataLexer(RegexLexer):
         'comments-double-slash': [
             (r'.(?=\n)', Comment.Single, '#pop'),
             (r'.', Comment.Single),
+        ],
+        'program': [
+            include('comments'),
+            include('strings'),
+            (r'^\s*end\b', Token.MatchingBracket.Other, '#pop'),
+            (r'.', Token.MatchingBracket.Other)
         ],
         'strings': [
             # `"compound string"'

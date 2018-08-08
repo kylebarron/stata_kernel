@@ -197,28 +197,8 @@ class StataKernel(Kernel):
         when closed.
 
         """
-        code = code.strip()
-        if code.endswith('///'):
-            return {'status': 'incomplete', 'indent': '    '}
-
-        lines = [x.strip() for x in code.split('\n')]
-        n_open = len([x for x in lines if x.endswith('{')])
-        n_closed = len([x for x in lines if x.startswith('}')])
-        if n_open > n_closed:
-            return {'status': 'incomplete', 'indent': '    '}
-
-        open_pr = r'^\s*(pr(ogram|ogra|ogr|og|o)?)\s+(de(fine|fin|fi|f)?\s+)?'
-        closed_pr = r'^\s*end\s*'
-        n_open = len([x for x in lines if re.search(open_pr, x)])
-        n_closed = len([x for x in lines if re.search(closed_pr, x)])
-        if n_open > n_closed:
-            return {'status': 'incomplete', 'indent': '    '}
-
-        open_input = r'^\s*inp(u|ut)?'
-        closed_input = r'^\s*end\s*'
-        n_open = len([x for x in lines if re.search(open_input, x)])
-        n_closed = len([x for x in lines if re.search(closed_input, x)])
-        if n_open > n_closed:
+        cm = CodeManager(code)
+        if str(cm.tokens[-1][0]) == 'Token.MatchingBracket.Other':
             return {'status': 'incomplete', 'indent': '    '}
 
         return {'status': 'complete'}
