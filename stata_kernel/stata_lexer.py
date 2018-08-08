@@ -1,3 +1,4 @@
+import re
 from pygments.lexer import RegexLexer, include
 from pygments.token import Comment, Name, String, Text
 
@@ -8,6 +9,7 @@ class StataLexer(RegexLexer):
     I only need accurate handling of comment, string, and line-continuation
     environments
     """
+    flags = re.IGNORECASE | re.DOTALL
     tokens = {
         'root': [
             # Later, add include('#delimit;') here
