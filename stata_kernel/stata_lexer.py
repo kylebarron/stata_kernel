@@ -10,13 +10,13 @@ class StataLexer(RegexLexer):
     """
     tokens = {
         'root': [
+            # Later, add include('#delimit;') here
             include('comments'),
             include('vars-strings'),
             (r'.', Text),
         ],
         # Global and local macros; regular and special strings
         'vars-strings': [
-            (r'\$[\w{]', Name.Variable.Global, 'var_validglobal'),
             (r'`\w{0,31}\'', Name.Variable),
             (r'"', String, 'string_dquote'),
             (r'`"', String, 'string_mquote'),
@@ -25,24 +25,42 @@ class StataLexer(RegexLexer):
         'string_dquote': [
             (r'"', String, '#pop'),
             (r'\\\\|\\"|\\\n', String.Escape),
-            (r'\$', Name.Variable.Global, 'var_validglobal'),
-            (r'`', Name.Variable, 'var_validlocal'),
             (r'[^$`"\\]+', String),
             (r'[$"\\]', String),
         ],
         'string_mquote': [
             (r'"\'', String, '#pop'),
             (r'\\\\|\\"|\\\n', String.Escape),
-            (r'\$', Name.Variable.Global, 'var_validglobal'),
-            (r'`', Name.Variable, 'var_validlocal'),
             (r'[^$`"\\]+', String),
             (r'[$"\\]', String),
         ],
-        # * only OK at line start, // OK anywhere
         'comments': [
-            (r'^\s*\*.*$', Comment),
-            (r'//.*', Comment.Single),
-            (r'/\*.*?\*/', Comment.Multiline),
-            (r'/[*](.|\n)*?[*]/', Comment.Multiline),
+            (r'(^//|(?<=\s)//)(?!/)', Comment.Single, 'comments-double-slash'),
+            (r'^\s*\*', Comment.Single, 'comments-star'),
+            (r'/\*', Comment.Multiline, 'comments-block'),
+            (r'(^///|(?<=\s)///).', Comment.Special, 'comments-triple-slash')
+        ],
+        'comments-block': [
+            (r'/\*', Comment.Multiline, '#push'),
+            # this ends and restarts a comment block. but need to catch this so
+            # that it doesn\'t start _another_ level of comment blocks
+            (r'\*/\*', Comment.Multiline),
+            (r'(\*/\s+\*(?!/)[^\n]*)|(\*/)', Comment.Multiline, '#pop'),
+            # Match anything else as a character inside the comment
+            (r'.', Comment.Multiline),
+        ],
+        'comments-star': [
+            (r'///.*?\n', Comment.Single, '#pop'),
+            include('comments'),
+            (r'.(?=\n)', Comment.Single, '#pop'),
+            (r'.', Comment.Single),
+        ],
+        'comments-triple-slash': [
+            (r'.(?=\n)', Comment.Special, '#pop'),
+            (r'.', Comment.Special),
+        ],
+        'comments-double-slash': [
+            (r'.(?=\n)', Comment.Single, '#pop'),
+            (r'.', Comment.Single),
         ]
     }
