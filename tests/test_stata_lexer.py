@@ -111,13 +111,15 @@ class TestCommentsFromStataList(object):
         disp "Not printed. Line continuation applies"
         ```
         """
-        code = '* ///\na'
+        code = '* ///\na\na'
         tokens = get_tokens(code)
         expected = [
             (Token.Comment.Single, '*'),
             (Token.Comment.Single, ' '),
             (Token.Comment.Single, '///\n'),
             (Token.Comment.Special, 'a'),
+            (Token.Comment.Special, '\n'),
+            (Token.Text, 'a'),
             (Token.Text, '\n')]
         assert tokens == expected
 

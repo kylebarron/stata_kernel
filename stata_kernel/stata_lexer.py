@@ -50,7 +50,7 @@ class StataLexer(RegexLexer):
             (r'.', Comment.Single),
         ],
         'comments-triple-slash': [
-            (r'.(?=\n)', Comment.Special, '#pop'),
+            (r'\n', Comment.Special, '#pop'),
             # A // breaks out of a comment for the rest of the line
             (r'//.*?(?=\n)', Comment.Single, '#pop'),
             (r'.', Comment.Special),
