@@ -35,7 +35,7 @@ ansi_regex = r'\x1b(' \
              r'(\d;\dR))'
 ansi_escape = re.compile(ansi_regex, flags=re.IGNORECASE)
 
-
+# self = StataKernel()
 class StataKernel(Kernel):
     implementation = 'stata_kernel'
     implementation_version = '0.1'
@@ -116,7 +116,7 @@ class StataKernel(Kernel):
 
         """
 
-        cm = CodeManager(code)
+        cm = CodeManager(re.sub(r'\r\n', r'\n', code))
         code = cm.remove_comments()
         graph_keywords = [
             r'gr(a|ap|aph)?', r'tw(o|ow|owa|oway)?',
@@ -251,16 +251,29 @@ class StataKernel(Kernel):
             results from Stata shell
         """
 
-        keywords = [
-            r'pr(o|og|ogr|ogra|ogram)?', r'while',
-            r'forv(a|al|alu|alue|alues)?', r'foreach', r'inp(u|ut)?',
-            r'e(x|xi|xit)?']
-        keywords = r'\b(' + '|'.join(keywords) + r')\b'
-        has_blocks = re.search(keywords, code)
+        cm = CodeManager(code)
 
-        # Split user code into lines
-        code = re.sub(r'\r\n', r'\n', code)
-        lines = code.split('\n')
+        chunks = []
+        token_names = []
+        last_token = ''
+        counter = -1
+        for i in range(len(cm.tokens)):
+            if cm.tokens[i][0] != last_token:
+                chunks.append([cm.tokens[i][1]])
+                token_names.append(cm.tokens[i][0])
+                last_token = cm.tokens[i][0]
+                counter += 1
+                continue
+
+            chunks[counter].append(cm.tokens[i][1])
+
+        chunks = [''.join(x).strip() for x in chunks]
+        lines = []
+        for chunk, token in zip(chunks, token_names):
+            if str(token) != 'Token.MatchingBracket.Other':
+                lines.extend(chunk.split('\n'))
+            else:
+                lines.append(chunk)
 
         # Remove leading and trailing whitespace from lines. This shouldn't
         # matter because Stata doesn't give a semantic meaning to whitespace.
@@ -273,15 +286,17 @@ class StataKernel(Kernel):
         results = []
         for line in lines:
             self.child.sendline(line)
-            if has_blocks:
-                try:
-                    self.child.expect('\r\n  \d\. ', timeout=0.1)
-                    continue
-                except pexpect.TIMEOUT:
-                    pass
-
-            self.child.expect('(?<=(\r\n)|(\x1b=))\r\n\. ', timeout=3)
+            self.child.expect('(?<=(\r\n)|(\x1b=))\r\n\. ', timeout=20)
             res = self.child.before
+
+            # if '\n' in line:
+            #     rs = res.split('\r\n')
+            #     ls = line.split('\n')
+            #     rs = [x for x in rs if not any(x in l for l in ls)]
+            #     res = '\r\n'.join(rs)
+            #     # ls = line.split('\n')
+            #     # for l in ls:
+            #     #     res = re.sub(r'^\s*\d*\.\s*', '', res)
 
             # Remove input command, up to first \r\n
             res = re.sub(r'^.+\r\n', '', res)
