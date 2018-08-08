@@ -1,5 +1,5 @@
 from pygments import lex
-from pygments.token import Comment, String, Text
+from pygments.token import Token
 from stata_kernel.stata_lexer import StataLexer
 
 def get_tokens(code):
@@ -17,16 +17,16 @@ def test_multiline_comment_after_star():
     code = '* /* a\na\n*/'
     tokens = get_tokens(code)
     expected = [
-        (Comment.Single, '*'),
-        (Comment.Single, ' '),
-        (Comment.Multiline, '/*'),
-        (Comment.Multiline, ' '),
-        (Comment.Multiline, 'a'),
-        (Comment.Multiline, '\n'),
-        (Comment.Multiline, 'a'),
-        (Comment.Multiline, '\n'),
-        (Comment.Multiline, '*/'),
-        (Comment.Single, '\n')]
+        (Token.Comment.Single, '*'),
+        (Token.Comment.Single, ' '),
+        (Token.Comment.Multiline, '/*'),
+        (Token.Comment.Multiline, ' '),
+        (Token.Comment.Multiline, 'a'),
+        (Token.Comment.Multiline, '\n'),
+        (Token.Comment.Multiline, 'a'),
+        (Token.Comment.Multiline, '\n'),
+        (Token.Comment.Multiline, '*/'),
+        (Token.Comment.Single, '\n')]
     assert tokens == expected
 
 def test_ignored_multiline_after_inline_comment_after_star_comment():
@@ -39,17 +39,17 @@ def test_ignored_multiline_after_inline_comment_after_star_comment():
     code = '* // /* a\na'
     tokens = get_tokens(code)
     expected = [
-        (Comment.Single, '*'),
-        (Comment.Single, ' '),
-        (Comment.Single, '//'),
-        (Comment.Single, ' '),
-        (Comment.Single, '/'),
-        (Comment.Single, '*'),
-        (Comment.Single, ' '),
-        (Comment.Single, 'a'),
-        (Text, '\n'),
-        (Text, 'a'),
-        (Text, '\n')]
+        (Token.Comment.Single, '*'),
+        (Token.Comment.Single, ' '),
+        (Token.Comment.Single, '//'),
+        (Token.Comment.Single, ' '),
+        (Token.Comment.Single, '/'),
+        (Token.Comment.Single, '*'),
+        (Token.Comment.Single, ' '),
+        (Token.Comment.Single, 'a'),
+        (Token.Text, '\n'),
+        (Token.Text, 'a'),
+        (Token.Text, '\n')]
     assert tokens == expected
 
 def test_ignored_multiline_after_inline_comment():
@@ -62,15 +62,15 @@ def test_ignored_multiline_after_inline_comment():
     code = '// /* a\na'
     tokens = get_tokens(code)
     expected = [
-        (Comment.Single, '//'),
-        (Comment.Single, ' '),
-        (Comment.Single, '/'),
-        (Comment.Single, '*'),
-        (Comment.Single, ' '),
-        (Comment.Single, 'a'),
-        (Text, '\n'),
-        (Text, 'a'),
-        (Text, '\n')]
+        (Token.Comment.Single, '//'),
+        (Token.Comment.Single, ' '),
+        (Token.Comment.Single, '/'),
+        (Token.Comment.Single, '*'),
+        (Token.Comment.Single, ' '),
+        (Token.Comment.Single, 'a'),
+        (Token.Text, '\n'),
+        (Token.Text, 'a'),
+        (Token.Text, '\n')]
     assert tokens == expected
 
 def test_inline_comment_needs_preceding_whitespace():
@@ -84,18 +84,18 @@ def test_inline_comment_needs_preceding_whitespace():
     code = '*// /* a\na\n*/'
     tokens = get_tokens(code)
     expected = [
-        (Comment.Single, '*'),
-        (Comment.Single, '/'),
-        (Comment.Single, '/'),
-        (Comment.Single, ' '),
-        (Comment.Multiline, '/*'),
-        (Comment.Multiline, ' '),
-        (Comment.Multiline, 'a'),
-        (Comment.Multiline, '\n'),
-        (Comment.Multiline, 'a'),
-        (Comment.Multiline, '\n'),
-        (Comment.Multiline, '*/'),
-        (Comment.Single, '\n')]
+        (Token.Comment.Single, '*'),
+        (Token.Comment.Single, '/'),
+        (Token.Comment.Single, '/'),
+        (Token.Comment.Single, ' '),
+        (Token.Comment.Multiline, '/*'),
+        (Token.Comment.Multiline, ' '),
+        (Token.Comment.Multiline, 'a'),
+        (Token.Comment.Multiline, '\n'),
+        (Token.Comment.Multiline, 'a'),
+        (Token.Comment.Multiline, '\n'),
+        (Token.Comment.Multiline, '*/'),
+        (Token.Comment.Single, '\n')]
     assert tokens == expected
 
 def test_line_continuation_comment_after_star_comment():
@@ -108,11 +108,11 @@ def test_line_continuation_comment_after_star_comment():
     code = '* ///\na'
     tokens = get_tokens(code)
     expected = [
-        (Comment.Single, '*'),
-        (Comment.Single, ' '),
-        (Comment.Single, '///\n'),
-        (Comment.Special, 'a'),
-        (Text, '\n')]
+        (Token.Comment.Single, '*'),
+        (Token.Comment.Single, ' '),
+        (Token.Comment.Single, '///\n'),
+        (Token.Comment.Special, 'a'),
+        (Token.Text, '\n')]
     assert tokens == expected
 
 def test_line_continuation_ignored_after_inline_comment():
@@ -125,16 +125,16 @@ def test_line_continuation_ignored_after_inline_comment():
     code = '// /// a\na'
     tokens = get_tokens(code)
     expected = [
-        (Comment.Single, '//'),
-        (Comment.Single, ' '),
-        (Comment.Single, '/'),
-        (Comment.Single, '/'),
-        (Comment.Single, '/'),
-        (Comment.Single, ' '),
-        (Comment.Single, 'a'),
-        (Text, '\n'),
-        (Text, 'a'),
-        (Text, '\n')]
+        (Token.Comment.Single, '//'),
+        (Token.Comment.Single, ' '),
+        (Token.Comment.Single, '/'),
+        (Token.Comment.Single, '/'),
+        (Token.Comment.Single, '/'),
+        (Token.Comment.Single, ' '),
+        (Token.Comment.Single, 'a'),
+        (Token.Text, '\n'),
+        (Token.Text, 'a'),
+        (Token.Text, '\n')]
     assert tokens == expected
 
 def test_nesting_of_multiline_comments():
@@ -153,26 +153,26 @@ def test_nesting_of_multiline_comments():
     code = '/*\n/* a */\na\n*/* a\na\n*/\na'
     tokens = get_tokens(code)
     expected = [
-        (Comment.Multiline, '/*'),
-        (Comment.Multiline, '\n'),
-        (Comment.Multiline, '/*'),
-        (Comment.Multiline, ' '),
-        (Comment.Multiline, 'a'),
-        (Comment.Multiline, ' '),
-        (Comment.Multiline, '*/'),
-        (Comment.Multiline, '\n'),
-        (Comment.Multiline, 'a'),
-        (Comment.Multiline, '\n'),
-        (Comment.Multiline, '*/*'),
-        (Comment.Multiline, ' '),
-        (Comment.Multiline, 'a'),
-        (Comment.Multiline, '\n'),
-        (Comment.Multiline, 'a'),
-        (Comment.Multiline, '\n'),
-        (Comment.Multiline, '*/'),
-        (Text, '\n'),
-        (Text, 'a'),
-        (Text, '\n')]
+        (Token.Comment.Multiline, '/*'),
+        (Token.Comment.Multiline, '\n'),
+        (Token.Comment.Multiline, '/*'),
+        (Token.Comment.Multiline, ' '),
+        (Token.Comment.Multiline, 'a'),
+        (Token.Comment.Multiline, ' '),
+        (Token.Comment.Multiline, '*/'),
+        (Token.Comment.Multiline, '\n'),
+        (Token.Comment.Multiline, 'a'),
+        (Token.Comment.Multiline, '\n'),
+        (Token.Comment.Multiline, '*/*'),
+        (Token.Comment.Multiline, ' '),
+        (Token.Comment.Multiline, 'a'),
+        (Token.Comment.Multiline, '\n'),
+        (Token.Comment.Multiline, 'a'),
+        (Token.Comment.Multiline, '\n'),
+        (Token.Comment.Multiline, '*/'),
+        (Token.Text, '\n'),
+        (Token.Text, 'a'),
+        (Token.Text, '\n')]
     assert tokens == expected
 
 def test_inline_comment_breaks_line_continuation_comment():
@@ -186,13 +186,69 @@ def test_inline_comment_breaks_line_continuation_comment():
     code = '* a ///\n// a ///\na'
     tokens = get_tokens(code)
     expected = [
-        (Comment.Single, '*'),
-        (Comment.Single, ' '),
-        (Comment.Single, 'a'),
-        (Comment.Single, ' '),
-        (Comment.Single, '///\n'),
-        (Comment.Single, '// a ///'),
-        (Text, '\n'),
-        (Text, 'a'),
-        (Text, '\n')]
+        (Token.Comment.Single, '*'),
+        (Token.Comment.Single, ' '),
+        (Token.Comment.Single, 'a'),
+        (Token.Comment.Single, ' '),
+        (Token.Comment.Single, '///\n'),
+        (Token.Comment.Single, '// a ///'),
+        (Token.Text, '\n'),
+        (Token.Text, 'a'),
+        (Token.Text, '\n')]
+    assert tokens == expected
+
+def test_inline_comment_breaks_line_continuation_comment2():
+    """
+    ```stata
+    disp "Line continuation" ///
+    // Breaks line continuation ///
+    di "Printed 2"
+    ```
+    """
+    code = 'a ///\n// a ///\na'
+    tokens = get_tokens(code)
+    expected = [
+        (Token.Text, 'a'),
+        (Token.Text, ' '),
+        (Token.Comment.Special, '///\n'),
+        (Token.Comment.Single, '// a ///'),
+        (Token.Text, '\n'),
+        (Token.Text, 'a'),
+        (Token.Text, '\n')]
+    assert tokens == expected
+
+def test_multiline_comment_across_empty_whitespace_lines():
+    """
+    ```stata
+    di /*
+
+    */ "hi"
+    ```
+    """
+    code = 'a /*\n\n*/ a'
+    tokens = get_tokens(code)
+    expected = [
+        (Token.Text, 'a'),
+        (Token.Text, ' '),
+        (Token.Comment.Multiline, '/*'),
+        (Token.Comment.Multiline, '\n'),
+        (Token.Comment.Multiline, '\n'),
+        (Token.Comment.Multiline, '*/'),
+        (Token.Text, ' '),
+        (Token.Text, 'a'),
+        (Token.Text, '\n')]
+    assert tokens == expected
+
+def test_multiline_comment_inside_string():
+    code = 'di "/*"'
+    tokens = get_tokens(code)
+    expected = [
+        (Token.Text, 'd'),
+        (Token.Text, 'i'),
+        (Token.Text, ' '),
+        (Token.Literal.String.Double, '"'),
+        (Token.Literal.String.Double, '/'),
+        (Token.Literal.String.Double, '*'),
+        (Token.Literal.String.Double, '"'),
+        (Token.Text, '\n')]
     assert tokens == expected
