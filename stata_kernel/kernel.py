@@ -8,6 +8,7 @@ from .completions import CompletionsManager
 from .code_manager import CodeManager
 from .stata_session import StataSession
 
+
 class StataKernel(Kernel):
     implementation = 'stata_kernel'
     implementation_version = '0.1'
@@ -33,8 +34,9 @@ class StataKernel(Kernel):
         self.banner = self.stata.banner
 
         # Change to this directory and set more off
-        self.stata.do('cd `"{}"\''.format(os.getcwd()))
-        self.stata.do('set more off')
+        text = [('Token.Text', 'cd `"{}"\''.format(os.getcwd())),
+                ('Token.Text', 'set more off')]
+        self.stata.do(text)
 
     def do_execute(
             self,
@@ -50,16 +52,16 @@ class StataKernel(Kernel):
         https://jupyter-client.readthedocs.io/en/stable/messaging.html#execution-results
 
         """
+        if not self.is_complete(code):
+            return {'status': 'error', 'execution_count': self.execution_count}
 
         cm = CodeManager(code)
-        code = cm.remove_comments()
-        obj = self.do(code)
-        res = obj.get('res').rstrip()
+        rc, res = self.stata.do(cm.get_chunks())
         stream_content = {'text': res}
 
         # The base class increments the execution count
         return_obj = {'execution_count': self.execution_count}
-        if obj.get('err'):
+        if rc:
             return_obj['status'] = 'error'
             stream_content['name'] = 'stderr'
         else:
@@ -126,18 +128,21 @@ class StataKernel(Kernel):
         when closed.
 
         """
-        code = re.sub(r'\r\n', r'\n', code)
-        cm = CodeManager(code)
-        if str(cm.tokens[-1][0]) == 'Token.MatchingBracket.Other':
-            return {'status': 'incomplete', 'indent': '    '}
+        if self.is_complete(code):
+            return {'status': 'complete'}
 
-        return {'status': 'complete'}
+        return {'status': 'incomplete', 'indent': '    '}
 
     def do_complete(self, code):
         env = self.stata.env
         suggestions = CompletionsManager(env)
         return {}
 
+    def is_complete(self, code):
+        cm = CodeManager(code)
+        if str(cm.tokens[-1][0]) == 'Token.MatchingBracket.Other':
+            return False
+        return True
 
     def get_log(self, code, log_path, is_async):
         """Get results from log file

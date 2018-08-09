@@ -94,7 +94,7 @@ class StataSession(object):
         # Set banner to Stata's shell header
         self.banner = ansi_escape.sub('', '\n'.join(banner))
 
-    def do(self, chunks):
+    def do(self, syn_chunks):
         """Run code in Stata
 
         This is a wrapper for the platform-dependent functions.
@@ -126,39 +126,43 @@ class StataSession(object):
 
         if self.execution_mode == 'console':
             log = []
-            for line in chunks:
-                obj = self.do_console(line)
-                log.append(obj['res'])
-                if obj['rc']:
-                    # stop running lines, return current results
+            rc = 0
+            err_regex = re.compile(r'\r\nr\((\d+)\);\r\n').search
+            for line in syn_chunks:
+                res = self.do_console(line[1])
+                log.append(res)
+                err = err_regex(res)
+                if err:
+                    rc = int(err.group(1))
                     break
-                if 'get_graph':
-                    img = self.get_graph()
+                # if 'get_graph':
+                #     img = self.get_graph()
 
-            return log
-
-        # Use token names to decide which chunks can be sent through DoCommand
-        # and which need to be sent through DoCommandAsync.
-        log_path = self.cache_dir + '/.stata_kernel_log.log'
-        rc = self.automate('DoCommand', 'log using `"{}"\', replace text'.format(log_path))
-        if rc:
-            # Cache location is non writable
-            return
-
-        for line in chunks:
-            if line['block']:
-                rc = self.do_aut_async(line)
-            else:
-                rc = self.do_aut_sync(line)
+            return rc, self.clean_log_console(log, syn_chunks)
+        else:
+            # Blocks will be sent through DoCommandAsync while everything else
+            # will be sent through docommand
+            log_path = self.cache_dir + '/.stata_kernel_log.log'
+            rc = self.automate(
+                'DoCommand', 'log using `"{}"\', replace text'.format(log_path))
             if rc:
-                # stop running lines, return current results
-                break
-            if 'get_graph':
-                img = self.get_graph()
-        rc = self.automate('DoCommand', 'cap log close')
+                # Cache location is non writable
+                return rc, ''
 
-        return log
+            for line in syn_chunks:
+                if str(line[0]) == 'Token.MatchingBracket.Other':
+                    rc = self.do_aut_async(line[1])
+                else:
+                    rc = self.do_aut_sync(line[1])
+                if rc:
+                    break
+                # if 'get_graph':
+                #     img = self.get_graph()
+            self.automate('DoCommand', 'cap log close')
+            with open(log_path, 'r') as f:
+                log = f.readlines()
 
+            return rc, self.clean_log_aut(log, syn_chunks)
 
     def do_console(self, line):
         """Run Stata command in console
@@ -183,30 +187,15 @@ class StataSession(object):
         Otherwise running a task longer than 30s would timeout.
 
         Args:
-            chunks (List[Tuple[Token, str]]):
-                list of strings that are ready to send to Stata.
-                NOTE I might end up needing more metadata about the chunks, so
-                this is subject to change format.
-
+            line (str): literal string ready to send to Stata
         Returns:
-            dict {
-                'err': error code as a number,
-                'res': unmodified output from line}
+            (str): unmodified output from line
         """
 
         self.child.sendline(line)
-        self.child.expect('(?<=(\r\n)|(\x1b=))\r\n\. ', timeout=20)
-        res = self.child.before
-        res = ansi_escape.sub('', res)
-
-        # Check error
-        err = re.search(r'\r\nr\((\d+)\);', res)
-        if err:
-            rc = int(err.group(1))
-        else:
-            rc = 0
-
-        return {'err': rc, 'res': res}
+        regex = r'\r\n(\x1b\[\?1h\x1b=)?\r\n\. '
+        self.child.expect(regex, timeout=20)
+        return ansi_escape.sub('', self.child.before)
 
     def do_aut_sync(self, line):
         """Run code in Stata Automation using DoCommand
@@ -225,6 +214,10 @@ class StataSession(object):
         sending one line of code at a time to the console anyways, it's easy
         enough to just have all do functions run one syntactic line at a time.
 
+        Args:
+            line (str): literal string ready to send to Stata
+        Returns:
+            (int): return code from Stata
         """
 
         return self.automate('DoCommand', line)
@@ -290,8 +283,8 @@ class StataSession(object):
                     cmd += ' {} {}'.format(key, val)
 
         res = subprocess.run(['osascript', '-e', cmd],
-                  stdout=subprocess.PIPE,
-                  stderr=subprocess.PIPE)
+                             stdout=subprocess.PIPE,
+                             stderr=subprocess.PIPE)
         if res.stderr:
             raise OSError(res.stderr.decode('utf-8') + '\nInput: ' + cmd)
         return self.resolve_return_type(cmd_name, res.stdout.decode('utf-8'))
@@ -314,6 +307,46 @@ class StataSession(object):
 
         return stdout
 
+    def clean_log_console(self, log, syn_chunks):
+        """Clean output from console
+
+        Args:
+            log (List[str]):
+                Text returned from each syntactic chunk of Stata code.
+            syn_chunks (List[Tuple[Token, str]]):
+                Input chunks. `len(syn_chunks) >= len(log)` because there
+                could have been an error in the middle.
+
+        Returns:
+            str: Text to return to user.
+        """
+
+        # Don't keep chunks that weren't executed
+        syn_chunks = syn_chunks[:len(log)]
+
+        # Take out line continuations for both input and results
+        log = [re.sub(r'\r\n> ', '', x) for x in log]
+
+        log_all = []
+        for (Token, in_line), log_line in zip(syn_chunks, log):
+            if str(Token) != 'Token.MatchingBracket.Other':
+                # Since I'm sending one line at a time, and since it's not a
+                # block, the first line should equal the text sent
+                # The assert is just a sanity check for now.
+                log_line = log_line.split('\r\n')
+                assert log_line[0] == in_line
+                log_all.extend(log_line[1:])
+                log_all.append('')
+            else:
+                # Split input and output
+                in_lines = in_line.split('\n')
+                log_lines = log_line.split('\r\n')
+                log_all.extend(
+                    [x for x in log_lines if not any(y in x for y in in_lines)])
+                log_all.append('')
+
+        return '\n'.join(log_all)
+
     def export_graph(self):
         """
         NOTE: unclear whether I actually need to save all the graphs individually, or if I can just overwrite one. Since I'm just writing them to load them into Python, and the next graph shouldn't start writing until I'm done reading the previous one into Python, I can probably just overwrite the same file.
@@ -324,7 +357,8 @@ class StataSession(object):
         self.do(cmd)
 
         # Read image
-        with open('{}/graph{}.{}'.format(self.cache_dir, self.graph_counter, self.graph_format)) as f:
+        with open('{}/graph{}.{}'.format(self.cache_dir, self.graph_counter,
+                                         self.graph_format)) as f:
             img = f.read()
 
         self.graph_counter += 1
