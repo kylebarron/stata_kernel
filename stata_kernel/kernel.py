@@ -27,7 +27,9 @@ class StataKernel(Kernel):
         config.read(os.path.expanduser('~/.stata_kernel.conf'))
         self.stata = StataSession(
             execution_mode=config['stata_kernel']['execution_mode'],
-            stata_path=config['stata_kernel']['stata_path'])
+            stata_path=config['stata_kernel']['stata_path'],
+            cache_dir=os.path.expanduser(
+                config['stata_kernel']['cache_directory']))
         self.banner = self.stata.banner
 
         # Change to this directory and set more off

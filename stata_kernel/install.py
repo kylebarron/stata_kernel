@@ -45,6 +45,9 @@ def install_conf():
     # which monitors the Stata console. In the future another mode, 'automation',
     # may be added to connect with the Stata GUI on Windows and macOS computers
     execution_mode = {}
+
+    # Directory to hold temporary images and log files
+    cache_directory = ~/.stata_kernel_cache
     """.format(stata_path, execution_mode)
 
     with open(os.path.expanduser('~/.stata_kernel.conf'), 'w') as f:
