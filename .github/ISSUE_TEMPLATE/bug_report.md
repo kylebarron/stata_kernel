@@ -4,7 +4,9 @@ about: Create a report to help us improve
 
 ---
 
-#### Code Sample, a copy-pastable example if possible
+#### Code Sample
+
+<!-- Should be a copy-pastable example if possible -->
 
 ```stata
 // Your code here
