@@ -372,7 +372,7 @@ class TestStrings(object):
             (Token.Text, '\n')]
         assert tokens == expected
 
-class TestCapNoiQuiChunks(object):
+class TestBlocks(object):
     def test_cap_chunk(self):
         code = 'cap {\n a\n}'
         tokens = get_tokens(code)
@@ -434,4 +434,10 @@ class TestCapNoiQuiChunks(object):
             (Token.MatchingBracket.Other, '\n'),
             (Token.MatchingBracket.Other, '}'),
             (Token.Text, '\n')]
+        assert tokens == expected
+
+    def test_if_block_not_matching_preceding_newline(self):
+        code = 'di 1\nif {\na\n}'
+        tokens = get_tokens(code)
+        expected = []
         assert tokens == expected
