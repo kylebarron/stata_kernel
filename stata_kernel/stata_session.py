@@ -79,7 +79,7 @@ class StataSession(object):
         self.child = pexpect.spawn(stata_path, encoding='utf-8')
         banner = []
         try:
-            self.child.expect('\r\n\.', timeout=0.2)
+            self.child.expect('\r\n\. ', timeout=0.2)
             banner.append(self.child.before)
         except pexpect.TIMEOUT:
             try:
@@ -88,7 +88,7 @@ class StataSession(object):
                     banner.append(self.child.before)
                     self.child.send('q')
             except pexpect.TIMEOUT:
-                self.child.expect('\r\n\.')
+                self.child.expect('\r\n\. ')
                 banner.append(self.child.before)
 
         # Set banner to Stata's shell header
