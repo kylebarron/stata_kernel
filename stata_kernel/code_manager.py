@@ -3,10 +3,11 @@ from pygments import lex
 
 from .stata_lexer import StataLexer
 
-# self = CodeManager('di 1\n//\nif {\na\n}\ndi 3')
+
 class CodeManager(object):
     """Class to deal with text before sending to Stata
     """
+
     def __init__(self, code):
         self.input = code
         self.tokens = self.tokenize_code(code)
@@ -48,41 +49,43 @@ class CodeManager(object):
     def get_chunks(self):
         """Get valid, executable chunks
 
-        Args:
-            tokens
+        First split non-comment tokens into semantic chunks. So a (possibly
+        multiline) chunk of regular text, then a chunk for a block, and so on.
+
+        Then split each semantic chunk into syntactic chunks. So each of these
+        is a string that can be sent to Stata and will return a dot prompt.
+
+        I strip leading and trailing whitespace from each syntactic chunk. This
+        shouldn't matter because Stata doesn't give a semantic meaning to extra
+        whitespace. I also make sure there are no empty syntactic chunks (i.e.
+        no empty lines). If I send an empty line to Stata, no blank line is
+        returned between dot prompts, so the pexpect regex fails.
         """
 
         tokens = self.tokens_nocomments
 
-        chunks = []
+        sem_chunks = []
         token_names = []
         last_token = ''
         counter = -1
         for i in range(len(tokens)):
             if tokens[i][0] != last_token:
-                chunks.append([tokens[i][1]])
+                sem_chunks.append([tokens[i][1]])
                 token_names.append(tokens[i][0])
                 last_token = tokens[i][0]
                 counter += 1
                 continue
 
-            chunks[counter].append(tokens[i][1])
+            sem_chunks[counter].append(tokens[i][1])
 
-        chunks = [''.join(x).strip() for x in chunks]
-        lines = []
-        for chunk, token in zip(chunks, token_names):
+        sem_chunks = [''.join(x).strip() for x in sem_chunks]
+        syn_chunks = []
+        for chunk, token in zip(sem_chunks, token_names):
             if str(token) != 'Token.MatchingBracket.Other':
-                lines.extend(chunk.split('\n'))
+                syn_chunks.extend([[token, x] for x in chunk.split('\n')])
             else:
-                lines.append(chunk)
+                syn_chunks.append([token, chunk])
 
-        # Remove leading and trailing whitespace from lines. This shouldn't
-        # matter because Stata doesn't give a semantic meaning to whitespace.
-        lines = [x.strip() for x in lines]
-
-        # Make sure no empty lines. If empty line, there's no blank line in the
-        # stata window between the dot prompts, so the current expect regex
-        # fails.
-        lines = [x for x in lines if x != '']
-
-        return lines
+        return [[token, text.strip()]
+                for token, text in syn_chunks
+                if text.strip() != '']
