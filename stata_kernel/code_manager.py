@@ -60,6 +60,9 @@ class CodeManager(object):
         whitespace. I also make sure there are no empty syntactic chunks (i.e.
         no empty lines). If I send an empty line to Stata, no blank line is
         returned between dot prompts, so the pexpect regex fails.
+
+        Returns:
+            List[Tuple[Token, str]]
         """
 
         tokens = self.tokens_nocomments
@@ -86,6 +89,6 @@ class CodeManager(object):
             else:
                 syn_chunks.append([token, chunk])
 
-        return [[token, text.strip()]
+        return [(token, text.strip())
                 for token, text in syn_chunks
                 if text.strip() != '']
