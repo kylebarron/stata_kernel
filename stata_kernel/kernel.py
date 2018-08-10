@@ -1,15 +1,18 @@
 import os
 import re
 import platform
+import tempfile
 import subprocess
 
 from time import sleep
 from subprocess import run
+from xml.dom import minidom
 from dateutil.parser import parse
 from configparser import ConfigParser
 from ipykernel.kernelbase import Kernel
 
 from .code_manager import CodeManager
+from .poor_mans_magic import poor_mans_magic, stata_magics
 
 if platform.system() == 'Windows':
     import win32com.client
@@ -35,6 +38,7 @@ ansi_regex = r'\x1b(' \
              r'(\d;\dR))'
 ansi_escape = re.compile(ansi_regex, flags=re.IGNORECASE)
 
+
 # self = StataKernel()
 class StataKernel(Kernel):
     implementation = 'stata_kernel'
@@ -53,8 +57,14 @@ class StataKernel(Kernel):
 
         config = ConfigParser()
         config.read(os.path.expanduser('~/.stata_kernel.conf'))
+
         self.execution_mode = config['stata_kernel']['execution_mode']
         self.stata_path = config['stata_kernel']['stata_path']
+
+        try:
+            self.graphdir = config['stata_kernel']['graphdir']
+        except:
+            self.graphdir = tempfile.mkdtemp()
 
         if self.execution_mode.lower() == 'automation':
             if platform.system() == 'Windows':
@@ -116,13 +126,82 @@ class StataKernel(Kernel):
 
         """
 
-        cm = CodeManager(re.sub(r'\r\n', r'\n', code))
+        #############
+        #  Magics!  #
+        #############
+
+        magic, code = poor_mans_magic(code)
+        quit_early  = {'execution_count': self.execution_count}
+        quit_early['status'] = 'ok'
+        quit_early['payload'] = []
+        quit_early['user_expressions'] = {}
+
+        if magic['name'] in stata_magics['global_magics']:
+            obj      = self.do("macro dir")
+            res      = obj.get('res').rstrip()
+            sglobals = magic['regex'].findall(res)
+            lens     = 0
+            pglobals = []
+            if len(sglobals) > 0:
+                for macro, cr, contents in sglobals:
+                    if magic['locals'] and not macro.startswith('_'):
+                        continue
+
+                    if not magic['locals'] and macro.startswith('_'):
+                        continue
+
+                    if macro.startswith('_'):
+                        macro = macro[1:]
+                        extra = 1
+                    else:
+                        extra = 0
+
+                    if magic['gregex'] != '':
+                        if not magic['gregex'].search(macro):
+                            continue
+
+                    macro  += ':'
+                    lmacro  = len(macro)
+                    lspaces = len(cr.strip('\r\n'))
+                    lens    = max(lens, lmacro)
+                    if len(macro) <= 15:
+                        if (lspaces + lmacro + extra) > 16:
+                            pglobals += ((macro, ' ' + contents),)
+                        else:
+                            pglobals += ((macro, contents),)
+                    else:
+                        pglobals += ((macro, contents.lstrip('\r\n')),)
+
+            fmt = "{{0:{0}}} {{1}}".format(lens)
+            for macro, contents in pglobals:
+                print(fmt.format(macro, magic['sregex'].sub((lens + 1) * ' ', contents)))
+
+            return quit_early
+
+        if magic['status'] == -1:
+            return quit_early
+
+        ##########
+        #  Code  #
+        ##########
+
+        cm   = CodeManager(re.sub(r'\r\n', r'\n', code))
         code = cm.remove_comments()
+
         graph_keywords = [
-            r'gr(a|ap|aph)?', r'tw(o|ow|owa|oway)?',
-            r'sc(a|at|att|atte|atter)?', r'line']
+            r'gr(a|ap|aph)?',
+            r'tw(o|ow|owa|oway)?',
+            r'sc(a|at|att|atte|atter)?',
+            r'hist(ogram)?',
+            r'line',
+            r'kdensity',
+            r'lowess',
+            r'lpoly',
+            r'tsline'
+        ]
         graph_keywords = r'\b(' + '|'.join(graph_keywords) + r')\b'
-        check_graphs = re.search(graph_keywords, code)
+        check_graphs   = re.search(graph_keywords, code)
+        magic_graph    = magic['name'] in stata_magics['plot_magics']
 
         obj = self.do(code)
         res = obj.get('res').rstrip()
@@ -142,20 +221,28 @@ class StataKernel(Kernel):
         if silent:
             return return_obj
 
+        # TODO: Add a Hydrogen flag? REPL does not have this limitation
         # At the moment, can only send either an image _or_ text to support
         # Hydrogen
         # Only send a response if there's text
-        if res.strip():
+        if res.strip() and not magic_graph:
             self.send_response(self.iopub_socket, 'stream', stream_content)
             return return_obj
+        elif res.strip():
+            self.send_response(self.iopub_socket, 'stream', stream_content)
 
-        if check_graphs:
+        if check_graphs or magic_graph:
+            if magic_graph:
+                meta = magic['kwargs']
+            else:
+                meta = {'width': 600, 'height': 400}
+
             graphs_to_get = self.check_graphs()
             graphs_to_get = list(set(graphs_to_get))
             all_graphs = []
             for graph in graphs_to_get:
-                g = self.get_graph(graph)
-                all_graphs.append(g)
+                g = self.get_graph(graph, **meta)
+                all_graphs.extend(g)
 
             for graph in all_graphs:
                 content = {
@@ -166,9 +253,7 @@ class StataKernel(Kernel):
                         'image/svg+xml': graph},
 
                     # We can specify the image size in the metadata field.
-                    'metadata': {
-                        'width': 600,
-                        'height': 400}}
+                    'metadata': meta}
 
                 # We send the display_data message with the contents.
                 self.send_response(self.iopub_socket, 'display_data', content)
@@ -535,19 +620,44 @@ class StataKernel(Kernel):
 
         return parse(stamp)
 
-    def get_graph(self, name):
-        cwd = os.getcwd()
+    def get_graph(self, name, width, height):
+        self._makedirs_try(self.graphdir)
+
         # Export graph to file
-        self.do('cap mkdir `"{}/.stata_kernel_images"\''.format(cwd))
-        cmd = 'graph export `"{}/.stata_kernel_images/{}.svg"\' , '.format(
-            cwd, name)
-        cmd += 'name({}) as(svg) replace'.format(name)
-        self.do(cmd)
+        gr  = os.path.join(self.graphdir, name + '.svg')
+        cmd = 'graph export `"{0}"\' , name({1}) as(svg) replace'
+        self.do(cmd.format(gr, name))
 
         # Read image
-        with open(cwd + '/.stata_kernel_images/' + name + '.svg') as f:
-            img = f.read()
+        if os.path.isfile(gr):
+            with open(gr) as f:
+                img = f.read()
 
-        self.graphs[name] = self.get_graph_timestamp(name)
+            try:
+                img = self._fix_svg_size(img, width, height)
+            except:
+                pass
 
-        return img
+            self.graphs[name] = self.get_graph_timestamp(name)
+            return [img]
+        else:
+            return []
+
+    def _makedirs_try(self, path_try):
+        try:
+            os.makedirs(path_try)
+        except OSError:
+            if not os.path.isdir(path_try):
+                raise
+
+    def _fix_svg_size(self, img, width, height):
+        # Minidom does not support parseUnicode, so it must be decoded
+        # to accept unicode characters
+        parsed = minidom.parseString(img.encode('utf-8'))
+        (svg,) = parsed.getElementsByTagName('svg')
+
+        # Handle overrides in case they were not encoded.
+        svg.setAttribute('width', '%dpx' % width)
+        svg.setAttribute('height', '%dpx' % height)
+
+        return svg.toxml()
