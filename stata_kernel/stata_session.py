@@ -328,21 +328,22 @@ class StataSession(object):
         log = [re.sub(r'\r\n> ', '', x) for x in log]
 
         log_all = []
-        for (Token, in_line), log_line in zip(syn_chunks, log):
+        for (Token, code_line), log_line in zip(syn_chunks, log):
             if str(Token) != 'Token.MatchingBracket.Other':
                 # Since I'm sending one line at a time, and since it's not a
                 # block, the first line should equal the text sent
                 # The assert is just a sanity check for now.
                 log_line = log_line.split('\r\n')
-                assert log_line[0] == in_line
+                assert log_line[0] == code_line
                 log_all.extend(log_line[1:])
                 log_all.append('')
             else:
                 # Split input and output
-                in_lines = in_line.split('\n')
+                code_lines = code_line.split('\n')
                 log_lines = log_line.split('\r\n')
-                log_all.extend(
-                    [x for x in log_lines if not any(y in x for y in in_lines)])
+                log_all.extend([
+                    x for x in log_lines if not any(y in x
+                                                    for y in code_lines)])
                 log_all.append('')
 
         return '\n'.join(log_all)
