@@ -28,8 +28,11 @@ polished in a week.
 
 - [x] Supports Windows, macOS, and Linux.
 - [x] Works with Jupyter Notebook and Atom's Hydrogen package
+- [x] Allows for inline and block comments.
 - [x] Display graphs (still working out limitations)
 - [x] Work with a remote session of Stata
+- [ ] Special shorthand "magics" to aid with, for example benchmarking code.
+- [ ] Documentation website.
 - [ ] Autocompletions as you type based on the variables, macros, and return objects currently in memory.
 - [ ] Mata interactive support
 - [ ] `#delimit ;` blocks
