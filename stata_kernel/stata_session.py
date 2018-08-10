@@ -34,6 +34,8 @@ class StataSession(object):
         self.execution_mode = execution_mode
         self.banner = 'stata_kernel: A Jupyter kernel for Stata.'
         self.cache_dir = cache_dir
+        self.cache_dir.mkdir(parents=True, exist_ok=True)
+
         # Make sure cache_dir exists
         self.graph_counter = 0
         if platform.system() == 'Windows':

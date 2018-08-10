@@ -2,6 +2,7 @@ import os
 import re
 import platform
 
+from pathlib import Path
 from configparser import ConfigParser
 from ipykernel.kernelbase import Kernel
 
@@ -26,7 +27,7 @@ class StataKernel(Kernel):
         self.graphs = {}
 
         config = ConfigParser()
-        config.read(os.path.expanduser('~/.stata_kernel.conf'))
+        config.read(Path('~/.stata_kernel.conf').expanduser())
         execution_mode = config['stata_kernel'].get('execution_mode')
         if not execution_mode:
             if platform.system() == 'Windows':
@@ -34,8 +35,8 @@ class StataKernel(Kernel):
             else:
                 execution_mode = 'console'
         stata_path=config['stata_kernel'].get('stata_path', 'stata')
-        cache_dir = config['stata_kernel'].get('cache_directory', '~/.tmp')
-        cache_dir = os.path.expanduser(cache_dir)
+        cache_dir = config['stata_kernel'].get('cache_directory', '~/.stata_kernel_cache')
+        cache_dir = Path(cache_dir).expanduser()
         self.stata = StataSession(execution_mode=execution_mode,
             stata_path=stata_path,
             cache_dir=cache_dir)

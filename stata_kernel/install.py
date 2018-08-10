@@ -4,6 +4,7 @@ import os
 import sys
 import platform
 
+from pathlib import Path
 from textwrap import dedent
 from jupyter_client.kernelspec import KernelSpecManager
 from IPython.utils.tempdir import TemporaryDirectory
@@ -51,7 +52,7 @@ def install_conf():
     cache_directory = ~/.stata_kernel_cache
     """.format(stata_path, execution_mode))
 
-    with open(os.path.expanduser('~/.stata_kernel.conf'), 'w') as f:
+    with open(Path('~/.stata_kernel.conf').expanduser(), 'w') as f:
         f.write(conf_default)
 
 
