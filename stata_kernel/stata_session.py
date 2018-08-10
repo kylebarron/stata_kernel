@@ -377,8 +377,15 @@ class StataSession(object):
         log = log[5:]
         log = log[:-1]
 
-        syn_chunks = [(t, 'cap noi ' + l) for t, l in syn_chunks]
-
+        # Add `cap noi ` to the beginning of code lines that were sent with
+        # DoCommandAsync
+        syn_chunks_new = []
+        for (Token, code_lines) in syn_chunks:
+            if str(Token) == 'Token.MatchingBracket.Other':
+                syn_chunks_new.append((Token, 'cap noi ' + code_lines))
+            else:
+                syn_chunks_new.append((Token, code_lines))
+        syn_chunks = syn_chunks_new
 
         # Now turn syn_chunks into a list of code lines
         all_code_lines = []
@@ -437,6 +444,31 @@ class StataSession(object):
                 all_code_lines.append(('inexact', line))
                 last_whitespace = '. '
 
+        code_line_idxs = [len(log)]
+        log_line_counter = 0
+        for (match_type, code_line) in all_code_lines:
+            if match_type == 'exact':
+                idx = log.index(code_line, log_line_counter)
+            else:
+                idx = [ind for ind, x in enumerate(log[log_line_counter:]) if code_line in x][0]
+            log_line_counter = idx + 1
+            code_line_idxs.append(idx)
+
+        # If I just want to remove code lines
+        # [x for ind, x in enumerate(log) if ind not in code_line_idxs]
+
+        start_idxs = [ind for ind, x in enumerate(log) if
+            (ind not in code_line_idxs) and
+            (ind - 1 in code_line_idxs)]
+        end_idxs = [ind for ind, x in enumerate(log) if
+            (ind not in code_line_idxs) and
+            (ind + 1 in code_line_idxs)]
+
+        all_log_chunks = []
+        for start_idx, end_idx in zip(start_idxs, end_idxs):
+            all_log_chunks.append('\n'.join(log[start_idx:end_idx]))
+
+        return '\n'.join(all_log_chunks)
 
     def export_graph(self):
         """
