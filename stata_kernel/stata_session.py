@@ -142,7 +142,7 @@ class StataSession(object):
         else:
             # Blocks will be sent through DoCommandAsync while everything else
             # will be sent through docommand
-            log_path = self.cache_dir + '/.stata_kernel_log.log'
+            log_path = self.cache_dir / '.stata_kernel_log.log'
             rc = self.automate(
                 'DoCommand', 'log using `"{}"\', replace text'.format(log_path))
             if rc:
