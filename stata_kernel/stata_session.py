@@ -56,13 +56,13 @@ class StataSession(object):
         self.stata = win32com.client.Dispatch("stata.StataOLEApp")
         window = win32gui.GetForegroundWindow()
         win32gui.MoveWindow(window, 0, 0, 1920, 1080, True)
-        self.run_automation_cmd(cmd_name='UtilShowStata', value=2)
+        self.automate(cmd_name='UtilShowStata', value=2)
 
     def init_mac_automation(self):
-        self.run_automation_cmd(cmd_name='activate')
-        self.run_automation_cmd(cmd_name='UtilShowStata', value=1)
+        self.automate(cmd_name='activate')
+        self.automate(cmd_name='UtilShowStata', value=1)
         cmd = 'set bounds of front window to {1, 1, 1280, 900}'
-        self.run_automation_cmd(cmd_name=cmd)
+        self.automate(cmd_name=cmd)
 
     def init_console(self, stata_path):
         """Initiate stata console
@@ -244,7 +244,7 @@ class StataSession(object):
             # NOTE What should the optimal sleep time be?
             # Should it be in the settings?
             sleep(0.25)
-            finished = self.run_automation_cmd('UtilIsStataFree')
+            finished = self.automate('UtilIsStataFree')
 
         return self.automate('UtilStataErrorCode')
 
