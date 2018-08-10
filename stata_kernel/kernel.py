@@ -1,5 +1,6 @@
 import os
 import re
+import platform
 
 from configparser import ConfigParser
 from ipykernel.kernelbase import Kernel
@@ -26,11 +27,18 @@ class StataKernel(Kernel):
 
         config = ConfigParser()
         config.read(os.path.expanduser('~/.stata_kernel.conf'))
-        self.stata = StataSession(
-            execution_mode=config['stata_kernel']['execution_mode'],
-            stata_path=config['stata_kernel']['stata_path'],
-            cache_dir=os.path.expanduser(
-                config['stata_kernel']['cache_directory']))
+        execution_mode = config['stata_kernel'].get('execution_mode')
+        if not execution_mode:
+            if platform.system() == 'Windows':
+                execution_mode = 'automation'
+            else:
+                execution_mode = 'console'
+        stata_path=config['stata_kernel'].get('stata_path', 'stata')
+        cache_dir = config['stata_kernel'].get('cache_directory', '~/.tmp')
+        cache_dir = os.path.expanduser(cache_dir)
+        self.stata = StataSession(execution_mode=execution_mode,
+            stata_path=stata_path,
+            cache_dir=cache_dir)
         self.banner = self.stata.banner
 
         # Change to this directory and set more off
