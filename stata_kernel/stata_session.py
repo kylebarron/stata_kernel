@@ -35,9 +35,7 @@ class StataSession(object):
         self.banner = 'stata_kernel: A Jupyter kernel for Stata.'
         self.cache_dir = cache_dir
         self.cache_dir.mkdir(parents=True, exist_ok=True)
-
-        # Make sure cache_dir exists
-        self.graph_counter = 0
+        self.stata_path = stata_path
         if platform.system() == 'Windows':
             self.execution_mode = 'automation'
             self.init_windows(stata_path)
@@ -486,5 +484,4 @@ class StataSession(object):
                                          self.graph_format)) as f:
             img = f.read()
 
-        self.graph_counter += 1
         return img
