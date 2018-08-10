@@ -122,7 +122,7 @@ def poor_mans_magic(code):
                 print("Uknown magic %{0}.".format(_magic))
 
     elif code.strip().startswith("?"):
-        code = "help " + code
+        code = "help " + code.strip()
 
     if code.strip() == '':
         magic['status'] = -1
