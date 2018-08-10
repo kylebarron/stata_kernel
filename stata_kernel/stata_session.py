@@ -146,10 +146,12 @@ class StataSession(object):
             rc = self.automate(
                 'DoCommand', 'log using `"{}"\', replace text'.format(log_path))
             if rc:
-                # Cache location is non writable
                 return rc, ''
 
+            # Keep track of how many chunks have been executed
+            syn_chunk_counter = 0
             for line in syn_chunks:
+                syn_chunk_counter += 1
                 if str(line[0]) == 'Token.MatchingBracket.Other':
                     rc = self.do_aut_async(line[1])
                 else:
@@ -160,7 +162,10 @@ class StataSession(object):
                 #     img = self.get_graph()
             self.automate('DoCommand', 'cap log close')
             with open(log_path, 'r') as f:
-                log = f.readlines()
+                log = f.read()
+
+            # Don't keep chunks that weren't executed
+            syn_chunks = syn_chunks[:syn_chunk_counter]
 
             return rc, self.clean_log_aut(log, syn_chunks)
 
@@ -347,6 +352,91 @@ class StataSession(object):
                 log_all.append('')
 
         return '\n'.join(log_all)
+
+    def clean_log_aut(self, log, syn_chunks):
+        """Do initial Automation-specific log cleaning
+
+        I know that code is run in order. So I'll search the log lines for the
+        first line of syn_chunks. Once I find it, I'll search for the next, etc.
+
+        First I'll turn syn_chunks into a list of strings that the code lines in
+        the output should start with. Then I'll use those lines to search the
+        log in order.
+
+        Args:
+            log (str): Contents of log file
+            syn_chunks (List[Tuple[Token, str]]):
+                Input chunks. `len(syn_chunks) >= len(log)` because there
+                could have been an error in the middle.
+        """
+
+        # Remove line continuations
+        log = re.sub(r'\n> ', '', log)
+        log = log.split('\n')
+
+        log = log[5:]
+        log = log[:-1]
+
+        syn_chunks = [(t, 'cap noi ' + l) for t, l in syn_chunks]
+
+
+        # Now turn syn_chunks into a list of code lines
+        all_code_lines = []
+        # Since I run `log using` with DoCommand
+        last_whitespace = ''
+        for (Token, code_lines) in syn_chunks:
+            if str(Token) != 'Token.MatchingBracket.Other':
+                # Means I sent it with DoCommand; there should be no leading
+                # spaces. Also means it should be a single line
+                all_code_lines.append(('exact', last_whitespace + code_lines))
+                last_whitespace = ''
+                continue
+
+            # So it's a block
+            lines = code_lines.split('\n')
+
+            # Blocks where the inner lines are indented and numbered
+            keywords = [r'pr(o|og|ogr|ogra|ogram)?', r'while',
+                r'forv(a|al|alu|alue|alues)?', r'foreach']
+            keywords = r'\b(' + '|'.join(keywords) + r')\b'
+            if re.search(keywords, lines[0][8:]):
+                block_counter = 1
+                for line in lines:
+                    all_code_lines.append(('exact', last_whitespace + line))
+                    block_counter += 1
+                    last_whitespace = '  {}. '.format(block_counter)
+
+                last_whitespace = '. '
+                continue
+
+            # If/else/else if blocks
+            # These lead following lines with .
+            if any(lines[0][8:].startswith(x) for x in ['if', 'else', 'else if']):
+                for line in lines:
+                    all_code_lines.append(('exact', last_whitespace + line))
+                    last_whitespace = '. '
+
+            cap_reg = re.compile(r'\bcap(t|tu|tur|ture)?\b').search
+            qui_reg = re.compile(r'\bqui(e|et|etl|etly)?\b').search
+            noi_reg = re.compile(r'\bn(o|oi|ois|oisi|oisil|oisily)?\b').search
+            # If `cap` or both `qui` and `cap` show up after my cap noi, no
+            # following code lines will be printed.
+            if cap_reg(lines[0][8:]) and not noi_reg(lines[0][8:]):
+                all_code_lines.append(('exact', last_whitespace + lines[0]))
+                last_whitespace = '. '
+                continue
+
+            if noi_reg(lines[0][8:]) or qui_reg(lines[0][8:]):
+                for line in lines:
+                    all_code_lines.append(('exact', last_whitespace + line))
+                    last_whitespace = '. '
+                continue
+
+            # Otherwise, I don't know what it is
+            for line in lines:
+                all_code_lines.append(('inexact', line))
+                last_whitespace = '. '
+
 
     def export_graph(self):
         """
