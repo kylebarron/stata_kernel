@@ -446,7 +446,7 @@ class StataSession(object):
                 all_code_lines.append(('inexact', line))
                 last_whitespace = '. '
 
-        code_line_idxs = [len(log)]
+        code_line_idxs = [len(log) - 1]
         log_line_counter = 0
         for (match_type, code_line) in all_code_lines:
             if match_type == 'exact':
@@ -462,7 +462,7 @@ class StataSession(object):
         start_idxs = [ind for ind, x in enumerate(log) if
             (ind not in code_line_idxs) and
             (ind - 1 in code_line_idxs)]
-        end_idxs = [ind for ind, x in enumerate(log) if
+        end_idxs = [ind + 1 for ind, x in enumerate(log) if
             (ind not in code_line_idxs) and
             (ind + 1 in code_line_idxs)]
 
