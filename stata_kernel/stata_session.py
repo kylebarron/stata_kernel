@@ -158,7 +158,9 @@ class StataSession(object):
                     rc = int(err.group(1))
                     break
 
-                if re.search(graph_keywords, line[1]):
+                if (str(line[0]) != 'Token.MatchingBracket.Other'
+                    ) and re.search(graph_keywords, line[1]):
+
                     rc, img, sc = self.get_current_graph('console')
                     new_syn_chunks.append(sc)
                     imgs.append(img)
