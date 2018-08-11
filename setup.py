@@ -38,11 +38,12 @@ setup(
     description='A Jupyter kernel for Stata. Works with Windows, macOS, and Linux. Preserves program state.',
     install_requires=requirements,
     license='GPLv3',
+    keywords='stata',
     long_description=readme + '\n\n' + history,
     long_description_content_type='text/markdown',
-    keywords='stata',
     name='stata_kernel',
     packages=['stata_kernel'],
+    setup_requires=setup_requirements,
     url='https://github.com/kylebarron/stata_kernel',
     version='1.2.0',
 )
