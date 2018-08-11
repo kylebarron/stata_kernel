@@ -1,4 +1,4 @@
-### Comparison with [ipystata](https://github.com/TiesdeKok/ipystata)
+# Comparison with [ipystata](https://github.com/TiesdeKok/ipystata)
 
 Except for Windows, this package takes a different approach to communication
 with Stata. On macOS and Linux, this controls the Stata console directly, which

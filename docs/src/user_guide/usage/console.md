@@ -1,4 +1,4 @@
-### Console
+# Jupyter Console
 
 To use it as a console, run:
 ```

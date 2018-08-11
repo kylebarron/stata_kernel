@@ -1,4 +1,4 @@
-## Troubleshooting
+# Troubleshooting
 
 If the `pip install` step gives you an error like "DEPRECATION: Uninstalling a distutils installed project (pexpect) has been deprecated", try
 ```
