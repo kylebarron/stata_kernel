@@ -121,7 +121,7 @@ class StataKernel(Kernel):
 
         return {'status': 'incomplete', 'indent': '    '}
 
-    def do_complete(self, code):
+    def do_complete(self, code, cursor_pos):
         env = self.stata.env
         suggestions = CompletionsManager(env)
         return {}
