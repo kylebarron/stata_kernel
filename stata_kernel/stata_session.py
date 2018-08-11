@@ -8,7 +8,6 @@ from configparser import ConfigParser
 
 if platform.system() == 'Windows':
     import win32com.client
-    import win32gui
     from win32api import WinExec
 else:
     import pexpect
@@ -66,15 +65,11 @@ class StataSession(object):
         WinExec(self.stata_path)
         sleep(0.25)
         self.stata = win32com.client.Dispatch("stata.StataOLEApp")
-        window = win32gui.GetForegroundWindow()
-        win32gui.MoveWindow(window, 0, 0, 1920, 1080, True)
         self.automate(cmd_name='UtilShowStata', value=2)
 
     def init_mac_automation(self):
         self.automate(cmd_name='activate')
         self.automate(cmd_name='UtilShowStata', value=1)
-        cmd = 'set bounds of front window to {1, 1, 1280, 900}'
-        self.automate(cmd_name=cmd)
 
     def init_console(self):
         """Initiate stata console
