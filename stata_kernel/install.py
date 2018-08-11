@@ -1,13 +1,15 @@
-import argparse
-import json
 import os
+import re
 import sys
+import json
+import argparse
 import platform
 
+from shutil import which
 from pathlib import Path
 from textwrap import dedent
-from jupyter_client.kernelspec import KernelSpecManager
 from IPython.utils.tempdir import TemporaryDirectory
+from jupyter_client.kernelspec import KernelSpecManager
 
 kernel_json = {
     "argv": [sys.executable, "-m", "stata_kernel", "-f", "{connection_file}"],
@@ -29,32 +31,46 @@ def install_my_kernel_spec(user=True, prefix=None):
 
 def install_conf():
     if platform.system() == 'Windows':
-        execution_mode = 'automation'
-    else:
-        execution_mode = 'console'
-
-    stata_path = 'stata'
-    if platform.system() == 'Windows':
         stata_path = win_find_path()
+    else:
+        for i in ['stata-mp', 'StataMP', 'stata-se', 'StataSE', 'stata', 'Stata']:
+            stata_path = which('StataMP')
+            if stata_path:
+                break
+
+        if (not stata_path) and (platform.system() == 'Darwin'):
+            stata_path = mac_find_path()
+
+    if not stata_path:
+        msg = """\
+            WARNING: Could not find Stata path.
+            Refer to the documentation to see how to set it manually:
+
+            https://kylebarron.github.io/stata_kernel/user_guide/configuration/
+
+            """
+        print(dedent(msg))
+
     conf_default = dedent(
         """\
     [stata_kernel]
 
-    # Path to stata executable. If you type this in your terminal, it should start
-    # the Stata console
+    # Path to stata executable. If you type this in your terminal, it should
+    # start the Stata console
     stata_path = {}
 
-    # The manner in which the kernel connects to Stata. The default is 'console',
-    # which monitors the Stata console. In the future another mode, 'automation',
-    # may be added to connect with the Stata GUI on Windows and macOS computers
-    execution_mode = {}
+    # **macOS only**
+    # The manner in which the kernel connects to Stata. Either 'console' or
+    # 'automation'. 'console' is the default because it allows multiple
+    # independent sessions of Stata at the same time.
+    execution_mode = console
 
     # Directory to hold temporary images and log files
     cache_directory = ~/.stata_kernel_cache
 
     # Extension and format for images
     graph_format = svg
-    """.format(stata_path, execution_mode))
+    """.format(stata_path))
 
     with open(Path('~/.stata_kernel.conf').expanduser(), 'w') as f:
         f.write(conf_default)
@@ -76,8 +92,43 @@ def win_find_path():
             pass
         if fpath:
             break
+
     return fpath
 
+def mac_find_path():
+    """Attempt to find Stata path on macOS when not on user's PATH
+
+    Returns:
+        (str): Path to Stata. Empty string if not found.
+    """
+    path = Path('/Applications/Stata')
+    if not path.exists():
+        return ''
+
+    dirs = [x for x in path.iterdir()
+            if re.search(r'Stata(SE|MP)?\.app', x.name)]
+    if not dirs:
+        return ''
+
+    if len(dirs) > 1:
+        for ext in ['MP.app', 'SE.app', '.app']:
+            name = [x for x in dirs if x.name.endswith(ext)]
+            if name:
+                dirs = name
+                break
+
+    path = dirs[0] / 'Contents'/ 'MacOS'
+    if not path.exists():
+        return ''
+
+    binaries = [x for x in path.iterdir()]
+    for pref in ['stata-mp', 'stata-se', 'stata']:
+        name = [x for x in binaries if x.name == pref]
+        if name:
+            binaries = name
+            break
+
+    return str(binaries[0])
 
 def _is_root():
     try:

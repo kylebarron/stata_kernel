@@ -6,6 +6,7 @@ import base64
 
 from time import sleep
 from pathlib import Path
+from textwrap import dedent
 from configparser import ConfigParser
 
 if platform.system() == 'Windows':
@@ -58,22 +59,29 @@ class StataSession(object):
         config = ConfigParser()
         config.read(Path('~/.stata_kernel.conf').expanduser())
 
-        self.stata_path = config['stata_kernel'].get('stata_path', 'stata')
         cache_dir = config['stata_kernel'].get(
             'cache_directory', '~/.stata_kernel_cache')
         cache_dir = Path(cache_dir).expanduser()
-        self.execution_mode = config['stata_kernel'].get(
-            'execution_mode', 'console')
+        cache_dir.mkdir(parents=True, exist_ok=True)
+        self.execution_mode = config['stata_kernel'].get('execution_mode')
 
-        self.banner = 'stata_kernel: A Jupyter kernel for Stata.'
+        stata_path = config['stata_kernel'].get('stata_path')
+        if platform.system() == 'Darwin':
+            stata_path = self.get_mac_stata_path_variant(stata_path, self.execution_mode)
+        if not stata_path:
+            self.raise_config_error('stata_path')
+
+        self.stata_path = stata_path
         self.cache_dir = cache_dir
-        self.cache_dir.mkdir(parents=True, exist_ok=True)
         self.graph_format = config['stata_kernel'].get('graph_format', 'svg')
+        self.banner = 'stata_kernel: A Jupyter kernel for Stata.'
 
         if platform.system() == 'Windows':
             self.execution_mode = 'automation'
             self.init_windows()
         elif platform.system() == 'Darwin':
+            if not self.execution_mode:
+                self.raise_config_error('execution_mode')
             if self.execution_mode == 'automation':
                 self.init_mac_automation()
             else:
@@ -311,13 +319,7 @@ class StataSession(object):
                 return getattr(self.stata, cmd_name)()
             return getattr(self.stata, cmd_name)(value, **kwargs)
 
-        app_name = re.search(r'/?([\w-]+)$', self.stata_path).group(1)
-        app_dict = {
-            'stata-mp': 'StataMP',
-            'stata-se': 'StataSE',
-            'stata-ic': 'StataIC'}
-        app_name = app_dict.get(app_name, app_name)
-
+        app_name = Path(self.stata_path).name
         cmd = 'tell application "{}" to {}'.format(app_name, cmd_name)
         if value is not None:
             value = str(value).replace('\n', '\\n').replace('\r', '\\r')
@@ -558,6 +560,34 @@ class StataSession(object):
             img = base64.b64encode(img).decode('utf-8')
 
         return rc, (img, self.graph_format), ('Token.Text', cmd)
+
+    def get_mac_stata_path_variant(self, stata_path, execution_mode):
+        if stata_path == '':
+            return ''
+
+        path = Path(stata_path)
+        if execution_mode == 'automation':
+            d = {
+                'stata': 'Stata',
+                'stata-se': 'StataSE',
+                'stata-mp': 'StataMP'}
+        else:
+            d = {
+                'Stata': 'stata',
+                'StataSE': 'stata-se',
+                'StataMP': 'stata-mp'}
+
+        bin_name = d.get(path.name, path.name)
+        return str(path.parent / bin_name)
+
+    def raise_config_error(self, config_opt):
+        msg = """\
+        {} option in configuration file is missing
+        Refer to the documentation to see how to set it manually:
+
+        https://kylebarron.github.io/stata_kernel/user_guide/configuration/
+        """.format(config_opt)
+        raise ValueError(dedent(msg))
 
     def shutdown(self):
         if self.execution_mode == 'automation':
