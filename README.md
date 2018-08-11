@@ -21,6 +21,24 @@ Atom             |  Jupyter Notebook
 ![Atom](./img/atom.png)    |  ![Jupyter Notebook](./img/jupyter_notebook.png)
 
 
+## Features
+
+`stata_kernel` is undergoing active development. It works now, but will be more
+polished in a week.
+
+- [x] Supports Windows, macOS, and Linux.
+- [x] Works with Jupyter Notebook and Atom's Hydrogen package
+- [x] Allows for inline and block comments.
+- [x] Display graphs (still working out limitations)
+- [x] Work with a remote session of Stata
+- [ ] Special shorthand "magics" to aid with, for example benchmarking code.
+- [ ] Documentation website.
+- [ ] Autocompletions as you type based on the variables, macros, and return objects currently in memory.
+- [ ] Mata interactive support
+- [ ] `#delimit ;` blocks
+- [ ] Cross-session history file
+- [ ] Easily pull up help files within the kernel.
+
 ### Comparison with [ipystata](https://github.com/TiesdeKok/ipystata)
 
 Except for Windows, this package takes a different approach to communication
@@ -74,6 +92,8 @@ The configuration file is named `.stata_kernel.conf` and is located in your home
     console and should be used if you choose `console` mode.
 
 - `execution_mode`: This can be set to `automation` or `console`, and is the manner in which this kernel talks to Stata. `automation` uses Stata Automation to communicate to Stata while `console` controls the console version of Stata. `automation` is only available on Windows or macOS. `console` is only available on macOS or Linux. On macOS, `automation` is the preferred option, though may have more bugs at the moment than `console`.
+- `cache_directory`: This is the directory for the kernel to store temporary log files and graphs. By default, this is `~/.stata_kernel_cache`, where `~` means your home directory.
+- `graph_format`: This is the format to export and display graphs. By default this is `svg`, but if you're on an older version of Stata, you could switch to `png`. There is also some support for `pdf` if using Jupyter Notebook.
 
 ## Using the Stata kernel
 
