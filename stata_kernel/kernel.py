@@ -9,9 +9,9 @@ from .stata_session import StataSession
 
 class StataKernel(Kernel):
     implementation = 'stata_kernel'
-    implementation_version = '0.1'
+    implementation_version = '1.2.0'
     language = 'stata'
-    language_version = '0.1'
+    language_version = '15.1'
     language_info = {
         'name': 'stata',
         'mimetype': 'text/x-stata',

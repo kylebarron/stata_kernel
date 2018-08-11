@@ -44,5 +44,5 @@ setup(
     name='stata_kernel',
     packages=['stata_kernel'],
     url='https://github.com/kylebarron/stata_kernel',
-    version='1.1.0',
+    version='1.2.0',
 )
