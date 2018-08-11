@@ -51,6 +51,9 @@ def install_conf():
 
     # Directory to hold temporary images and log files
     cache_directory = ~/.stata_kernel_cache
+
+    # Extension and format for images
+    graph_format = svg
     """.format(stata_path, execution_mode))
 
     with open(Path('~/.stata_kernel.conf').expanduser(), 'w') as f:

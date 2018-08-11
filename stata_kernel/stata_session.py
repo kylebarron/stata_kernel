@@ -118,30 +118,37 @@ class StataSession(object):
             Note, though, that there are _many_ graph commands, and it would be
             a pain to write a regex for them all. See: `help graph_other`
 
-            graph_keywords = [
-                r'gr(a|ap|aph)?', r'tw(o|ow|owa|oway)?',
-                r'sc(a|at|att|atte|atter)?', r'line']
-            graph_keywords = r'\b(' + '|'.join(graph_keywords) + r')\b'
-            check_graphs = re.search(graph_keywords, code)
-
         NOTE: Also don't forget to prevent any empty lines from going to Stata
         """
+
+        graph_keywords = [
+            r'gr(a|ap|aph)?', r'tw(o|ow|owa|oway)?',
+            r'sc(a|at|att|atte|atter)?', r'line']
+        graph_keywords = r'\b(' + '|'.join(graph_keywords) + r')\b'
 
         if self.execution_mode == 'console':
             log = []
             rc = 0
             err_regex = re.compile(r'\r\nr\((\d+)\);\r\n').search
+            new_syn_chunks = []
+            imgs = []
             for line in syn_chunks:
+                new_syn_chunks.append(line)
                 res = self.do_console(line[1])
                 log.append(res)
                 err = err_regex(res)
                 if err:
                     rc = int(err.group(1))
                     break
-                # if 'get_graph':
-                #     img = self.get_graph()
 
-            return rc, self.clean_log_console(log, syn_chunks)
+                if re.search(graph_keywords, line[1]):
+                    rc, img, sc = self.get_current_graph('console')
+                    new_syn_chunks.append(sc)
+                    imgs.append(img)
+                    if rc:
+                        break
+
+            return rc, imgs, self.clean_log_console(log, new_syn_chunks)
         else:
             # Blocks will be sent through DoCommandAsync while everything else
             # will be sent through docommand
@@ -152,25 +159,33 @@ class StataSession(object):
                 return rc, ''
 
             # Keep track of how many chunks have been executed
+            new_syn_chunks = []
+            imgs = []
             syn_chunk_counter = 0
             for line in syn_chunks:
                 syn_chunk_counter += 1
+                new_syn_chunks.append(line)
                 if str(line[0]) == 'Token.MatchingBracket.Other':
                     rc = self.do_aut_async(line[1])
                 else:
                     rc = self.do_aut_sync(line[1])
+                    if (not rc) and re.search(graph_keywords, line[1]):
+                        rc, img, sc = self.get_current_graph('automation')
+                        syn_chunk_counter += 1
+                        new_syn_chunks.append(sc)
+                        imgs.append(img)
+
                 if rc:
                     break
-                # if 'get_graph':
-                #     img = self.get_graph()
+
             self.automate('DoCommand', 'cap log close')
             with open(log_path, 'r') as f:
                 log = f.read()
 
             # Don't keep chunks that weren't executed
-            syn_chunks = syn_chunks[:syn_chunk_counter]
+            syn_chunks = new_syn_chunks[:syn_chunk_counter]
 
-            return rc, self.clean_log_aut(log, syn_chunks)
+            return rc, imgs, self.clean_log_aut(log, syn_chunks)
 
     def do_console(self, line):
         """Run Stata command in console
@@ -486,21 +501,29 @@ class StataSession(object):
 
         return '\n'.join(all_log_chunks)
 
-    def export_graph(self):
+    def get_current_graph(self, execution_mode):
         """
         NOTE: unclear whether I actually need to save all the graphs individually, or if I can just overwrite one. Since I'm just writing them to load them into Python, and the next graph shouldn't start writing until I'm done reading the previous one into Python, I can probably just overwrite the same file.
         """
         # Export graph to file
-        cmd = 'qui graph export `"{0}/graph{1}.{2}"\' , as({2}) replace'.format(
-            self.cache_dir, self.graph_counter, self.graph_format)
-        self.do(cmd)
+        rc = 0
+        cmd = 'qui graph export `"{0}/graph.{1}"\' , as({1}) replace'.format(
+            self.cache_dir, self.graph_format)
+        if execution_mode == 'automation':
+            rc = self.automate('DoCommand', cmd)
+        else:
+            res = self.do_console(cmd)
+            err = re.search(r'\r\nr\((\d+)\);\r\n', res)
+            if err:
+                rc = int(err.group(1))
+        if rc:
+            return rc, None, ('Token.Text', cmd)
 
         # Read image
-        with open('{}/graph{}.{}'.format(self.cache_dir, self.graph_counter,
-                                         self.graph_format)) as f:
+        with open('{}/graph.{}'.format(self.cache_dir, self.graph_format)) as f:
             img = f.read()
 
-        return img
+        return rc, img, ('Token.Text', cmd)
 
     def shutdown(self):
         if self.execution_mode == 'automation':

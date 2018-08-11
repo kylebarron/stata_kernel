@@ -48,7 +48,7 @@ class StataKernel(Kernel):
             return {'status': 'error', 'execution_count': self.execution_count}
 
         cm = CodeManager(code)
-        rc, res = self.stata.do(cm.get_chunks())
+        rc, imgs, res = self.stata.do(cm.get_chunks())
         stream_content = {'text': res}
 
         # The base class increments the execution count
@@ -72,29 +72,22 @@ class StataKernel(Kernel):
             self.send_response(self.iopub_socket, 'stream', stream_content)
             return return_obj
 
-        # if check_graphs:
-        #     graphs_to_get = self.check_graphs()
-        #     graphs_to_get = list(set(graphs_to_get))
-        #     all_graphs = []
-        #     for graph in graphs_to_get:
-        #         g = self.get_graph(graph)
-        #         all_graphs.append(g)
-        #
-        #     for graph in all_graphs:
-        #         content = {
-        #             # This dict may contain different MIME representations
-        #             # of the output.
-        #             'data': {
-        #                 'text/plain': 'text',
-        #                 'image/svg+xml': graph},
-        #
-        #             # We can specify the image size in the metadata field.
-        #             'metadata': {
-        #                 'width': 600,
-        #                 'height': 400}}
-        #
-        #         # We send the display_data message with the contents.
-        #         self.send_response(self.iopub_socket, 'display_data', content)
+        if imgs:
+            for img in imgs:
+                content = {
+                    # This dict may contain different MIME representations
+                    # of the output.
+                    'data': {
+                        'text/plain': 'text',
+                        'image/svg+xml': img},
+
+                    # We can specify the image size in the metadata field.
+                    'metadata': {
+                        'width': 600,
+                        'height': 400}}
+
+                # We send the display_data message with the contents.
+                self.send_response(self.iopub_socket, 'display_data', content)
 
         return return_obj
 
