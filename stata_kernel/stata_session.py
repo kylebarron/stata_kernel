@@ -118,6 +118,7 @@ class StataSession(object):
         gone away.
         """
         self.child = pexpect.spawn(self.stata_path, encoding='utf-8')
+        self.child.logfile = open(self.cache_dir / 'console_debug.log', 'w')
         banner = []
         try:
             self.child.expect('\r\n\. ', timeout=0.2)
