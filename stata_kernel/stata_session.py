@@ -1,3 +1,4 @@
+import os
 import re
 import platform
 import subprocess
@@ -80,6 +81,13 @@ class StataSession(object):
         else:
             self.execution_mode = 'console'
             self.init_console()
+
+        # Change to this directory and set more off
+        text = [('Token.Text', 'cd `"{}"\''.format(os.getcwd())),
+                ('Token.Text', 'set more off'),
+                ('Token.Text', 'clear all'),
+                ('Token.Text', 'capture log close _all'),]
+        self.stata.do(text)
 
     def init_windows(self):
         # The WinExec step is necessary for some reason to make graphs

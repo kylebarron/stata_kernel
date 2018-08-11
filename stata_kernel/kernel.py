@@ -1,5 +1,3 @@
-import os
-
 from ipykernel.kernelbase import Kernel
 
 from .completions import CompletionsManager
@@ -24,11 +22,6 @@ class StataKernel(Kernel):
 
         self.stata = StataSession()
         self.banner = self.stata.banner
-
-        # Change to this directory and set more off
-        text = [('Token.Text', 'cd `"{}"\''.format(os.getcwd())),
-                ('Token.Text', 'set more off')]
-        self.stata.do(text)
 
     def do_execute(
             self,
