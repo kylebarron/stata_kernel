@@ -42,12 +42,15 @@ class StataKernel(Kernel):
         if not self.is_complete(code):
             return {'status': 'error', 'execution_count': self.execution_count}
 
-        code = self.magics(code, self)
+        code = self.magics.magic(code, self)
+        if self.magics.img_set:
+            self.stata.img_metadata = self.magics.img_metadata
+
         if self.magics.quit_early:
             return self.magics.quit_early
 
         cm = CodeManager(code)
-        rc, imgs, res = self.stata.do(cm.get_chunks())
+        rc, imgs, res = self.stata.do(cm.get_chunks(), self.magics.graphs)
         stream_content = {'text': res}
 
         # The base class increments the execution count
@@ -69,9 +72,10 @@ class StataKernel(Kernel):
         # Only send a response if there's text
         if res.strip():
             self.send_response(self.iopub_socket, 'stream', stream_content)
-            return return_obj
+            if (self.magics.graphs != 2):
+                return return_obj
 
-        if imgs:
+        if imgs or (self.magics.graphs == 2):
             img_mimetypes = {
                 'pdf': 'application/pdf',
                 'svg': 'image/svg+xml',
@@ -87,9 +91,7 @@ class StataKernel(Kernel):
                         img_mimetypes[graph_format]: img},
 
                     # We can specify the image size in the metadata field.
-                    'metadata': {
-                        'width': 600,
-                        'height': 400}}
+                    'metadata': self.stata.img_metadata}
 
                 # We send the display_data message with the contents.
                 self.send_response(self.iopub_socket, 'display_data', content)

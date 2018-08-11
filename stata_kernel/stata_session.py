@@ -6,6 +6,7 @@ import base64
 
 from time import sleep
 from pathlib import Path
+from xml.dom import minidom
 from configparser import ConfigParser
 
 if platform.system() == 'Windows':
@@ -69,6 +70,9 @@ class StataSession(object):
         self.cache_dir = cache_dir
         self.cache_dir.mkdir(parents=True, exist_ok=True)
         self.graph_format = config['stata_kernel'].get('graph_format', 'svg')
+        self.img_metadata = {
+            'width': 600,
+            'height': 400}
 
         if platform.system() == 'Windows':
             self.execution_mode = 'automation'
@@ -87,7 +91,7 @@ class StataSession(object):
                 ('Token.Text', 'set more off'),
                 ('Token.Text', 'clear all'),
                 ('Token.Text', 'capture log close _all'),]
-        self.stata.do(text)
+        self.do(text)
 
     def init_windows(self):
         # The WinExec step is necessary for some reason to make graphs
@@ -127,7 +131,7 @@ class StataSession(object):
         # Set banner to Stata's shell header
         self.banner = ansi_escape.sub('', '\n'.join(banner))
 
-    def do(self, syn_chunks):
+    def do(self, syn_chunks, graphs = 1):
         """Run code in Stata
 
         This is a wrapper for the platform-dependent functions.
@@ -136,6 +140,12 @@ class StataSession(object):
             (List[Tuple[Token, str]]):
                 Each tuple should have two elements. The first is the name of
                 the Token, the second is the string to send to Stata.
+
+        Kwargs:
+            graphs (default 1):
+                0 dooes not look for images
+                1 looks after each line not in Token.MatchingBracket.Other
+                2 looks only after _all_ lines have executed
 
         NOTE I might end up needing more metadata about the chunks, so this is subject to change format.
 
@@ -166,14 +176,20 @@ class StataSession(object):
                     rc = int(err.group(1))
                     break
 
-                if (str(line[0]) != 'Token.MatchingBracket.Other'
-                    ) and re.search(graph_keywords, line[1]):
+                gr = re.search(graph_keywords, line[1]) and (graphs == 1)
+                if (str(line[0]) != 'Token.MatchingBracket.Other') and gr:
 
                     rc, img, sc = self.get_current_graph('console')
                     new_syn_chunks.append(sc)
                     imgs.append(img)
                     if rc:
                         break
+
+            if (not rc) and (graphs == 2):
+                gr_rc, img, sc = self.get_current_graph('console')
+                if not gr_rc:
+                    new_syn_chunks.append(sc)
+                    imgs.append(img)
 
             return rc, imgs, self.clean_log_console(log, new_syn_chunks)
         else:
@@ -196,7 +212,9 @@ class StataSession(object):
                     rc = self.do_aut_async(line[1])
                 else:
                     rc = self.do_aut_sync(line[1])
-                    if (not rc) and re.search(graph_keywords, line[1]):
+                    gr = re.search(graph_keywords, line[1]) and (graphs == 1)
+                    if (not rc) and gr:
+
                         rc, img, sc = self.get_current_graph('automation')
                         syn_chunk_counter += 1
                         new_syn_chunks.append(sc)
@@ -204,6 +222,12 @@ class StataSession(object):
 
                 if rc:
                     break
+
+            if (not rc) and (graphs == 2):
+                gr_rc, img, sc = self.get_current_graph('automation')
+                if not gr_rc:
+                    new_syn_chunks.append(sc)
+                    imgs.append(img)
 
             self.automate('DoCommand', 'cap log close')
             with open(log_path, 'r') as f:
@@ -557,6 +581,9 @@ class StataSession(object):
         if read_format == 'rb':
             img = base64.b64encode(img).decode('utf-8')
 
+        if self.graph_format == 'svg':
+            img = self._fix_svg_size(img, **self.img_metadata)
+
         return rc, (img, self.graph_format), ('Token.Text', cmd)
 
     def shutdown(self):
@@ -565,3 +592,15 @@ class StataSession(object):
         else:
             self.child.close(force=True)
         return
+
+    def _fix_svg_size(self, img, width, height):
+        # Minidom does not support parseUnicode, so it must be decoded
+        # to accept unicode characters
+        parsed = minidom.parseString(img.encode('utf-8'))
+        (svg,) = parsed.getElementsByTagName('svg')
+
+        # Handle overrides in case they were not encoded.
+        svg.setAttribute('width', '%dpx' % width)
+        svg.setAttribute('height', '%dpx' % height)
+
+        return svg.toxml()
