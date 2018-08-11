@@ -391,12 +391,16 @@ class StataSession(object):
         # Now turn syn_chunks into a list of code lines
         all_code_lines = []
         # Since I run `log using` with DoCommand
+        # It's weird, but sometimes there's a single leading whitespace. Usually
+        # there isn't, but it seems that when I run two loop blocks in a row
+        # (ish?), then there's a leading whitespace on the second one. So after
+        # this for loop, I set the first line to `inexact` matching.
         last_whitespace = ''
         for (Token, code_lines) in syn_chunks:
             if str(Token) != 'Token.MatchingBracket.Other':
                 # Means I sent it with DoCommand; there should be no leading
                 # spaces. Also means it should be a single line
-                all_code_lines.append(('exact', last_whitespace + code_lines))
+                all_code_lines.append(['exact', last_whitespace + code_lines])
                 last_whitespace = ''
                 continue
 
@@ -410,7 +414,7 @@ class StataSession(object):
             if re.search(keywords, lines[0][8:]):
                 block_counter = 1
                 for line in lines:
-                    all_code_lines.append(('exact', last_whitespace + line))
+                    all_code_lines.append(['exact', last_whitespace + line])
                     block_counter += 1
                     last_whitespace = '  {}. '.format(block_counter)
 
@@ -421,7 +425,7 @@ class StataSession(object):
             # These lead following lines with .
             if any(lines[0][8:].startswith(x) for x in ['if', 'else', 'else if']):
                 for line in lines:
-                    all_code_lines.append(('exact', last_whitespace + line))
+                    all_code_lines.append(['exact', last_whitespace + line])
                     last_whitespace = '. '
                 continue
 
@@ -431,20 +435,22 @@ class StataSession(object):
             # If `cap` or both `qui` and `cap` show up after my cap noi, no
             # following code lines will be printed.
             if cap_reg(lines[0][8:]) and not noi_reg(lines[0][8:]):
-                all_code_lines.append(('exact', last_whitespace + lines[0]))
+                all_code_lines.append(['exact', last_whitespace + lines[0]])
                 last_whitespace = '. '
                 continue
 
             if noi_reg(lines[0][8:]) or qui_reg(lines[0][8:]):
                 for line in lines:
-                    all_code_lines.append(('exact', last_whitespace + line))
+                    all_code_lines.append(['exact', last_whitespace + line])
                     last_whitespace = '. '
                 continue
 
             # Otherwise, I don't know what it is
             for line in lines:
-                all_code_lines.append(('inexact', line))
+                all_code_lines.append(['inexact', line])
                 last_whitespace = '. '
+
+        all_code_lines[0][0] = 'inexact'
 
         code_line_idxs = [len(log) - 1]
         log_line_counter = 0
