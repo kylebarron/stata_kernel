@@ -36,7 +36,8 @@ def install_conf():
     stata_path = 'stata'
     if platform.system() == 'Windows':
         stata_path = win_find_path()
-    conf_default = dedent("""\
+    conf_default = dedent(
+        """\
     [stata_kernel]
 
     # Path to stata executable. If you type this in your terminal, it should start

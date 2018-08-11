@@ -28,6 +28,7 @@ ansi_regex = r'\x1b(' \
              r'(\d;\dR))'
 ansi_escape = re.compile(ansi_regex, flags=re.IGNORECASE)
 
+
 class StataSession(object):
     def __init__(self, execution_mode, stata_path, cache_dir):
 
@@ -408,7 +409,8 @@ class StataSession(object):
             lines = code_lines.split('\n')
 
             # Blocks where the inner lines are indented and numbered
-            keywords = [r'pr(o|og|ogr|ogra|ogram)?', r'while',
+            keywords = [
+                r'pr(o|og|ogr|ogra|ogram)?', r'while',
                 r'forv(a|al|alu|alue|alues)?', r'foreach']
             keywords = r'\b(' + '|'.join(keywords) + r')\b'
             if re.search(keywords, lines[0][8:]):
@@ -423,7 +425,8 @@ class StataSession(object):
 
             # If/else/else if blocks
             # These lead following lines with .
-            if any(lines[0][8:].startswith(x) for x in ['if', 'else', 'else if']):
+            if any(lines[0][8:].startswith(x)
+                   for x in ['if', 'else', 'else if']):
                 for line in lines:
                     all_code_lines.append(['exact', last_whitespace + line])
                     last_whitespace = '. '
@@ -458,19 +461,22 @@ class StataSession(object):
             if match_type == 'exact':
                 idx = log.index(code_line, log_line_counter)
             else:
-                idx = [ind for ind, x in enumerate(log[log_line_counter:]) if code_line in x][0]
+                idx = [
+                    ind for ind, x in enumerate(log[log_line_counter:])
+                    if code_line in x][0]
             log_line_counter = idx + 1
             code_line_idxs.append(idx)
 
         # If I just want to remove code lines
         # [x for ind, x in enumerate(log) if ind not in code_line_idxs]
 
-        start_idxs = [ind for ind, x in enumerate(log) if
-            (ind not in code_line_idxs) and
-            (ind - 1 in code_line_idxs)]
-        end_idxs = [ind + 1 for ind, x in enumerate(log) if
-            (ind not in code_line_idxs) and
-            (ind + 1 in code_line_idxs)]
+        start_idxs = [
+            ind for ind, x in enumerate(log)
+            if (ind not in code_line_idxs) and (ind - 1 in code_line_idxs)]
+        end_idxs = [
+            ind + 1
+            for ind, x in enumerate(log)
+            if (ind not in code_line_idxs) and (ind + 1 in code_line_idxs)]
 
         all_log_chunks = []
         for start_idx, end_idx in zip(start_idxs, end_idxs):

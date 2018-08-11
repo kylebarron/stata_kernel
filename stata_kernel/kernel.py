@@ -33,10 +33,12 @@ class StataKernel(Kernel):
                 execution_mode = 'automation'
             else:
                 execution_mode = 'console'
-        stata_path=config['stata_kernel'].get('stata_path', 'stata')
-        cache_dir = config['stata_kernel'].get('cache_directory', '~/.stata_kernel_cache')
+        stata_path = config['stata_kernel'].get('stata_path', 'stata')
+        cache_dir = config['stata_kernel'].get(
+            'cache_directory', '~/.stata_kernel_cache')
         cache_dir = Path(cache_dir).expanduser()
-        self.stata = StataSession(execution_mode=execution_mode,
+        self.stata = StataSession(
+            execution_mode=execution_mode,
             stata_path=stata_path,
             cache_dir=cache_dir)
         self.banner = self.stata.banner
