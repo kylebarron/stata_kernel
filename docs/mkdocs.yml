@@ -1,0 +1,82 @@
+# Project Information
+site_name: 'stata_kernel'
+site_description: 'A Jupyter Kernel for Stata. Works with Windows, macOS, and Linux.'
+site_author: 'Kyle Barron'
+
+docs_dir: 'src'
+site_dir: 'html/mkdocs'
+
+# Repository
+repo_name: 'kylebarron/stata_kernel'
+repo_url: 'https://github.com/kylebarron/stata_kernel'
+edit_uri: 'blob/master/docs/src/'
+site_url: 'https://kylebarron.github.io/stata_kernel/'
+
+# Social links
+extra:
+  social:
+    - type: 'github'
+      link: 'https://github.com/kylebarron'
+    - type: 'key'
+      link: 'https://keybase.io/kylebarron'
+
+# Layout
+nav:
+    - Home: 'index.md'
+    - User Guide:
+        - Installing: 'user_guide/install.md'
+        - Configuration: 'user_guide/configuration.md'
+        - Using the kernel:
+            - Jupyter Notebook: 'user_guide/usage/notebook.md'
+            - Atom: 'user_guide/usage/atom.md'
+            - Jupyter Console: 'user_guide/usage/console.md'
+        - Limitations: 'user_guide/limitations.md'
+        - Troubleshooting: 'user_guide/troubleshooting.md'
+    - Comparison with ipystata: 'comparison_with_ipystata.md'
+
+
+# Theme
+theme:
+    feature:
+        tabs: false
+    logo:
+        icon: 'home'
+    name: 'material'
+    language: 'en'
+    palette:
+        primary: 'blue'
+        accent:  'light blue'
+    font:
+        text: 'Nunito Sans'
+        code: 'Fira Code'
+
+extra_javascript:
+    - aux/helpers.js
+    - https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.4/MathJax.js?config=TeX-AMS-MML_HTMLorMML
+
+# These extensions are chosen to be a superset of Pandoc's Markdown.
+# This way, I can write in Pandoc's Markdown and have it be supported here.
+# https://pandoc.org/MANUAL.html
+markdown_extensions:
+    - admonition
+    - attr_list
+    - codehilite
+    - def_list
+    - footnotes
+    - pymdownx.arithmatex
+    - pymdownx.betterem
+    - pymdownx.caret:
+        insert: false
+    - pymdownx.details
+    - pymdownx.escapeall:
+        hardbreak: true
+        nbsp: true
+    - pymdownx.magiclink:
+        hide_protocol: true
+        repo_url_shortener: true
+    - pymdownx.smartsymbols
+    - pymdownx.superfences
+    - pymdownx.tasklist(custom_checkbox=true)
+    - pymdownx.tilde
+    - toc:
+        permalink: true
