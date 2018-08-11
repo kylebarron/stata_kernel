@@ -95,7 +95,7 @@ class StataSession(object):
                 ('Token.Text', 'set more off'),
                 ('Token.Text', 'clear all'),
                 ('Token.Text', 'capture log close _all'),]
-        self.stata.do(text)
+        self.do(text)
 
     def init_windows(self):
         # The WinExec step is necessary for some reason to make graphs
