@@ -168,9 +168,11 @@ class StataSession(object):
             imgs = []
             for line in syn_chunks:
                 new_syn_chunks.append(line)
-                res = self.do_console(line[1])
+                res, eof = self.do_console(line[1])
                 log.append(res)
                 err = err_regex(res)
+                if eof:
+                    break
                 if err:
                     rc = int(err.group(1))
                     break
@@ -253,8 +255,9 @@ class StataSession(object):
 
         self.child.sendline(line)
         regex = r'\r\n(\x1b\[\?1h\x1b=)?\r\n\. '
-        self.child.expect(regex, timeout=20)
-        return ansi_escape.sub('', self.child.before)
+        index = self.child.expect([regex, pexpect.EOF], timeout=20)
+        eof = (index == 1)
+        return ansi_escape.sub('', self.child.before), eof
 
     def do_aut_sync(self, line):
         """Run code in Stata Automation using DoCommand
@@ -541,7 +544,7 @@ class StataSession(object):
         if execution_mode == 'automation':
             rc = self.automate('DoCommand', cmd)
         else:
-            res = self.do_console(cmd)
+            res, eof = self.do_console(cmd)
             err = re.search(r'\r\nr\((\d+)\);\r\n', res)
             if err:
                 rc = int(err.group(1))
