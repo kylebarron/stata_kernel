@@ -253,7 +253,12 @@ class StataSession(object):
 
         self.child.sendline(line)
         regex = r'\r\n(\x1b\[\?1h\x1b=)?\r\n\. '
-        self.child.expect(regex, timeout=20)
+        try:
+            self.child.expect(regex, timeout=20)
+        except KeyboardInterrupt:
+            self.child.sendcontrol('c')
+            self.child.expect(regex, timeout=20)
+
         return ansi_escape.sub('', self.child.before)
 
     def do_aut_sync(self, line):
@@ -278,8 +283,12 @@ class StataSession(object):
         Returns:
             (int): return code from Stata
         """
-
-        return self.automate('DoCommand', line)
+        try:
+            rc = self.automate('DoCommand', line)
+        except KeyboardInterrupt:
+            self.automate('UtilSetStataBreak')
+            rc = 1
+        return rc
 
     def do_aut_async(self, line):
         """Run code in Stata Automation using DoCommandAsync
@@ -297,15 +306,19 @@ class StataSession(object):
         """
 
         line = 'cap noi ' + line
-        self.automate('DoCommandAsync', line)
-        finished = 0
-        while not finished:
-            # NOTE What should the optimal sleep time be?
-            # Should it be in the settings?
-            sleep(0.25)
-            finished = self.automate('UtilIsStataFree')
-
-        return self.automate('UtilStataErrorCode')
+        try:
+            self.automate('DoCommandAsync', line)
+            finished = 0
+            while not finished:
+                # NOTE What should the optimal sleep time be?
+                # Should it be in the settings?
+                sleep(0.25)
+                finished = self.automate('UtilIsStataFree')
+            rc = self.automate('UtilStataErrorCode')
+        except KeyboardInterrupt:
+            self.automate('UtilSetStataBreak')
+            rc = 1
+        return rc
 
     def automate(self, cmd_name, value=None, **kwargs):
         """Execute `cmd_name` through Automation in a cross-platform manner
