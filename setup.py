@@ -14,8 +14,19 @@ requirements = [
 
 setup_requirements = [
     'setuptools >= 38.6.0',
-    'twine >= 1.11.0'
-]
+    'twine >= 1.11.0']
+
+test_requirements = [
+    'mkdocs==1.0',
+    'mkdocs-material==3.0.3',
+    'bumpversion==0.5.3',
+    'coverage==4.5.1',
+    'flake8==3.5.0',
+    'pip==18.0',
+    'pytest==3.7.1',
+    'tox==2.9.1',
+    'wheel==0.30.0',
+    'yapf==0.20.2']
 
 setup(
     author='Kyle Barron',
@@ -38,11 +49,14 @@ setup(
     description='A Jupyter kernel for Stata. Works with Windows, macOS, and Linux. Preserves program state.',
     install_requires=requirements,
     license='GPLv3',
+    keywords='stata',
     long_description=readme + '\n\n' + history,
     long_description_content_type='text/markdown',
-    keywords='stata',
     name='stata_kernel',
     packages=['stata_kernel'],
+    setup_requires=setup_requirements,
+    test_suite='tests',
+    tests_require=test_requirements,
     url='https://github.com/kylebarron/stata_kernel',
     version='1.2.0',
 )

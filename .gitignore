@@ -1,5 +1,6 @@
 .DS_Store
 .stata_kernel_images
+docs/html/mkdocs/
 
 # Byte-compiled / optimized / DLL files
 __pycache__/

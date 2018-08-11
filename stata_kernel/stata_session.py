@@ -1,3 +1,4 @@
+import os
 import re
 import platform
 import subprocess
@@ -81,6 +82,13 @@ class StataSession(object):
             self.execution_mode = 'console'
             self.init_console()
 
+        # Change to this directory and set more off
+        text = [('Token.Text', 'cd `"{}"\''.format(os.getcwd())),
+                ('Token.Text', 'set more off'),
+                ('Token.Text', 'clear all'),
+                ('Token.Text', 'capture log close _all'),]
+        self.stata.do(text)
+
     def init_windows(self):
         # The WinExec step is necessary for some reason to make graphs
         # work. Stata can't be launched directly with Dispatch()
@@ -158,7 +166,9 @@ class StataSession(object):
                     rc = int(err.group(1))
                     break
 
-                if re.search(graph_keywords, line[1]):
+                if (str(line[0]) != 'Token.MatchingBracket.Other'
+                    ) and re.search(graph_keywords, line[1]):
+
                     rc, img, sc = self.get_current_graph('console')
                     new_syn_chunks.append(sc)
                     imgs.append(img)
