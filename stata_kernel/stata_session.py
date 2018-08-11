@@ -1,6 +1,7 @@
 import re
 import platform
 import subprocess
+import base64
 
 from time import sleep
 from pathlib import Path
@@ -40,7 +41,8 @@ class StataSession(object):
         cache_dir = config['stata_kernel'].get(
             'cache_directory', '~/.stata_kernel_cache')
         cache_dir = Path(cache_dir).expanduser()
-        self.execution_mode = config['stata_kernel'].get('execution_mode', 'console')
+        self.execution_mode = config['stata_kernel'].get(
+            'execution_mode', 'console')
 
         self.banner = 'stata_kernel: A Jupyter kernel for Stata.'
         self.cache_dir = cache_dir
@@ -519,8 +521,16 @@ class StataSession(object):
             return rc, None, ('Token.Text', cmd)
 
         # Read image
-        with open('{}/graph.{}'.format(self.cache_dir, self.graph_format)) as f:
+        if self.graph_format == 'svg':
+            read_format = 'r'
+        else:
+            read_format = 'rb'
+        with open('{}/graph.{}'.format(self.cache_dir, self.graph_format),
+                  read_format) as f:
             img = f.read()
+
+        if read_format == 'rb':
+            img = base64.b64encode(img).decode('utf-8')
 
         return rc, (img, self.graph_format), ('Token.Text', cmd)
 
