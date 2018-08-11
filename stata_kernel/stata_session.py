@@ -3,6 +3,8 @@ import platform
 import subprocess
 
 from time import sleep
+from pathlib import Path
+from configparser import ConfigParser
 
 if platform.system() == 'Windows':
     import win32com.client
@@ -30,7 +32,21 @@ ansi_escape = re.compile(ansi_regex, flags=re.IGNORECASE)
 
 
 class StataSession(object):
-    def __init__(self, execution_mode, stata_path, cache_dir):
+    def __init__(self):
+
+        config = ConfigParser()
+        config.read(Path('~/.stata_kernel.conf').expanduser())
+
+        stata_path = config['stata_kernel'].get('stata_path', 'stata')
+        cache_dir = config['stata_kernel'].get(
+            'cache_directory', '~/.stata_kernel_cache')
+        cache_dir = Path(cache_dir).expanduser()
+        execution_mode = config['stata_kernel'].get('execution_mode')
+        if not execution_mode:
+            if platform.system() == 'Windows':
+                execution_mode = 'automation'
+            else:
+                execution_mode = 'console'
 
         self.execution_mode = execution_mode
         self.banner = 'stata_kernel: A Jupyter kernel for Stata.'
@@ -499,3 +515,10 @@ class StataSession(object):
             img = f.read()
 
         return img
+
+    def shutdown(self):
+        if self.execution_mode == 'automation':
+            self.automate('DoCommandAsync', 'exit, clear')
+        else:
+            self.child.close(force=True)
+        return

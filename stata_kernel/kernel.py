@@ -1,8 +1,5 @@
 import os
-import platform
 
-from pathlib import Path
-from configparser import ConfigParser
 from ipykernel.kernelbase import Kernel
 
 from .completions import CompletionsManager
@@ -25,22 +22,7 @@ class StataKernel(Kernel):
 
         self.graphs = {}
 
-        config = ConfigParser()
-        config.read(Path('~/.stata_kernel.conf').expanduser())
-        execution_mode = config['stata_kernel'].get('execution_mode')
-        if not execution_mode:
-            if platform.system() == 'Windows':
-                execution_mode = 'automation'
-            else:
-                execution_mode = 'console'
-        stata_path = config['stata_kernel'].get('stata_path', 'stata')
-        cache_dir = config['stata_kernel'].get(
-            'cache_directory', '~/.stata_kernel_cache')
-        cache_dir = Path(cache_dir).expanduser()
-        self.stata = StataSession(
-            execution_mode=execution_mode,
-            stata_path=stata_path,
-            cache_dir=cache_dir)
+        self.stata = StataSession()
         self.banner = self.stata.banner
 
         # Change to this directory and set more off
@@ -123,10 +105,7 @@ class StataKernel(Kernel):
         kernel machinery will take care of cleaning up its own things before
         stopping.
         """
-        if self.execution_mode == 'automation':
-            self.run_automation_cmd('DoCommandAsync', 'exit, clear')
-        else:
-            self.child.close(force=True)
+        self.stata.shutdown()
         return {'restart': restart}
 
     def do_is_complete(self, code):
