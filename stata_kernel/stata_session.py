@@ -30,6 +30,26 @@ ansi_regex = r'\x1b(' \
              r'(\d;\dR))'
 ansi_escape = re.compile(ansi_regex, flags=re.IGNORECASE)
 
+graph_keywords = [
+    r'gr(a|ap|aph)?', r'tw(o|ow|owa|oway)?', r'sc(a|at|att|atte|atter)?',
+    r'line', r'hist(o|og|ogr|ogra|ogram)?', r'kdensity', r'lowess', r'lpoly',
+    r'tsr?line', r'symplot', r'quantile', r'qnorm', r'pnorm', r'qchi', r'pchi',
+    r'qqplot', r'gladder', r'qladder', r'rvfplot', r'avplot', r'avplots',
+    r'cprplot', r'acprplot', r'rvpplot', r'lvr2plot', r'ac', r'pac', r'pergram',
+    r'cumsp', r'xcorr', r'wntestb', r'estat\s+acplot', r'estat\s+aroots',
+    r'estat\s+sbcusum', r'fcast\s+graph', r'varstable', r'vecstable',
+    r'irf\s+graph', r'irf\s+ograph', r'irf\s+cgraph', r'xtline'
+    r'sts\s+graph', r'strate', r'ltable', r'stci', r'stphplot', r'stcoxkm',
+    r'estat phtest', r'stcurve', r'roctab', r'rocplot', r'roccomp',
+    r'rocregplot', r'lroc', r'lsens', r'biplot', r'irtgraph\s+icc',
+    r'irtgraph\s+tcc', r'irtgraph\s+iif', r'irtgraph\s+tif', r'biplot',
+    r'cluster dendrogram', r'screeplot', r'scoreplot', r'loadingplot',
+    r'procoverlay', r'cabiplot', r'caprojection', r'mcaplot', r'mcaprojection',
+    r'mdsconfig', r'mdsshepard', r'cusum', r'cchart', r'pchart', r'rchart',
+    r'xchart', r'shewhart', r'serrbar', r'marginsplot', r'bayesgraph',
+    r'tabodds', r'teffects\s+overlap', r'npgraph', r'grmap', r'pkexamine']
+graph_keywords = r'\b(' + '|'.join(graph_keywords) + r')\b'
+
 
 class StataSession(object):
     def __init__(self):
@@ -122,11 +142,6 @@ class StataSession(object):
 
         NOTE: Also don't forget to prevent any empty lines from going to Stata
         """
-
-        graph_keywords = [
-            r'gr(a|ap|aph)?', r'tw(o|ow|owa|oway)?',
-            r'sc(a|at|att|atte|atter)?', r'line']
-        graph_keywords = r'\b(' + '|'.join(graph_keywords) + r')\b'
 
         if self.execution_mode == 'console':
             log = []
