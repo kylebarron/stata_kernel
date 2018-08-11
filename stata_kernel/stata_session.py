@@ -206,7 +206,7 @@ class StataSession(object):
         """Run code in Stata Automation using DoCommand
 
         In general, DoCommand is desired rather than DoCommandAsync:
-            1. DoCommand will stop on error (NOTE check this is always true for Windows).
+            1. DoCommand will stop on error.
             2. DoCommand returns the return code, so you don't have to check the log for errors.
             3. DoCommand is synchronous, so I don't have to keep polling for the command to have finished.
 
@@ -375,6 +375,7 @@ class StataSession(object):
         log = log.split('\n')
 
         log = log[5:]
+        # Note: I know this leaves `cap log close`.
         log = log[:-1]
 
         # Add `cap noi ` to the beginning of code lines that were sent with
@@ -422,6 +423,7 @@ class StataSession(object):
                 for line in lines:
                     all_code_lines.append(('exact', last_whitespace + line))
                     last_whitespace = '. '
+                continue
 
             cap_reg = re.compile(r'\bcap(t|tu|tur|ture)?\b').search
             qui_reg = re.compile(r'\bqui(e|et|etl|etly)?\b').search
