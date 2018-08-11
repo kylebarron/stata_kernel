@@ -503,7 +503,6 @@ class StataSession(object):
 
     def get_current_graph(self, execution_mode):
         """
-        NOTE: unclear whether I actually need to save all the graphs individually, or if I can just overwrite one. Since I'm just writing them to load them into Python, and the next graph shouldn't start writing until I'm done reading the previous one into Python, I can probably just overwrite the same file.
         """
         # Export graph to file
         rc = 0
@@ -523,7 +522,7 @@ class StataSession(object):
         with open('{}/graph.{}'.format(self.cache_dir, self.graph_format)) as f:
             img = f.read()
 
-        return rc, img, ('Token.Text', cmd)
+        return rc, (img, self.graph_format), ('Token.Text', cmd)
 
     def shutdown(self):
         if self.execution_mode == 'automation':

@@ -73,13 +73,19 @@ class StataKernel(Kernel):
             return return_obj
 
         if imgs:
-            for img in imgs:
+            img_mimetypes = {
+                'pdf': 'application/pdf',
+                'svg': 'image/svg+xml',
+                'tif': 'image/tiff',
+                'png': 'image/png'}
+            for (img, graph_format) in imgs:
+
                 content = {
                     # This dict may contain different MIME representations
                     # of the output.
                     'data': {
                         'text/plain': 'text',
-                        'image/svg+xml': img},
+                        img_mimetypes[graph_format]: img},
 
                     # We can specify the image size in the metadata field.
                     'metadata': {
