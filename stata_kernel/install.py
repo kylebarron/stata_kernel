@@ -4,6 +4,8 @@ import os
 import sys
 import platform
 
+from pathlib import Path
+from textwrap import dedent
 from jupyter_client.kernelspec import KernelSpecManager
 from IPython.utils.tempdir import TemporaryDirectory
 
@@ -34,7 +36,8 @@ def install_conf():
     stata_path = 'stata'
     if platform.system() == 'Windows':
         stata_path = win_find_path()
-    conf_default = """\
+    conf_default = dedent(
+        """\
     [stata_kernel]
 
     # Path to stata executable. If you type this in your terminal, it should start
@@ -45,9 +48,15 @@ def install_conf():
     # which monitors the Stata console. In the future another mode, 'automation',
     # may be added to connect with the Stata GUI on Windows and macOS computers
     execution_mode = {}
-    """.format(stata_path, execution_mode)
 
-    with open(os.path.expanduser('~/.stata_kernel.conf'), 'w') as f:
+    # Directory to hold temporary images and log files
+    cache_directory = ~/.stata_kernel_cache
+
+    # Extension and format for images
+    graph_format = svg
+    """.format(stata_path, execution_mode))
+
+    with open(Path('~/.stata_kernel.conf').expanduser(), 'w') as f:
         f.write(conf_default)
 
 

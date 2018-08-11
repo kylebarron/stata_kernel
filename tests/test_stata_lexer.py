@@ -326,7 +326,7 @@ class TestSingleLineComments(object):
         tokens = get_tokens(code)
         expected = [
             (Token.Comment.Single, '//'),
-            (Token.Comment.Single, '\n')]
+            (Token.Text, '\n')]
         assert tokens == expected
 
 
@@ -339,10 +339,10 @@ class TestStrings(object):
             (Token.Text, 'd'),
             (Token.Text, 'i'),
             (Token.Text, ' '),
-            (Token.Literal.String.Double, '"'),
-            (Token.Literal.String.Double, '/'),
-            (Token.Literal.String.Double, '*'),
-            (Token.Literal.String.Double, '"'),
+            (Token.Text, '"'),
+            (Token.Text, '/'),
+            (Token.Text, '*'),
+            (Token.Text, '"'),
             (Token.Text, '\n')]
         assert tokens == expected
 
@@ -353,10 +353,10 @@ class TestStrings(object):
             (Token.Text, 'd'),
             (Token.Text, 'i'),
             (Token.Text, ' '),
-            (Token.Literal.String.Double, '"'),
-            (Token.Literal.String.Double, '/'),
-            (Token.Literal.String.Double, '/'),
-            (Token.Literal.String.Double, '"'),
+            (Token.Text, '"'),
+            (Token.Text, '/'),
+            (Token.Text, '/'),
+            (Token.Text, '"'),
             (Token.Text, '\n')]
         assert tokens == expected
 
@@ -366,13 +366,13 @@ class TestStrings(object):
         expected = [
             (Token.Text, 'a'),
             (Token.Text, ' '),
-            (Token.Literal.String.Double, '"'),
-            (Token.Literal.String.Double, '*'),
-            (Token.Literal.String.Double, '"'),
+            (Token.Text, '"'),
+            (Token.Text, '*'),
+            (Token.Text, '"'),
             (Token.Text, '\n')]
         assert tokens == expected
 
-class TestCapNoiQuiChunks(object):
+class TestBlocks(object):
     def test_cap_chunk(self):
         code = 'cap {\n a\n}'
         tokens = get_tokens(code)
@@ -430,6 +430,23 @@ class TestCapNoiQuiChunks(object):
             (Token.Comment.Multiline, '*/'),
             (Token.MatchingBracket.Other, '\n'),
             (Token.MatchingBracket.Other, ' '),
+            (Token.MatchingBracket.Other, 'a'),
+            (Token.MatchingBracket.Other, '\n'),
+            (Token.MatchingBracket.Other, '}'),
+            (Token.Text, '\n')]
+        assert tokens == expected
+
+    def test_if_block_not_matching_preceding_newline(self):
+        code = 'di 1\nif {\na\n}'
+        tokens = get_tokens(code)
+        expected = [
+            (Token.Text, 'd'),
+            (Token.Text, 'i'),
+            (Token.Text, ' '),
+            (Token.Text, '1'),
+            (Token.Text, '\n'),
+            (Token.MatchingBracket.Other, 'if {'),
+            (Token.MatchingBracket.Other, '\n'),
             (Token.MatchingBracket.Other, 'a'),
             (Token.MatchingBracket.Other, '\n'),
             (Token.MatchingBracket.Other, '}'),

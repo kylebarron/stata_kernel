@@ -1,7 +1,8 @@
 import re
 from pygments.lexer import RegexLexer, include
-from pygments.token import Comment, String, Text, Token
+from pygments.token import Comment, Text, Token
 
+# yapf: disable
 class StataLexer(RegexLexer):
     """Modified Pygments Stata Lexer
 
@@ -14,7 +15,7 @@ class StataLexer(RegexLexer):
             # Later, add include('#delimit;') here
             include('comments'),
             include('strings'),
-            (r'^.*?\{', Token.MatchingBracket.Other, 'block'),
+            (r'^[^\n]*?\{', Token.MatchingBracket.Other, 'block'),
             (r'^\s*(pr(ogram|ogra|ogr|og|o)?)\s+(?!di|dr|l)(de(fine|fin|fi|f)?\s+)?', Token.MatchingBracket.Other, 'program'),
             (r'^\s*inp(u|ut)?', Token.MatchingBracket.Other, 'program'),
             (r'.', Text),
@@ -58,7 +59,7 @@ class StataLexer(RegexLexer):
             (r'.', Comment.Special),
         ],
         'comments-double-slash': [
-            (r'.(?=\n)', Comment.Single, '#pop'),
+            (r'\n', Text, '#pop'),
             (r'.', Comment.Single),
         ],
         'program': [
@@ -98,3 +99,4 @@ class StataLexer(RegexLexer):
             (r'.', Token.MatchingBracket.Other)
         ]
     }
+# yapf: enable
