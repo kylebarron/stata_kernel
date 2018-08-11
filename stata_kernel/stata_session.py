@@ -37,38 +37,33 @@ class StataSession(object):
         config = ConfigParser()
         config.read(Path('~/.stata_kernel.conf').expanduser())
 
-        stata_path = config['stata_kernel'].get('stata_path', 'stata')
+        self.stata_path = config['stata_kernel'].get('stata_path', 'stata')
         cache_dir = config['stata_kernel'].get(
             'cache_directory', '~/.stata_kernel_cache')
         cache_dir = Path(cache_dir).expanduser()
-        execution_mode = config['stata_kernel'].get('execution_mode')
-        if not execution_mode:
-            if platform.system() == 'Windows':
-                execution_mode = 'automation'
-            else:
-                execution_mode = 'console'
+        self.execution_mode = config['stata_kernel'].get('execution_mode', 'console')
 
-        self.execution_mode = execution_mode
         self.banner = 'stata_kernel: A Jupyter kernel for Stata.'
         self.cache_dir = cache_dir
         self.cache_dir.mkdir(parents=True, exist_ok=True)
-        self.stata_path = stata_path
+        self.graph_format = config['stata_kernel'].get('graph_format', 'svg')
+
         if platform.system() == 'Windows':
             self.execution_mode = 'automation'
-            self.init_windows(stata_path)
+            self.init_windows()
         elif platform.system() == 'Darwin':
-            if execution_mode == 'automation':
+            if self.execution_mode == 'automation':
                 self.init_mac_automation()
             else:
-                self.init_console(stata_path)
+                self.init_console()
         else:
             self.execution_mode = 'console'
-            self.init_console(stata_path)
+            self.init_console()
 
-    def init_windows(self, stata_path):
+    def init_windows(self):
         # The WinExec step is necessary for some reason to make graphs
         # work. Stata can't be launched directly with Dispatch()
-        WinExec(stata_path)
+        WinExec(self.stata_path)
         sleep(0.25)
         self.stata = win32com.client.Dispatch("stata.StataOLEApp")
         window = win32gui.GetForegroundWindow()
@@ -81,19 +76,15 @@ class StataSession(object):
         cmd = 'set bounds of front window to {1, 1, 1280, 900}'
         self.automate(cmd_name=cmd)
 
-    def init_console(self, stata_path):
+    def init_console(self):
         """Initiate stata console
 
         Spawn stata console and then wait/scroll to initial dot prompt.
         It tries to find the dot prompt immediately; otherwise it assumes
         there's a `more` stopping it, and presses `q` until the more has
         gone away.
-
-        Args:
-            stata_path (str): Path to stata executable
-
         """
-        self.child = pexpect.spawn(stata_path, encoding='utf-8')
+        self.child = pexpect.spawn(self.stata_path, encoding='utf-8')
         banner = []
         try:
             self.child.expect('\r\n\. ', timeout=0.2)
