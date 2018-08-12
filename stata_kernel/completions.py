@@ -114,9 +114,9 @@ class CompletionsManager(object):
                         pos += len(lfunction) + 3 + lfluff
                         if rdelimit == ")'":
                             rcomp = ""
-                        elif rdelimit == ")":
+                        elif rdelimit[0:1] == ")":
                             rcomp = ""
-                        elif rdelimit == "'":
+                        elif rdelimit[0:1] == "'":
                             rcomp = ")"
                         else:
                             rcomp = ")'"
@@ -128,7 +128,7 @@ class CompletionsManager(object):
                         if function == 'scalar':
                             env_add = 5
                             pos += len(function) + extra
-                            rcomp = "" if rdelimit == ")" else ")'"
+                            rcomp = "" if rdelimit[0:1] == ")" else ")"
         else:
             pos = 0
 
@@ -138,12 +138,12 @@ class CompletionsManager(object):
         if chunk.find('`') >= 0:
             pos += chunk.find('`') + 1
             env = 1
-            rcomp = "" if rdelimit == "'" else "'"
+            rcomp = "" if rdelimit[0:1] == "'" else "'"
         elif chunk.find('$') >= 0:
             if chunk.find('{') >= 0:
                 pos += chunk.find('{') + 1
                 env = 3
-                rcomp = "" if rdelimit == "}" else "}"
+                rcomp = "" if rdelimit[0:1] == "}" else "}"
             else:
                 env = 2
                 pos += chunk.find('$') + 1
