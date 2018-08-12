@@ -1,16 +1,11 @@
 import re
-from time import time
+# from time import time
 
 
 # TODO: Add scalars and matrices?
-# TODO: Add a local that will not conflict with user-defined values
+# TODO: Speed up completions refresh
 class CompletionsManager(object):
     def __init__(self, kernel):
-        # ds_local = "__StataKernel_ds"
-        # ds_unab = """unab {0}: *""".format(ds_local)
-        # ds_disp = """disp `"`{0}'"'""".format(ds_local)
-        # ds_clear = "local {0}".format(ds_local)
-
         self.varlist = re.compile(
             r"(?:\s+)(\S*)", flags=re.MULTILINE)
 
@@ -71,7 +66,6 @@ class CompletionsManager(object):
 
         return macros
 
-    # TODO: Faster method for non-console mode
     def quickdo(self, code, kernel):
         if kernel.stata.execution_mode == 'console':
             res, timer = kernel.stata.do_console(code)
