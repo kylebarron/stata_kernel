@@ -8,6 +8,7 @@ from time import sleep
 from pathlib import Path
 from xml.dom import minidom
 from timeit import default_timer
+from textwrap import dedent
 from configparser import ConfigParser
 
 if platform.system() == 'Windows':
@@ -60,25 +61,32 @@ class StataSession(object):
         config = ConfigParser()
         config.read(Path('~/.stata_kernel.conf').expanduser())
 
-        self.stata_path = config['stata_kernel'].get('stata_path', 'stata')
         cache_dir = config['stata_kernel'].get(
             'cache_directory', '~/.stata_kernel_cache')
         cache_dir = Path(cache_dir).expanduser()
-        self.execution_mode = config['stata_kernel'].get(
-            'execution_mode', 'console')
+        cache_dir.mkdir(parents=True, exist_ok=True)
+        self.execution_mode = config['stata_kernel'].get('execution_mode')
 
-        self.banner = 'stata_kernel: A Jupyter kernel for Stata.'
+        stata_path = config['stata_kernel'].get('stata_path')
+        if platform.system() == 'Darwin':
+            stata_path = self.get_mac_stata_path_variant(stata_path, self.execution_mode)
+        if not stata_path:
+            self.raise_config_error('stata_path')
+
+        self.stata_path = stata_path
         self.cache_dir = cache_dir
-        self.cache_dir.mkdir(parents=True, exist_ok=True)
         self.graph_format = config['stata_kernel'].get('graph_format', 'svg')
         self.img_metadata = {
             'width': 600,
             'height': 400}
+        self.banner = 'stata_kernel: A Jupyter kernel for Stata.'
 
         if platform.system() == 'Windows':
             self.execution_mode = 'automation'
             self.init_windows()
         elif platform.system() == 'Darwin':
+            if not self.execution_mode:
+                self.raise_config_error('execution_mode')
             if self.execution_mode == 'automation':
                 self.init_mac_automation()
             else:
@@ -115,6 +123,7 @@ class StataSession(object):
         gone away.
         """
         self.child = pexpect.spawn(self.stata_path, encoding='utf-8')
+        self.child.logfile = open(self.cache_dir / 'console_debug.log', 'w')
         banner = []
         try:
             self.child.expect('\r\n\. ', timeout=0.2)
@@ -329,7 +338,12 @@ class StataSession(object):
         regex = r'\r\n(\x1b\[\?1h\x1b=)?\r\n\. '
         self.child.sendline(line)
         timer = default_timer()
-        self.child.expect(regex, timeout=20)
+        try:
+            self.child.expect(regex, timeout=20)
+        except KeyboardInterrupt:
+            self.child.sendcontrol('c')
+            self.child.expect(regex, timeout=20)
+
         delta = default_timer() - timer
         return ansi_escape.sub('', self.child.before), delta
 
@@ -357,9 +371,13 @@ class StataSession(object):
             (int): execution time
         """
         timer = default_timer()
-        rc = self.automate('DoCommand', line)
-        delta = default_timer() - timer
+        try:
+            rc = self.automate('DoCommand', line)
+        except KeyboardInterrupt:
+            self.automate('UtilSetStataBreak')
+            rc = 1
 
+        delta = default_timer() - timer
         return rc, delta
 
     def do_aut_async(self, line):
@@ -385,17 +403,24 @@ class StataSession(object):
 
         line = 'cap noi ' + line
         timer = default_timer()
-        self.automate('DoCommandAsync', line)
-        finished = 0
-        while not finished:
-            # NOTE What should the optimal sleep time be?
-            # Should it be in the settings?
-            sleep(0.25)
-            timer += 0.25
-            finished = self.automate('UtilIsStataFree')
+
+        try:
+            self.automate('DoCommandAsync', line)
+            finished = 0
+            while not finished:
+                # NOTE What should the optimal sleep time be?
+                # Should it be in the settings?
+                sleep(0.25)
+                timer += 0.25
+                finished = self.automate('UtilIsStataFree')
+
+            rc = self.automate('UtilStataErrorCode')
+        except KeyboardInterrupt:
+            self.automate('UtilSetStataBreak')
+            rc = 1
 
         delta = default_timer() - timer
-        return self.automate('UtilStataErrorCode'), delta
+        return rc, delta
 
     def automate(self, cmd_name, value=None, **kwargs):
         """Execute `cmd_name` through Automation in a cross-platform manner
@@ -410,13 +435,7 @@ class StataSession(object):
                 return getattr(self.stata, cmd_name)()
             return getattr(self.stata, cmd_name)(value, **kwargs)
 
-        app_name = re.search(r'/?([\w-]+)$', self.stata_path).group(1)
-        app_dict = {
-            'stata-mp': 'StataMP',
-            'stata-se': 'StataSE',
-            'stata-ic': 'StataIC'}
-        app_name = app_dict.get(app_name, app_name)
-
+        app_name = Path(self.stata_path).name
         cmd = 'tell application "{}" to {}'.format(app_name, cmd_name)
         if value is not None:
             value = str(value).replace('\n', '\\n').replace('\r', '\\r')
@@ -665,6 +684,34 @@ class StataSession(object):
             img = self._fix_svg_size(img, **img_metadata)
 
         return rc, (img, self.graph_format), ('Token.Text', cmd)
+
+    def get_mac_stata_path_variant(self, stata_path, execution_mode):
+        if stata_path == '':
+            return ''
+
+        path = Path(stata_path)
+        if execution_mode == 'automation':
+            d = {
+                'stata': 'Stata',
+                'stata-se': 'StataSE',
+                'stata-mp': 'StataMP'}
+        else:
+            d = {
+                'Stata': 'stata',
+                'StataSE': 'stata-se',
+                'StataMP': 'stata-mp'}
+
+        bin_name = d.get(path.name, path.name)
+        return str(path.parent / bin_name)
+
+    def raise_config_error(self, config_opt):
+        msg = """\
+        {} option in configuration file is missing
+        Refer to the documentation to see how to set it manually:
+
+        https://kylebarron.github.io/stata_kernel/user_guide/configuration/
+        """.format(config_opt)
+        raise ValueError(dedent(msg))
 
     def shutdown(self):
         if self.execution_mode == 'automation':
