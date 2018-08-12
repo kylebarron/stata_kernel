@@ -13,6 +13,13 @@ class CodeManager(object):
         self.tokens = self.tokenize_code(code)
         self.tokens_nocomments = self.remove_comments()
 
+        self.ends_sc = str(self.tokens_nocomments[-1][0]) in ['Token.Keyword.Namespace', 'Token.Keyword.Reserved']
+
+        self.has_sc_delimits = 'Token.Keyword.Namespace' in [str(x[0]) for x in self.tokens_nocomments]
+        if self.has_sc_delimits:
+            self.adjust_for_semicolons()
+
+
     def tokenize_code(self, code):
         """Tokenize input code using custom lexer
 
@@ -45,6 +52,23 @@ class CodeManager(object):
         """
         return [
             x for x in self.tokens if not str(x[0]).startswith('Token.Comment')]
+
+    def adjust_for_semicolons(self):
+        # Remove any \n with label Token.Keyword.Namespace
+        # These are embedded newlines inside #delimit ; blocks
+
+        tokens = [x for x in self.tokens_nocomments if not ((str(x[0]) == 'Token.Keyword.Namespace') and (x[1] == '\n'))]
+
+        # Change the ; delimiters to \n
+        tokens = [('Newline delimiter', '\n') if (str(x[0]) == 'Token.Keyword.Reserved') and x[1] == ';' else x for x in tokens ]
+
+        # and then join all text together
+        text = ''.join([x[1] for x in tokens])
+
+        # Then run it through the tokenizer again once more to get blocks
+        self.tokens_nocomments = self.tokenize_code(text)
+
+        self.get_chunks()
 
     def get_chunks(self):
         """Get valid, executable chunks
