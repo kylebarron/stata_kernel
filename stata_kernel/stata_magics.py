@@ -92,7 +92,7 @@ class StataMagics():
     img_metadata = {'width': 600, 'height': 400}
 
     magic_regex = re.compile(
-        r'\A%(?<magic>.+?)(?<code>\s+.*)?\Z',
+        r'\A%(?P<magic>.+?)(?P<code>\s+.*)?\Z',
         flags=re.DOTALL + re.MULTILINE)
 
     available_magics = [
@@ -194,15 +194,15 @@ class StataMagics():
             gregex['match'] = re.compile(code.strip())
             if args['truncate']:
                 gregex['main'] = re.compile(
-                    r"^(?<macro>_?[\w\d]*?):"
-                    r"(?<cr>[\r\n]{0,2} {1,16})"
-                    r"(?<contents>.*?$)",
+                    r"^(?P<macro>_?[\w\d]*?):"
+                    r"(?P<cr>[\r\n]{0,2} {1,16})"
+                    r"(?P<contents>.*?$)",
                     flags=re.DOTALL + re.MULTILINE)
             else:
                 gregex['main'] = re.compile(
-                    r"^(?<macro>_?[\w\d]*?):"
-                    r"(?<cr>[\r\n]{0,2} {1,16})"
-                    r"(?<contents>.*?$(?:[\r\n]{0,2} {16,16}.*?$)*)",
+                    r"^(?P<macro>_?[\w\d]*?):"
+                    r"(?P<cr>[\r\n]{0,2} {1,16})"
+                    r"(?P<contents>.*?$(?:[\r\n]{0,2} {16,16}.*?$)*)",
                     flags=re.DOTALL + re.MULTILINE)
         except:
             self.status = -1
