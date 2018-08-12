@@ -2,7 +2,6 @@ import argparse
 import regex
 from .code_manager import CodeManager
 
-
 # ---------------------------------------------------------------------
 # Magic argument parsers
 
@@ -11,107 +10,90 @@ class MagicParsers():
     def __init__(self):
         self.plot = argparse.ArgumentParser()
         self.plot.add_argument(
-            'code',
-            nargs    = '*',
-            type     = str,
-            metavar  = 'CODE',
-            help     = "Code to run")
+            'code', nargs='*', type=str, metavar='CODE', help="Code to run")
         self.plot.add_argument(
             '--scale',
-            dest     = 'scale',
-            type     = float,
-            metavar  = 'SCALE',
-            default  = 1,
-            help     = "Scale default height and width",
-            required = False)
+            dest='scale',
+            type=float,
+            metavar='SCALE',
+            default=1,
+            help="Scale default height and width",
+            required=False)
         self.plot.add_argument(
             '--width',
-            dest     = 'width',
-            type     = int,
-            metavar  = 'WIDTH',
-            default  = 600,
-            help     = "Plot width",
-            required = False)
+            dest='width',
+            type=int,
+            metavar='WIDTH',
+            default=600,
+            help="Plot width",
+            required=False)
         self.plot.add_argument(
             '--height',
-            dest     = 'height',
-            type     = int,
-            metavar  = 'height',
-            default  = 400,
-            help     = "Plot height",
-            required = False)
+            dest='height',
+            type=int,
+            metavar='height',
+            default=400,
+            help="Plot height",
+            required=False)
         self.plot.add_argument(
             '--set',
-            dest     = 'set',
-            action   = 'store_true',
-            help     = "Permanently set plot width and height.",
-            required = False)
+            dest='set',
+            action='store_true',
+            help="Permanently set plot width and height.",
+            required=False)
 
         self.globals = argparse.ArgumentParser()
         self.globals.add_argument(
-            'code',
-            nargs    = '*',
-            type     = str,
-            metavar  = 'CODE',
-            help     = "Code to run")
+            'code', nargs='*', type=str, metavar='CODE', help="Code to run")
         self.globals.add_argument(
-            '-t', '--truncate',
-            dest     = 'truncate',
-            action   = 'store_true',
-            help     = "Truncate macro values to first line printed by Stata",
-            required = False)
+            '-t',
+            '--truncate',
+            dest='truncate',
+            action='store_true',
+            help="Truncate macro values to first line printed by Stata",
+            required=False)
 
         self.time = argparse.ArgumentParser()
         self.time.add_argument(
-            'code',
-            nargs    = '*',
-            type     = str,
-            metavar  = 'CODE',
-            help     = "Code to run")
+            'code', nargs='*', type=str, metavar='CODE', help="Code to run")
         self.time.add_argument(
             '--profile',
-            dest     = 'profile',
-            action   = 'store_true',
-            help     = "Profile each line of code",
-            required = False)
+            dest='profile',
+            action='store_true',
+            help="Profile each line of code",
+            required=False)
 
         self.timeit = argparse.ArgumentParser()
         self.timeit.add_argument(
-            'code',
-            nargs    = '*',
-            type     = str,
-            metavar  = 'CODE',
-            help     = "Code to run")
+            'code', nargs='*', type=str, metavar='CODE', help="Code to run")
         self.timeit.add_argument(
             '-r',
-            dest     = 'r',
-            type     = int,
-            metavar  = 'R',
-            default  = 3,
-            help     = "Choose best time of R loops.",
-            required = False)
+            dest='r',
+            type=int,
+            metavar='R',
+            default=3,
+            help="Choose best time of R loops.",
+            required=False)
         self.timeit.add_argument(
             '-n',
-            dest     = 'n',
-            type     = int,
-            metavar  = 'N',
-            default  = None,
-            help     = "Execute statement N times per loop.",
-            required = False)
+            dest='n',
+            type=int,
+            metavar='N',
+            default=None,
+            help="Execute statement N times per loop.",
+            required=False)
+
 
 # ---------------------------------------------------------------------
 # Hack-ish magic parser
 
 
 class StataMagics():
-    img_metadata = {
-        'width': 600,
-        'height': 400}
+    img_metadata = {'width': 600, 'height': 400}
 
     magic_regex = regex.compile(
         r'\A%(?<magic>.+?)(?<code>\s+.*)?\Z',
-        flags = regex.DOTALL + regex.MULTILINE
-    )
+        flags=regex.DOTALL + regex.MULTILINE)
 
     available_magics = [
         'plot',
@@ -203,9 +185,9 @@ class StataMagics():
             self.status = -1
             return code
 
-    def magic_globals(self, code, kernel, local = False):
+    def magic_globals(self, code, kernel, local=False):
         gregex = {}
-        gregex['blank'] = regex.compile(r"^ {16,16}", flags = regex.MULTILINE)
+        gregex['blank'] = regex.compile(r"^ {16,16}", flags=regex.MULTILINE)
         try:
             args = vars(self.parse.globals.parse_args(code.split(' ')))
             code = ' '.join(args['code'])
@@ -215,13 +197,13 @@ class StataMagics():
                     r"^(?<macro>_?[\w\d]*?):"
                     r"(?<cr>[\r\n]{0,2} {1,16})"
                     r"(?<contents>.*?$)",
-                    flags = regex.DOTALL + regex.MULTILINE)
+                    flags=regex.DOTALL + regex.MULTILINE)
             else:
                 gregex['main'] = regex.compile(
                     r"^(?<macro>_?[\w\d]*?):"
                     r"(?<cr>[\r\n]{0,2} {1,16})"
                     r"(?<contents>.*?$(?:[\r\n]{0,2} {16,16}.*?$)*)",
-                    flags = regex.DOTALL + regex.MULTILINE)
+                    flags=regex.DOTALL + regex.MULTILINE)
         except:
             self.status = -1
 
@@ -252,10 +234,10 @@ class StataMagics():
                     if not gregex['match'].search(macro):
                         continue
 
-                macro  += ':'
-                lmacro  = len(macro)
+                macro += ':'
+                lmacro = len(macro)
                 lspaces = len(cr.strip('\r\n'))
-                lens    = max(lens, lmacro)
+                lens = max(lens, lmacro)
                 if len(macro) <= 15:
                     if (lspaces + lmacro + extra) > 16:
                         print_globals += [(macro, ' ' + contents)]
@@ -266,8 +248,9 @@ class StataMagics():
 
         fmt = "{{0:{0}}} {{1}}".format(lens)
         for macro, contents in print_globals:
-            print(fmt.format(
-                macro, gregex['blank'].sub((lens + 1) * ' ', contents)))
+            print(
+                fmt.format(macro, gregex['blank'].sub((lens + 1) * ' ',
+                                                      contents)))
 
         self.status = -1
         return ''
