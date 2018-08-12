@@ -58,6 +58,7 @@ graph_keywords = r'\b(' + '|'.join(graph_keywords) + r')\b'
 class StataSession(object):
     def __init__(self):
 
+        self.install = os.path.dirname(os.path.abspath(__file__))
         config = ConfigParser()
         config.read(Path('~/.stata_kernel.conf').expanduser())
 
@@ -96,6 +97,7 @@ class StataSession(object):
 
         # Change to this directory and set more off
         text = [
+            ('Token.Text', 'adopath + `"{}/ado"\''.format(self.install)),
             ('Token.Text', 'cd `"{}"\''.format(os.getcwd())),
             ('Token.Text', 'set more off'),
             ('Token.Text', 'clear all'),
@@ -186,12 +188,16 @@ class StataSession(object):
             graphs = 1
             timeit = 0
 
+        # NOTE(mauricio): On some systems, the error regex does not
+        # capture the exit code if surrounded by \r\n; I made it catch
+        # either or both.
+
         time_total = 0
         time_profile = []
         if self.execution_mode == 'console':
             log = []
             rc = 0
-            err_regex = re.compile(r'\r\nr\((\d+)\);\r\n').search
+            err_regex = re.compile(r'[\r\n]{1,2}r\((\d+)\);[\r\n]{1,2}').search
             new_syn_chunks = []
             imgs = []
 

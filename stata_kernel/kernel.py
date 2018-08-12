@@ -23,6 +23,7 @@ class StataKernel(Kernel):
         self.magics = StataMagics()
 
         self.stata = StataSession()
+        self.completions = CompletionsManager(self)
         self.banner = self.stata.banner
 
     def do_execute(
@@ -58,6 +59,9 @@ class StataKernel(Kernel):
         cm = CodeManager(code)
         rc, imgs, res = self.stata.do(cm.get_chunks(), self.magics)
         stream_content = {'text': res}
+
+        # Refresh completions
+        self.completions.refresh(self)
 
         # Post magic results, if applicable
         self.magics.post(self)
@@ -132,9 +136,35 @@ class StataKernel(Kernel):
         return {'status': 'incomplete', 'indent': '    '}
 
     def do_complete(self, code, cursor_pos):
-        env = self.stata.env
-        suggestions = CompletionsManager(env)
-        return {}
+        # env = self.stata.env
+        # suggestions = CompletionsManager(env)
+
+        # Suggest for the current space-delimited word
+        pos = code[:cursor_pos].rfind(' ')
+        pos = 0 if pos < 0 else pos + 1
+        chunk = code[pos:cursor_pos]
+        env = 0
+
+        # Figure out if this is a local or global; env = 0 (default)
+        # will suggest variables in memory
+
+        if chunk.find('`') >= 0:
+            pos += chunk.find('`') + 1
+            env = 1
+        elif chunk.find('$') >= 0:
+            if chunk.find('{') >= 0:
+                pos += chunk.find('{') + 1
+                env = 3
+            else:
+                env = 2
+                pos += chunk.find('$') + 1
+
+        return {
+            'status': 'ok',
+            'cursor_start': pos,
+            'cursor_end': cursor_pos,
+            'matches': self.completions.get(code[pos:cursor_pos], env)
+        }
 
     def is_complete(self, code):
         cm = CodeManager(code)
