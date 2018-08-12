@@ -124,3 +124,22 @@ class StataKernel(Kernel):
         if str(cm.tokens[-1][0]) == 'Token.MatchingBracket.Other':
             return False
         return True
+
+    def do_inspect(self, code, cursor_pos, detail_level=0):
+        rc, imgs, res = self.stata.do([('Token.Text', 'man {}'.format(code))])
+        if rc:
+            status = 'error'
+        else:
+            status = 'ok'
+        content = {
+            # 'ok' if the request succeeded or 'error', with error information as in all other replies.
+            'status' : status,
+
+            # found should be true if an object was found, false otherwise
+            'found' : True,
+
+            # data can be empty if nothing is found
+            'data': {'text/plain': 'hello world'},
+            'metadata': {},
+        }
+        self.send_response(self.iopub_socket, 'display_data', content)
