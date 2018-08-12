@@ -15,12 +15,15 @@ class CodeManager(object):
         self.tokens = self.tokenize_code(code)
         self.tokens_nocomments = self.remove_comments()
 
-        self.ends_sc = str(self.tokens_nocomments[-1][0]) in ['Token.Keyword.Namespace', 'Token.Keyword.Reserved']
+        self.ends_sc = str(self.tokens_nocomments[-1][0]) in [
+            'Token.Keyword.Namespace', 'Token.Keyword.Reserved']
 
-        self.has_sc_delimits = 'Token.Keyword.Namespace' in [str(x[0]) for x in self.tokens_nocomments]
+        self.has_sc_delimits = 'Token.Keyword.Namespace' in [
+            str(x[0]) for x in self.tokens_nocomments]
+        self.is_complete = self._is_complete()
+
         if self.has_sc_delimits:
             self.adjust_for_semicolons()
-
 
     def tokenize_code(self, code):
         """Tokenize input code using custom lexer
@@ -59,30 +62,43 @@ class CodeManager(object):
         # Remove any \n with label Token.Keyword.Namespace
         # These are embedded newlines inside #delimit ; blocks
 
-        tokens = [x for x in self.tokens_nocomments if not ((str(x[0]) == 'Token.Keyword.Namespace') and (x[1] == '\n'))]
-
-        # Find indices of `;`
-        inds = [ind for ind, x in enumerate(tokens) if (str(x[0]) == 'Token.Keyword.Reserved') and x[1] == ';']
-
-        # If there are no semicolons,
-        if not inds:
-            self.tokens_nocomments = self.tokenize_code('')
-            return
-
-        # Drop all lines after the last index of ;
-        # This is so that a non ;-delimited last line doesn't still get run
-        # This actually discards the final ;, but this means that I don't have
-        # an extra newline from changing the ; to \n
-        tokens = tokens[:max(inds)]
+        tokens = [
+            x for x in self.tokens_nocomments
+            if not ((str(x[0]) == 'Token.Keyword.Namespace') and (x[1] == '\n'))
+        ]
 
         # Change the ; delimiters to \n
-        tokens = [('Newline delimiter', '\n') if (str(x[0]) == 'Token.Keyword.Reserved') and x[1] == ';' else x for x in tokens ]
+        tokens = [('Newline delimiter', '\n') if
+                  (str(x[0]) == 'Token.Keyword.Reserved') and x[1] == ';' else x
+                  for x in tokens]
 
         # and then join all text together
         text = ''.join([x[1] for x in tokens])
 
         # Then run it through the tokenizer again once more to get blocks
         self.tokens_nocomments = self.tokenize_code(text)
+
+    def _is_complete(self):
+        if str(self.tokens_nocomments[-1][0]) == 'Token.MatchingBracket.Other':
+            return False
+
+        if self.ends_sc:
+            # Find indices of `;`
+            inds = [
+                ind for ind, x in enumerate(self.tokens)
+                if (str(x[0]) == 'Token.Keyword.Reserved') and x[1] == ';']
+
+            if not inds:
+                inds = [0]
+
+            # Check if there's non whitespace text after the last semicolon
+            # If so, then it's not complete
+            tr_text = ''.join([
+                x[1] for x in self.tokens[max(inds) + 1:]]).strip()
+            if tr_text:
+                return False
+
+        return True
 
     def get_chunks(self):
         """Get valid, executable chunks

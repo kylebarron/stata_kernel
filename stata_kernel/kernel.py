@@ -140,7 +140,4 @@ class StataKernel(Kernel):
         return {}
 
     def is_complete(self, code):
-        cm = CodeManager(code, self.sc_delimit_mode)
-        if str(cm.tokens_nocomments[-1][0]) == 'Token.MatchingBracket.Other':
-            return False
-        return True
+        return CodeManager(code, self.sc_delimit_mode).is_complete
