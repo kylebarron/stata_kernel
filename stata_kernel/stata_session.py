@@ -58,7 +58,7 @@ graph_keywords = r'\b(' + '|'.join(graph_keywords) + r')\b'
 class StataSession(object):
     def __init__(self):
 
-        self.install = os.path.dirname(os.path.abspath(__file__))
+        self.adodir = os.path.join(Path(__file__).resolve().parent, "ado")
         config = ConfigParser()
         config.read(Path('~/.stata_kernel.conf').expanduser())
 
@@ -97,7 +97,7 @@ class StataSession(object):
 
         # Change to this directory and set more off
         text = [
-            ('Token.Text', 'adopath + `"{}/ado"\''.format(self.install)),
+            ('Token.Text', 'adopath + `"{}"\''.format(self.adodir)),
             ('Token.Text', 'cd `"{}"\''.format(os.getcwd())),
             ('Token.Text', 'set more off'),
             ('Token.Text', 'clear all'),

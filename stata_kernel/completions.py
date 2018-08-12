@@ -21,11 +21,11 @@ class CompletionsManager(object):
 
         # Varlist-style matching; applies to all
         self.varlist = re.compile(
-            r"(?:\s+)(\S*)", flags=re.MULTILINE)
+            r"(?:\s+)(\S+)", flags=re.MULTILINE)
 
-        # Clean line-breaks
+        # Clean line-breaks.
         self.varclean = re.compile(
-            r"\s*[\s\S?]^>\s*", flags=re.MULTILINE).sub
+            r"(?=\s*)[\s\S]{1,2}?^>\s", flags=re.MULTILINE).sub
 
         # Macth context; this is used to determine if the line starts
         # with matrix or scalar. It also matches constructs like
@@ -40,7 +40,7 @@ class CompletionsManager(object):
                     r"\([^\)\s]*?\Z", **kwargs).search,
             'lfunction':
                 regex.compile(
-                    r"(?r)`\=(?<context>\S+?)"
+                    r"(?r)\s(?<fluff>.*?)`\=(?<context>\S+?)"
                     r"\([^\)\s]*?\Z", **kwargs).search,
             'line':
                 regex.compile(r"(?r)^\s*(?<context>\S+)", **kwargs).search}
@@ -50,11 +50,13 @@ class CompletionsManager(object):
     def refresh(self, kernel):
         self.suggestions = self.get_suggestions(kernel)
 
-    def get_env(self, code):
+    def get_env(self, code, rdelimit):
         """Returns completions environment
 
         Args:
             code (str): Right-truncated to cursor position
+            rdelimit (str): The two characters immediately after code.
+                Will be used to accurately determine rcomp.
 
         Returns:
             env (int):
@@ -105,10 +107,19 @@ class CompletionsManager(object):
                 lfuncontext = self.context['lfunction'](code)
                 if lfuncontext:
                     lfunction = lfuncontext.groupdict()['context']
+                    fluff = lfuncontext.groupdict()['fluff']
+                    lfluff = 0 if not fluff else len(fluff)
                     if lfunction == 'scalar':
                         env_add = 5
-                        pos += len(lfunction) + 3
-                        rcomp = ")'"
+                        pos += len(lfunction) + 3 + lfluff
+                        if rdelimit == ")'":
+                            rcomp = ""
+                        elif rdelimit == ")":
+                            rcomp = ""
+                        elif rdelimit == "'":
+                            rcomp = ")"
+                        else:
+                            rcomp = ")'"
                 else:
                     funcontext = self.context['function'](code)
                     if funcontext:
@@ -117,7 +128,7 @@ class CompletionsManager(object):
                         if function == 'scalar':
                             env_add = 5
                             pos += len(function) + extra
-                            rcomp = ")"
+                            rcomp = "" if rdelimit == ")" else ")'"
         else:
             pos = 0
 
@@ -127,12 +138,12 @@ class CompletionsManager(object):
         if chunk.find('`') >= 0:
             pos += chunk.find('`') + 1
             env = 1
-            rcomp = "'"
+            rcomp = "" if rdelimit == "'" else "'"
         elif chunk.find('$') >= 0:
             if chunk.find('{') >= 0:
                 pos += chunk.find('{') + 1
                 env = 3
-                rcomp = "}"
+                rcomp = "" if rdelimit == "}" else "}"
             else:
                 env = 2
                 pos += chunk.find('$') + 1

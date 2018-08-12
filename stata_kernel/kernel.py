@@ -144,7 +144,9 @@ class StataKernel(Kernel):
     def do_complete(self, code, cursor_pos):
         # Environment-aware suggestion for the current space-delimited
         # variable, local, etc.
-        env, pos, chunk, rcomp = self.completions.get_env(code[:cursor_pos])
+        env, pos, chunk, rcomp = self.completions.get_env(
+            code[:cursor_pos], code[cursor_pos:(cursor_pos + 2)])
+
         return {
             'status': 'ok',
             'cursor_start': pos,
