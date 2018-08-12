@@ -6,7 +6,7 @@ from .code_manager import CodeManager
 
 # NOTE(mauricio): Figure  out if passing the kernel around is a problem...
 class StataParser(argparse.ArgumentParser):
-    def __init__(self, *args, kernel = None, **kwargs):
+    def __init__(self, *args, kernel=None, **kwargs):
         super(StataParser, self).__init__(*args, **kwargs)
         self.kernel = kernel
 
@@ -20,97 +20,61 @@ class StataParser(argparse.ArgumentParser):
         print_kernel(self.format_usage(), self.kernel)
         sys.exit(2)
 
+
 # ---------------------------------------------------------------------
 # Magic argument parsers
 
 
 class MagicParsers():
     def __init__(self, kernel):
-        self.plot = StataParser(prog = '%plot', kernel = kernel)
+        self.plot = StataParser(prog='%plot', kernel=kernel)
         self.plot.add_argument(
             'code', nargs='*', type=str, metavar='CODE', help="Code to run")
         self.plot.add_argument(
-            '--scale',
-            dest='scale',
-            type=float,
-            metavar='SCALE',
-            default=1,
-            help="Scale default height and width",
-            required=False)
+            '--scale', dest='scale', type=float, metavar='SCALE', default=1,
+            help="Scale default height and width", required=False)
         self.plot.add_argument(
-            '--width',
-            dest='width',
-            type=int,
-            metavar='WIDTH',
-            default=600,
-            help="Plot width",
-            required=False)
+            '--width', dest='width', type=int, metavar='WIDTH', default=600,
+            help="Plot width", required=False)
         self.plot.add_argument(
-            '--height',
-            dest='height',
-            type=int,
-            metavar='height',
-            default=400,
-            help="Plot height",
-            required=False)
+            '--height', dest='height', type=int, metavar='height', default=400,
+            help="Plot height", required=False)
         self.plot.add_argument(
-            '--set',
-            dest='set',
-            action='store_true',
-            help="Set plot width and height for the session.",
-            required=False)
+            '--set', dest='set', action='store_true',
+            help="Set plot width and height for the session.", required=False)
 
-        self.globals = StataParser(prog = '%globals', kernel = kernel)
+        self.globals = StataParser(prog='%globals', kernel=kernel)
         self.globals.add_argument(
             'code', nargs='*', type=str, metavar='CODE', help="Code to run")
         self.globals.add_argument(
-            '-t',
-            '--truncate',
-            dest='truncate',
-            action='store_true',
+            '-t', '--truncate', dest='truncate', action='store_true',
             help="Truncate macro values to first line printed by Stata",
             required=False)
 
-        self.locals = StataParser(prog = '%locals', kernel = kernel)
+        self.locals = StataParser(prog='%locals', kernel=kernel)
         self.locals.add_argument(
             'code', nargs='*', type=str, metavar='CODE', help="Code to run")
         self.locals.add_argument(
-            '-t',
-            '--truncate',
-            dest='truncate',
-            action='store_true',
+            '-t', '--truncate', dest='truncate', action='store_true',
             help="Truncate macro values to first line printed by Stata",
             required=False)
 
-        self.time = StataParser(prog = '%time', kernel = kernel)
+        self.time = StataParser(prog='%time', kernel=kernel)
         self.time.add_argument(
             'code', nargs='*', type=str, metavar='CODE', help="Code to run")
         self.time.add_argument(
-            '--profile',
-            dest='profile',
-            action='store_true',
-            help="Profile each line of code",
-            required=False)
+            '--profile', dest='profile', action='store_true',
+            help="Profile each line of code", required=False)
 
-        self.timeit = StataParser(prog = '%timeit', kernel = kernel)
+        self.timeit = StataParser(prog='%timeit', kernel=kernel)
         self.timeit.add_argument(
             'code', nargs='*', type=str, metavar='CODE', help="Code to run")
         self.timeit.add_argument(
-            '-r',
-            dest='r',
-            type=int,
-            metavar='R',
-            default=3,
-            help="Choose best time of R loops.",
-            required=False)
+            '-r', dest='r', type=int, metavar='R', default=3,
+            help="Choose best time of R loops.", required=False)
         self.timeit.add_argument(
-            '-n',
-            dest='n',
-            type=int,
-            metavar='N',
-            default=None,
-            help="Execute statement N times per loop.",
-            required=False)
+            '-n', dest='n', type=int, metavar='N', default=None,
+            help="Execute statement N times per loop.", required=False)
 
 
 # ---------------------------------------------------------------------
@@ -121,8 +85,7 @@ class StataMagics():
     img_metadata = {'width': 600, 'height': 400}
 
     magic_regex = re.compile(
-        r'\A%(?P<magic>.+?)(?P<code>\s+.*)?\Z',
-        flags=re.DOTALL + re.MULTILINE)
+        r'\A%(?P<magic>.+?)(?P<code>\s+.*)?\Z', flags=re.DOTALL + re.MULTILINE)
 
     available_magics = [
         'plot',
@@ -132,8 +95,7 @@ class StataMagics():
         'locals',
         'globals',
         'time',
-        'timeit'
-    ]
+        'timeit']
 
     def __init__(self):
         self.quit_early = None
@@ -161,8 +123,7 @@ class StataMagics():
                     if code.strip() == '':
                         self.status = -1
                 else:
-                    print_kernel(
-                        "Unknown magic %{0}.".format(name), kernel)
+                    print_kernel("Unknown magic %{0}.".format(name), kernel)
                     self.status = -1
 
                 if (self.status == -1):
@@ -170,8 +131,7 @@ class StataMagics():
                         'execution_count': kernel.execution_count,
                         'status': 'ok',
                         'payload': [],
-                        'user_expressions': {}
-                    }
+                        'user_expressions': {}}
 
         elif code.strip().startswith("?"):
             code = "help " + code.strip()
@@ -181,8 +141,7 @@ class StataMagics():
     def post(self, kernel):
         if self.timeit in [1, 2]:
             total, _ = self.time_profile.pop()
-            print_kernel(
-                "Wall time (seconds): {0:.2f}".format(total), kernel)
+            print_kernel("Wall time (seconds): {0:.2f}".format(total), kernel)
 
             if (len(self.time_profile) > 0) and (self.timeit == 2):
                 lens = 0
@@ -231,8 +190,7 @@ class StataMagics():
                 gregex['main'] = re.compile(
                     r"^(?P<macro>_?[\w\d]*?):"
                     r"(?P<cr>[\r\n]{0,2} {1,16})"
-                    r"(?P<contents>.*?$)",
-                    flags=re.DOTALL + re.MULTILINE)
+                    r"(?P<contents>.*?$)", flags=re.DOTALL + re.MULTILINE)
             else:
                 gregex['main'] = re.compile(
                     r"^(?P<macro>_?[\w\d]*?):"
@@ -336,9 +294,10 @@ class StataMagics():
 # ---------------------------------------------------------------------
 # Print messages to the kernel
 
+
 def print_kernel(msg, kernel):
-    msg = re.sub(r'$', r'\r\n', msg, flags = re.MULTILINE)
-    msg = re.sub(r'[\r\n]{1,2}[\r\n]{1,2}', r'\r\n', msg, flags = re.MULTILINE)
+    msg = re.sub(r'$', r'\r\n', msg, flags=re.MULTILINE)
+    msg = re.sub(r'[\r\n]{1,2}[\r\n]{1,2}', r'\r\n', msg, flags=re.MULTILINE)
     stream_content = {'text': msg}
     stream_content['name'] = 'stdout'
     kernel.send_response(kernel.iopub_socket, 'stream', stream_content)

@@ -26,11 +26,7 @@ class StataKernel(Kernel):
         self.banner = self.stata.banner
 
     def do_execute(
-            self,
-            code,
-            silent,
-            store_history=True,
-            user_expressions=None,
+            self, code, silent, store_history=True, user_expressions=None,
             allow_stdin=False):
         """Execute user code.
 

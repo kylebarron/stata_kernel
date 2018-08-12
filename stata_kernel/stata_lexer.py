@@ -2,6 +2,7 @@ import re
 from pygments.lexer import RegexLexer, include
 from pygments.token import Comment, Text, Token
 
+
 # yapf: disable
 class StataLexer(RegexLexer):
     """Modified Pygments Stata Lexer

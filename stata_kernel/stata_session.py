@@ -69,16 +69,15 @@ class StataSession(object):
 
         stata_path = config['stata_kernel'].get('stata_path')
         if platform.system() == 'Darwin':
-            stata_path = self.get_mac_stata_path_variant(stata_path, self.execution_mode)
+            stata_path = self.get_mac_stata_path_variant(
+                stata_path, self.execution_mode)
         if not stata_path:
             self.raise_config_error('stata_path')
 
         self.stata_path = stata_path
         self.cache_dir = cache_dir
         self.graph_format = config['stata_kernel'].get('graph_format', 'svg')
-        self.img_metadata = {
-            'width': 600,
-            'height': 400}
+        self.img_metadata = {'width': 600, 'height': 400}
         self.banner = 'stata_kernel: A Jupyter kernel for Stata.'
 
         if platform.system() == 'Windows':
@@ -96,10 +95,11 @@ class StataSession(object):
             self.init_console()
 
         # Change to this directory and set more off
-        text = [('Token.Text', 'cd `"{}"\''.format(os.getcwd())),
-                ('Token.Text', 'set more off'),
-                ('Token.Text', 'clear all'),
-                ('Token.Text', 'capture log close _all'),]
+        text = [
+            ('Token.Text', 'cd `"{}"\''.format(os.getcwd())),
+            ('Token.Text', 'set more off'),
+            ('Token.Text', 'clear all'),
+            ('Token.Text', 'capture log close _all'), ]
         self.do(text)
 
     def init_windows(self):
@@ -141,7 +141,7 @@ class StataSession(object):
         # Set banner to Stata's shell header
         self.banner = ansi_escape.sub('', '\n'.join(banner))
 
-    def do(self, syn_chunks, magics = None):
+    def do(self, syn_chunks, magics=None):
         """Run code in Stata
 
         This is a wrapper for the platform-dependent functions.
@@ -223,7 +223,6 @@ class StataSession(object):
                         time_profile += [(timer, line[1][:68] + ' ...')]
                     else:
                         time_profile += [(timer, line[1])]
-
 
             # graphs = 2 is set by the %plot magic to check for the last
             # image after a code chunk
@@ -450,8 +449,7 @@ class StataSession(object):
                 elif isinstance(val, int):
                     cmd += ' {} {}'.format(key, val)
 
-        res = subprocess.run(['osascript', '-e', cmd],
-                             stdout=subprocess.PIPE,
+        res = subprocess.run(['osascript', '-e', cmd], stdout=subprocess.PIPE,
                              stderr=subprocess.PIPE)
         if res.stderr:
             raise OSError(res.stderr.decode('utf-8') + '\nInput: ' + cmd)
@@ -691,15 +689,9 @@ class StataSession(object):
 
         path = Path(stata_path)
         if execution_mode == 'automation':
-            d = {
-                'stata': 'Stata',
-                'stata-se': 'StataSE',
-                'stata-mp': 'StataMP'}
+            d = {'stata': 'Stata', 'stata-se': 'StataSE', 'stata-mp': 'StataMP'}
         else:
-            d = {
-                'Stata': 'stata',
-                'StataSE': 'stata-se',
-                'StataMP': 'stata-mp'}
+            d = {'Stata': 'stata', 'StataSE': 'stata-se', 'StataMP': 'stata-mp'}
 
         bin_name = d.get(path.name, path.name)
         return str(path.parent / bin_name)
@@ -724,7 +716,7 @@ class StataSession(object):
         # Minidom does not support parseUnicode, so it must be decoded
         # to accept unicode characters
         parsed = minidom.parseString(img.encode('utf-8'))
-        (svg,) = parsed.getElementsByTagName('svg')
+        (svg, ) = parsed.getElementsByTagName('svg')
 
         # Handle overrides in case they were not encoded.
         svg.setAttribute('width', '%dpx' % width)
