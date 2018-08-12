@@ -39,13 +39,24 @@ class MagicParsers():
             '--set',
             dest='set',
             action='store_true',
-            help="Permanently set plot width and height.",
+            help="Set plot width and height for the session.",
             required=False)
 
         self.globals = argparse.ArgumentParser()
         self.globals.add_argument(
             'code', nargs='*', type=str, metavar='CODE', help="Code to run")
         self.globals.add_argument(
+            '-t',
+            '--truncate',
+            dest='truncate',
+            action='store_true',
+            help="Truncate macro values to first line printed by Stata",
+            required=False)
+
+        self.locals = argparse.ArgumentParser()
+        self.locals.add_argument(
+            'code', nargs='*', type=str, metavar='CODE', help="Code to run")
+        self.locals.add_argument(
             '-t',
             '--truncate',
             dest='truncate',
@@ -132,7 +143,8 @@ class StataMagics():
                     if code.strip() == '':
                         self.status = -1
                 else:
-                    print("Unknown magic %{0}.".format(name))
+                    self.print_kernel(
+                        "Unknown magic %{0}.".format(name), kernel)
                     self.status = -1
 
                 if (self.status == -1):
@@ -148,22 +160,23 @@ class StataMagics():
 
         return code
 
-    def post(self):
+    def post(self, kernel):
         if self.timeit in [1, 2]:
-            total, l = self.time_profile.pop()
-            print("Wall time (seconds): {0:.2f}".format(total))
+            total, _ = self.time_profile.pop()
+            self.print_kernel(
+                "Wall time (seconds): {0:.2f}".format(total), kernel)
 
             if (len(self.time_profile) > 0) and (self.timeit == 2):
-                tlens = 0
+                lens = 0
                 tprint = []
                 for t, l in self.time_profile:
                     tfmt = "{0:.2f}".format(t)
                     tprint += [(tfmt, l)]
-                    lens = max(0, len(tfmt))
+                    lens = max(lens, len(tfmt))
 
                 fmt = "\t{{0:{0}}} {{1}}".format(lens)
                 for t, l in tprint:
-                    print(fmt.format(t, l))
+                    self.print_kernel(fmt.format(t, l), kernel)
 
     def magic_graph(self, code, kernel):
         return self.magic_plot(code, kernel)
@@ -189,7 +202,11 @@ class StataMagics():
         gregex = {}
         gregex['blank'] = re.compile(r"^ {16,16}", flags=re.MULTILINE)
         try:
-            args = vars(self.parse.globals.parse_args(code.split(' ')))
+            if local:
+                args = vars(self.parse.locals.parse_args(code.split(' ')))
+            else:
+                args = vars(self.parse.globals.parse_args(code.split(' ')))
+
             code = ' '.join(args['code'])
             gregex['match'] = re.compile(code.strip())
             if args['truncate']:
@@ -248,9 +265,10 @@ class StataMagics():
 
         fmt = "{{0:{0}}} {{1}}".format(lens)
         for macro, contents in print_globals:
-            print(
-                fmt.format(macro, gregex['blank'].sub((lens + 1) * ' ',
-                                                      contents)))
+            self.print_kernel(
+                fmt.format(
+                    macro, gregex['blank'].sub((lens + 1) * ' ', contents)),
+                kernel)
 
         self.status = -1
         return ''
@@ -276,13 +294,13 @@ class StataMagics():
     def magic_timeit(self, code, kernel):
         self.status = -1
         self.graphs = 0
-        print("Magic timeit has not yet been implemented.")
+        self.print_kernel("Magic timeit has not been implemented.", kernel)
         return code
 
     def magic_exit(self, code, kernel):
         self.status = -1
         self.graphs = 0
-        print("Magic exit has not yet been implemented.")
+        self.print_kernel("Magic exit has not been implemented.", kernel)
         return code
 
     def magic_restart(self, code, kernel):
@@ -293,5 +311,12 @@ class StataMagics():
         #     magic['status'] = -1
         #     print("Magic restart must be called by itself.")
         self.status = -1
-        print("Magic restart has not yet been implemented.")
+        self.print_kernel("Magic restart has not been implemented.", kernel)
         return code
+
+    def print_kernel(self, msg, kernel):
+        msg = re.sub(r'$', r'\r\n', msg, flags = re.MULTILINE)
+        msg = re.sub(r'[\r\n]{1,2}[\r\n]{1,2}', r'\r\n', msg, flags = re.MULTILINE)
+        stream_content = {'text': msg}
+        stream_content['name'] = 'stdout'
+        kernel.send_response(kernel.iopub_socket, 'stream', stream_content)

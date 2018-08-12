@@ -64,7 +64,7 @@ class StataKernel(Kernel):
         stream_content = {'text': res}
 
         # Post magic results, if applicable
-        self.magics.post()
+        self.magics.post(self)
 
         # The base class increments the execution count
         return_obj = {'execution_count': self.execution_count}
