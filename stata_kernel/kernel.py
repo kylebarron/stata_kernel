@@ -60,9 +60,6 @@ class StataKernel(Kernel):
         rc, imgs, res = self.stata.do(cm.get_chunks(), self.magics)
         stream_content = {'text': res}
 
-        # Refresh completions
-        self.completions.refresh(self)
-
         # Post magic results, if applicable
         self.magics.post(self)
 
@@ -78,6 +75,8 @@ class StataKernel(Kernel):
             stream_content['name'] = 'stdout'
 
         if silent:
+            # Refresh completions
+            self.completions.refresh(self)
             return return_obj
 
         # At the moment, can only send either an image _or_ text to support
@@ -86,6 +85,8 @@ class StataKernel(Kernel):
         if res.strip():
             self.send_response(self.iopub_socket, 'stream', stream_content)
             if (self.magics.graphs != 2):
+                # Refresh completions
+                self.completions.refresh(self)
                 return return_obj
 
         if imgs or (self.magics.graphs == 2):
@@ -109,6 +110,8 @@ class StataKernel(Kernel):
                 # We send the display_data message with the contents.
                 self.send_response(self.iopub_socket, 'display_data', content)
 
+        # Refresh completions
+        self.completions.refresh(self)
         return return_obj
 
     def do_shutdown(self, restart):
@@ -136,34 +139,14 @@ class StataKernel(Kernel):
         return {'status': 'incomplete', 'indent': '    '}
 
     def do_complete(self, code, cursor_pos):
-        # env = self.stata.env
-        # suggestions = CompletionsManager(env)
-
-        # Suggest for the current space-delimited word
-        pos = code[:cursor_pos].rfind(' ')
-        pos = 0 if pos < 0 else pos + 1
-        chunk = code[pos:cursor_pos]
-        env = 0
-
-        # Figure out if this is a local or global; env = 0 (default)
-        # will suggest variables in memory
-
-        if chunk.find('`') >= 0:
-            pos += chunk.find('`') + 1
-            env = 1
-        elif chunk.find('$') >= 0:
-            if chunk.find('{') >= 0:
-                pos += chunk.find('{') + 1
-                env = 3
-            else:
-                env = 2
-                pos += chunk.find('$') + 1
-
+        # Environment-aware suggestion for the current space-delimited
+        # variable, local, etc.
+        env, pos, chunk, rcomp = self.completions.get_env(code[:cursor_pos])
         return {
             'status': 'ok',
             'cursor_start': pos,
             'cursor_end': cursor_pos,
-            'matches': self.completions.get(code[pos:cursor_pos], env)
+            'matches': self.completions.get(chunk, env, rcomp)
         }
 
     def is_complete(self, code):
