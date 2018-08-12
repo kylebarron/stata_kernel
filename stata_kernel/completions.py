@@ -8,13 +8,15 @@ class CompletionsManager(object):
 
         # NOTE(mauricio): Locals have to be listed sepparately because
         # inside a Stata program they would only list the locals for
-        # that program.
+        # that program. Further, we need to match the output until the
+        # end of the string OR until '---+\s*end' (the latter in case
+        # set trace was set to on.
         self.matchall = re.compile(
             r"\A.*?%varlist%(?P<varlist>.*?)"
             r"%globals%(?P<globals>.*?)"
             # r"%locals%(?P<locals>.*?)"
             r"%scalars%(?P<scalars>.*?)"
-            r"%matrices%(?P<matrices>.*?)\Z",
+            r"%matrices%(?P<matrices>.*?)(\Z|---+\s*end)",
             flags = re.DOTALL + re.MULTILINE).match
 
         # Varlist-style matching; applies to all

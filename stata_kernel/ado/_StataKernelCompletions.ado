@@ -1,4 +1,7 @@
+capture program drop _StataKernelCompletions
 program _StataKernelCompletions
+    local userTrace `c(trace)'
+    set trace off
     syntax [varlist]
     disp "%varlist%"
     disp `"`varlist'"'
@@ -11,4 +14,5 @@ program _StataKernelCompletions
     disp `"`:all scalars'"'
     disp "%matrices%"
     disp `"`:all matrices'"'
+    set trace `userTrace'
 end
