@@ -119,8 +119,10 @@ class StataLexer(RegexLexer):
             (r';', Token.Keyword.Reserved),
             (r'.', Token.Keyword.Namespace),
         ],
+        # Made changes for //, // inside of *, and ending character for *
         'delimit;-comments': [
-            (r'(^//|(?<=\s)//)(?!/)', Comment.Single, 'delimit;-comments-double-slash'),
+            # Either after a ; delimiter or has whitespace after beginning of the line
+            (r'((^\s+//)|(?<=;\s)\s*//)(?!/)', Comment.Single, 'delimit;-comments-double-slash'),
             (r'^\s*\*', Comment.Single, 'delimit;-comments-star'),
             (r'/\*', Comment.Multiline, 'delimit;-comments-block'),
             (r'(^///|(?<=\s)///)', Comment.Special, 'delimit;-comments-triple-slash')
@@ -137,10 +139,9 @@ class StataLexer(RegexLexer):
         'delimit;-comments-star': [
             (r'///.*?\n', Comment.Single,
                 ('#pop', 'delimit;-comments-triple-slash')),
-            (r'(^//|(?<=\s)//)(?!/)', Comment.Single,
-                ('#pop', 'delimit;-comments-double-slash')),
+            # // doesn't break out of star comment inside #delimit ;
             (r'/\*', Comment.Multiline, 'delimit;-comments-block'),
-            # Only #delimit; change I made so far:
+            # ; ends a * comment
             (r'.(?=;)', Comment.Single, '#pop'),
             (r'.', Comment.Single),
         ],

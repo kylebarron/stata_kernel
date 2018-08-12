@@ -305,7 +305,6 @@ class TestLineContinuationComments(object):
             (Token.Text, '\n')]
         assert tokens == expected
 
-
 class TestSingleLineComments(object):
     def test1(self):
         code = 'di//*\n*/1'
@@ -328,8 +327,6 @@ class TestSingleLineComments(object):
             (Token.Comment.Single, '//'),
             (Token.Text, '\n')]
         assert tokens == expected
-
-
 
 class TestStrings(object):
     def test_multiline_comment_inside_string(self):
@@ -451,4 +448,168 @@ class TestBlocks(object):
             (Token.MatchingBracket.Other, '\n'),
             (Token.MatchingBracket.Other, '}'),
             (Token.Text, '\n')]
+        assert tokens == expected
+
+class TestSemicolonDelimitComments(object):
+    def test_inline_comment(self):
+        """
+        ```stata
+        #delimit ;
+        // This line is ignored, but the line break is not
+        di "Printed 1";
+        ```
+        """
+        code = '#delimit ;\n// a\na;'
+        tokens = get_tokens(code)
+        expected = [
+            (Token.Comment.Single, '#delimit ;\n'),
+            (Token.Comment.Single, '//'),
+            (Token.Comment.Single, ' '),
+            (Token.Comment.Single, 'a'),
+            (Token.Keyword.Namespace, '\n'),
+            (Token.Keyword.Namespace, 'a'),
+            (Token.Keyword.Reserved, ';'),
+            (Token.Keyword.Namespace, '\n')]
+        assert tokens == expected
+
+    def test_multiline_comment_after_inline_comment(self):
+        """
+        ```stata
+        #delimit ;
+        // Same for multi-line /*
+        di "Printed 2";
+        ```
+        """
+        code = '#delimit ;\n// /* a\na;'
+        tokens = get_tokens(code)
+        expected = [
+            (Token.Comment.Single, '#delimit ;\n'),
+            (Token.Comment.Single, '//'),
+            (Token.Comment.Single, ' '),
+            (Token.Comment.Single, '/'),
+            (Token.Comment.Single, '*'),
+            (Token.Comment.Single, ' '),
+            (Token.Comment.Single, 'a'),
+            (Token.Keyword.Namespace, '\n'),
+            (Token.Keyword.Namespace, 'a'),
+            (Token.Keyword.Reserved, ';'),
+            (Token.Keyword.Namespace, '\n')]
+        assert tokens == expected
+
+    def test_star_comment(self):
+        """
+        ```stata
+        #delimit ;
+        * Line continuations do apply
+        di "Not printed";
+        ```
+        """
+        code = '#delimit ;\n* a\na;'
+        tokens = get_tokens(code)
+        expected = [
+            (Token.Comment.Single, '#delimit ;\n'),
+            (Token.Comment.Single, '*'),
+            (Token.Comment.Single, ' '),
+            (Token.Comment.Single, 'a'),
+            (Token.Comment.Single, '\n'),
+            (Token.Comment.Single, 'a'),
+            (Token.Keyword.Reserved, ';'),
+            (Token.Keyword.Namespace, '\n')]
+        assert tokens == expected
+
+    def test_multiline_comment_after_star(self):
+        """
+        ```stata
+        #delimit ;
+        * Same for multi-line /*
+        di "Not printed"  */;
+        ```
+        """
+        code = '#delimit ;\n* /* a\na;'
+        tokens = get_tokens(code)
+        expected = [
+            (Token.Comment.Single, '#delimit ;\n'),
+            (Token.Comment.Single, '*'),
+            (Token.Comment.Single, ' '),
+            (Token.Comment.Multiline, '/*'),
+            (Token.Comment.Multiline, ' '),
+            (Token.Comment.Multiline, 'a'),
+            (Token.Comment.Multiline, '\n'),
+            (Token.Comment.Multiline, 'a'),
+            (Token.Comment.Multiline, ';'),
+            (Token.Comment.Multiline, '\n')]
+        assert tokens == expected
+
+    def test_inline_comment_after_star_comment(self):
+        """
+        ```stata
+        #delimit ;
+        * Line continuation
+        // Does not break line continuation
+        di "Not printed";
+        ```
+        """
+        code = '#delimit ;\n* // a\na;'
+        tokens = get_tokens(code)
+        expected = [
+            (Token.Comment.Single, '#delimit ;\n'),
+            (Token.Comment.Single, '*'),
+            (Token.Comment.Single, ' '),
+            (Token.Comment.Single, '/'),
+            (Token.Comment.Single, '/'),
+            (Token.Comment.Single, ' '),
+            (Token.Comment.Single, 'a'),
+            (Token.Comment.Single, '\n'),
+            (Token.Comment.Single, 'a'),
+            (Token.Keyword.Reserved, ';'),
+            (Token.Keyword.Namespace, '\n')]
+        assert tokens == expected
+
+    def test_inline_comment_inside_expr_with_whitespace(self):
+        """
+        ```stata
+        #delimit ;
+        disp "Line start"
+         // This is ignored, and does not give error
+        "; Line end" ;
+        ```
+        """
+        code = '#delimit ;\na\n // c\na;'
+        tokens = get_tokens(code)
+        expected = [
+            (Token.Comment.Single, '#delimit ;\n'),
+            (Token.Keyword.Namespace, 'a'),
+            (Token.Keyword.Namespace, '\n'),
+            (Token.Comment.Single, ' //'),
+            (Token.Comment.Single, ' '),
+            (Token.Comment.Single, 'c'),
+            (Token.Keyword.Namespace, '\n'),
+            (Token.Keyword.Namespace, 'a'),
+            (Token.Keyword.Reserved, ';'),
+            (Token.Keyword.Namespace, '\n')]
+        assert tokens == expected
+
+    def test_inline_comment_inside_expr_without_whitespace(self):
+        """
+        ```stata
+        #delimit ;
+        disp "Line start"
+        // This is ignored, and does not give error
+        "; Line end" ;
+        ```
+        """
+        code = '#delimit ;\na\n// c\na;'
+        tokens = get_tokens(code)
+        expected = [
+            (Token.Comment.Single, '#delimit ;\n'),
+            (Token.Keyword.Namespace, 'a'),
+            (Token.Keyword.Namespace, '\n'),
+            (Token.Keyword.Namespace, '/'),
+            (Token.Keyword.Namespace, '/'),
+            (Token.Keyword.Namespace, ' '),
+            (Token.Keyword.Namespace, 'c'),
+            (Token.Keyword.Namespace, '\n'),
+            (Token.Keyword.Namespace, 'a'),
+            (Token.Keyword.Reserved, ';'),
+            (Token.Keyword.Namespace, '\n')]
         assert tokens == expected
