@@ -1,14 +1,32 @@
 import argparse
+import sys
 import re
 from .code_manager import CodeManager
+
+
+# NOTE(mauricio): Figure  out if passing the kernel around is a problem...
+class StataParser(argparse.ArgumentParser):
+    def __init__(self, *args, kernel = None, **kwargs):
+        super(StataParser, self).__init__(*args, **kwargs)
+        self.kernel = kernel
+
+    def print_help(self, **kwargs):
+        print_kernel(self.format_help(), self.kernel)
+        sys.exit(1)
+
+    def error(self, msg):
+        print("debug1")
+        print_kernel('error: %s\n' % msg, self.kernel)
+        print_kernel(self.format_usage(), self.kernel)
+        sys.exit(2)
 
 # ---------------------------------------------------------------------
 # Magic argument parsers
 
 
 class MagicParsers():
-    def __init__(self):
-        self.plot = argparse.ArgumentParser()
+    def __init__(self, kernel):
+        self.plot = StataParser(prog = '%plot', kernel = kernel)
         self.plot.add_argument(
             'code', nargs='*', type=str, metavar='CODE', help="Code to run")
         self.plot.add_argument(
@@ -42,7 +60,7 @@ class MagicParsers():
             help="Set plot width and height for the session.",
             required=False)
 
-        self.globals = argparse.ArgumentParser()
+        self.globals = StataParser(prog = '%globals', kernel = kernel)
         self.globals.add_argument(
             'code', nargs='*', type=str, metavar='CODE', help="Code to run")
         self.globals.add_argument(
@@ -53,7 +71,7 @@ class MagicParsers():
             help="Truncate macro values to first line printed by Stata",
             required=False)
 
-        self.locals = argparse.ArgumentParser()
+        self.locals = StataParser(prog = '%locals', kernel = kernel)
         self.locals.add_argument(
             'code', nargs='*', type=str, metavar='CODE', help="Code to run")
         self.locals.add_argument(
@@ -64,7 +82,7 @@ class MagicParsers():
             help="Truncate macro values to first line printed by Stata",
             required=False)
 
-        self.time = argparse.ArgumentParser()
+        self.time = StataParser(prog = '%time', kernel = kernel)
         self.time.add_argument(
             'code', nargs='*', type=str, metavar='CODE', help="Code to run")
         self.time.add_argument(
@@ -74,7 +92,7 @@ class MagicParsers():
             help="Profile each line of code",
             required=False)
 
-        self.timeit = argparse.ArgumentParser()
+        self.timeit = StataParser(prog = '%timeit', kernel = kernel)
         self.timeit.add_argument(
             'code', nargs='*', type=str, metavar='CODE', help="Code to run")
         self.timeit.add_argument(
@@ -116,7 +134,6 @@ class StataMagics():
         'time',
         'timeit'
     ]
-    parse = MagicParsers()
 
     def __init__(self):
         self.quit_early = None
@@ -130,6 +147,7 @@ class StataMagics():
 
     def magic(self, code, kernel):
         self.__init__()
+        self.parse = MagicParsers(kernel)
 
         if code.strip().startswith("%"):
             match = self.magic_regex.match(code.strip())
@@ -143,7 +161,7 @@ class StataMagics():
                     if code.strip() == '':
                         self.status = -1
                 else:
-                    self.print_kernel(
+                    print_kernel(
                         "Unknown magic %{0}.".format(name), kernel)
                     self.status = -1
 
@@ -163,7 +181,7 @@ class StataMagics():
     def post(self, kernel):
         if self.timeit in [1, 2]:
             total, _ = self.time_profile.pop()
-            self.print_kernel(
+            print_kernel(
                 "Wall time (seconds): {0:.2f}".format(total), kernel)
 
             if (len(self.time_profile) > 0) and (self.timeit == 2):
@@ -176,7 +194,7 @@ class StataMagics():
 
                 fmt = "\t{{0:{0}}} {{1}}".format(lens)
                 for t, l in tprint:
-                    self.print_kernel(fmt.format(t, l), kernel)
+                    print_kernel(fmt.format(t, l), kernel)
 
     def magic_graph(self, code, kernel):
         return self.magic_plot(code, kernel)
@@ -265,7 +283,7 @@ class StataMagics():
 
         fmt = "{{0:{0}}} {{1}}".format(lens)
         for macro, contents in print_globals:
-            self.print_kernel(
+            print_kernel(
                 fmt.format(
                     macro, gregex['blank'].sub((lens + 1) * ' ', contents)),
                 kernel)
@@ -294,13 +312,13 @@ class StataMagics():
     def magic_timeit(self, code, kernel):
         self.status = -1
         self.graphs = 0
-        self.print_kernel("Magic timeit has not been implemented.", kernel)
+        print_kernel("Magic timeit has not been implemented.", kernel)
         return code
 
     def magic_exit(self, code, kernel):
         self.status = -1
         self.graphs = 0
-        self.print_kernel("Magic exit has not been implemented.", kernel)
+        print_kernel("Magic exit has not been implemented.", kernel)
         return code
 
     def magic_restart(self, code, kernel):
@@ -311,12 +329,16 @@ class StataMagics():
         #     magic['status'] = -1
         #     print("Magic restart must be called by itself.")
         self.status = -1
-        self.print_kernel("Magic restart has not been implemented.", kernel)
+        print_kernel("Magic restart has not been implemented.", kernel)
         return code
 
-    def print_kernel(self, msg, kernel):
-        msg = re.sub(r'$', r'\r\n', msg, flags = re.MULTILINE)
-        msg = re.sub(r'[\r\n]{1,2}[\r\n]{1,2}', r'\r\n', msg, flags = re.MULTILINE)
-        stream_content = {'text': msg}
-        stream_content['name'] = 'stdout'
-        kernel.send_response(kernel.iopub_socket, 'stream', stream_content)
+
+# ---------------------------------------------------------------------
+# Print messages to the kernel
+
+def print_kernel(msg, kernel):
+    msg = re.sub(r'$', r'\r\n', msg, flags = re.MULTILINE)
+    msg = re.sub(r'[\r\n]{1,2}[\r\n]{1,2}', r'\r\n', msg, flags = re.MULTILINE)
+    stream_content = {'text': msg}
+    stream_content['name'] = 'stdout'
+    kernel.send_response(kernel.iopub_socket, 'stream', stream_content)
