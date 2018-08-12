@@ -8,7 +8,9 @@ class CodeManager(object):
     """Class to deal with text before sending to Stata
     """
 
-    def __init__(self, code):
+    def __init__(self, code, semicolon_delimit=False):
+        if semicolon_delimit:
+            code = '#delimit ;\n' + code
         self.input = code
         self.tokens = self.tokenize_code(code)
         self.tokens_nocomments = self.remove_comments()
@@ -59,6 +61,20 @@ class CodeManager(object):
 
         tokens = [x for x in self.tokens_nocomments if not ((str(x[0]) == 'Token.Keyword.Namespace') and (x[1] == '\n'))]
 
+        # Find indices of `;`
+        inds = [ind for ind, x in enumerate(tokens) if (str(x[0]) == 'Token.Keyword.Reserved') and x[1] == ';']
+
+        # If there are no semicolons,
+        if not inds:
+            self.tokens_nocomments = self.tokenize_code('')
+            return
+
+        # Drop all lines after the last index of ;
+        # This is so that a non ;-delimited last line doesn't still get run
+        # This actually discards the final ;, but this means that I don't have
+        # an extra newline from changing the ; to \n
+        tokens = tokens[:max(inds)]
+
         # Change the ; delimiters to \n
         tokens = [('Newline delimiter', '\n') if (str(x[0]) == 'Token.Keyword.Reserved') and x[1] == ';' else x for x in tokens ]
 
@@ -67,8 +83,6 @@ class CodeManager(object):
 
         # Then run it through the tokenizer again once more to get blocks
         self.tokens_nocomments = self.tokenize_code(text)
-
-        self.get_chunks()
 
     def get_chunks(self):
         """Get valid, executable chunks
