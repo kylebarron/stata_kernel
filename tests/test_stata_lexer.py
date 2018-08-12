@@ -462,7 +462,8 @@ class TestSemicolonDelimitComments(object):
         code = '#delimit ;\n// a\na;'
         tokens = get_tokens(code)
         expected = [
-            (Token.Comment.Single, '#delimit ;\n'),
+            (Token.Comment.Single, '#delimit ;'),
+            (Token.Keyword.Namespace, '\n'),
             (Token.Comment.Single, '//'),
             (Token.Comment.Single, ' '),
             (Token.Comment.Single, 'a'),
@@ -483,7 +484,8 @@ class TestSemicolonDelimitComments(object):
         code = '#delimit ;\n// /* a\na;'
         tokens = get_tokens(code)
         expected = [
-            (Token.Comment.Single, '#delimit ;\n'),
+            (Token.Comment.Single, '#delimit ;'),
+            (Token.Keyword.Namespace, '\n'),
             (Token.Comment.Single, '//'),
             (Token.Comment.Single, ' '),
             (Token.Comment.Single, '/'),
@@ -507,7 +509,8 @@ class TestSemicolonDelimitComments(object):
         code = '#delimit ;\n* a\na;'
         tokens = get_tokens(code)
         expected = [
-            (Token.Comment.Single, '#delimit ;\n'),
+            (Token.Comment.Single, '#delimit ;'),
+            (Token.Keyword.Namespace, '\n'),
             (Token.Comment.Single, '*'),
             (Token.Comment.Single, ' '),
             (Token.Comment.Single, 'a'),
@@ -528,7 +531,8 @@ class TestSemicolonDelimitComments(object):
         code = '#delimit ;\n* /* a\na;'
         tokens = get_tokens(code)
         expected = [
-            (Token.Comment.Single, '#delimit ;\n'),
+            (Token.Comment.Single, '#delimit ;'),
+            (Token.Keyword.Namespace, '\n'),
             (Token.Comment.Single, '*'),
             (Token.Comment.Single, ' '),
             (Token.Comment.Multiline, '/*'),
@@ -552,7 +556,8 @@ class TestSemicolonDelimitComments(object):
         code = '#delimit ;\n* // a\na;'
         tokens = get_tokens(code)
         expected = [
-            (Token.Comment.Single, '#delimit ;\n'),
+            (Token.Comment.Single, '#delimit ;'),
+            (Token.Keyword.Namespace, '\n'),
             (Token.Comment.Single, '*'),
             (Token.Comment.Single, ' '),
             (Token.Comment.Single, '/'),
@@ -577,7 +582,8 @@ class TestSemicolonDelimitComments(object):
         code = '#delimit ;\na\n // c\na;'
         tokens = get_tokens(code)
         expected = [
-            (Token.Comment.Single, '#delimit ;\n'),
+            (Token.Comment.Single, '#delimit ;'),
+            (Token.Keyword.Namespace, '\n'),
             (Token.Keyword.Namespace, 'a'),
             (Token.Keyword.Namespace, '\n'),
             (Token.Comment.Single, ' //'),
@@ -601,7 +607,8 @@ class TestSemicolonDelimitComments(object):
         code = '#delimit ;\na\n// c\na;'
         tokens = get_tokens(code)
         expected = [
-            (Token.Comment.Single, '#delimit ;\n'),
+            (Token.Comment.Single, '#delimit ;'),
+            (Token.Keyword.Namespace, '\n'),
             (Token.Keyword.Namespace, 'a'),
             (Token.Keyword.Namespace, '\n'),
             (Token.Keyword.Namespace, '/'),

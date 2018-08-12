@@ -30,7 +30,7 @@ class StataLexer(RegexLexer):
             (r'^[^\n]*?\{', Token.MatchingBracket.Other, 'block'),
             (r'^\s*(pr(ogram|ogra|ogr|og|o)?)\s+(?!di|dr|l)(de(fine|fin|fi|f)?\s+)?', Token.MatchingBracket.Other, 'program'),
             (r'^\s*inp(u|ut)?', Token.MatchingBracket.Other, 'program'),
-            (r'^\s*#d(e|el|eli|elim|elimi|elimit)?\s*;\s*\n', Comment.Single, 'delimit;'),
+            (r'^\s*#d(e|el|eli|elim|elimi|elimit)?\s*;\s*?$', Comment.Single, 'delimit;'),
             (r'.', Text),
         ],
         'block': [
@@ -113,7 +113,7 @@ class StataLexer(RegexLexer):
 
 
         'delimit;': [
-            (r'^\s*#d(e|el|eli|elim|elimi|elimit)?\s+cr\s*\n', Comment.Single, '#pop'),
+            (r'^\s*#d(e|el|eli|elim|elimi|elimit)?\s+cr\s*?$', Comment.Single, '#pop'),
             include('delimit;-comments'),
             include('delimit;-strings'),
             (r';', Token.Keyword.Reserved),
