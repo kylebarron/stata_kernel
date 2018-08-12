@@ -1,5 +1,5 @@
 import argparse
-import regex
+import re
 from .code_manager import CodeManager
 
 # ---------------------------------------------------------------------
@@ -91,9 +91,9 @@ class MagicParsers():
 class StataMagics():
     img_metadata = {'width': 600, 'height': 400}
 
-    magic_regex = regex.compile(
+    magic_regex = re.compile(
         r'\A%(?<magic>.+?)(?<code>\s+.*)?\Z',
-        flags=regex.DOTALL + regex.MULTILINE)
+        flags=re.DOTALL + re.MULTILINE)
 
     available_magics = [
         'plot',
@@ -187,23 +187,23 @@ class StataMagics():
 
     def magic_globals(self, code, kernel, local=False):
         gregex = {}
-        gregex['blank'] = regex.compile(r"^ {16,16}", flags=regex.MULTILINE)
+        gregex['blank'] = re.compile(r"^ {16,16}", flags=re.MULTILINE)
         try:
             args = vars(self.parse.globals.parse_args(code.split(' ')))
             code = ' '.join(args['code'])
-            gregex['match'] = regex.compile(code.strip())
+            gregex['match'] = re.compile(code.strip())
             if args['truncate']:
-                gregex['main'] = regex.compile(
+                gregex['main'] = re.compile(
                     r"^(?<macro>_?[\w\d]*?):"
                     r"(?<cr>[\r\n]{0,2} {1,16})"
                     r"(?<contents>.*?$)",
-                    flags=regex.DOTALL + regex.MULTILINE)
+                    flags=re.DOTALL + re.MULTILINE)
             else:
-                gregex['main'] = regex.compile(
+                gregex['main'] = re.compile(
                     r"^(?<macro>_?[\w\d]*?):"
                     r"(?<cr>[\r\n]{0,2} {1,16})"
                     r"(?<contents>.*?$(?:[\r\n]{0,2} {16,16}.*?$)*)",
-                    flags=regex.DOTALL + regex.MULTILINE)
+                    flags=re.DOTALL + re.MULTILINE)
         except:
             self.status = -1
 
