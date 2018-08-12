@@ -9,9 +9,9 @@ class CodeManager(object):
     """
 
     def __init__(self, code, semicolon_delimit=False):
+        self.input = code
         if semicolon_delimit:
             code = '#delimit ;\n' + code
-        self.input = code
         self.tokens = self.tokenize_code(code)
         self.tokens_nocomments = self.remove_comments()
 
@@ -87,7 +87,15 @@ class CodeManager(object):
           `di 2 + ///` or `di 2 + /*`.
         - If in a #delimit ; block and there are non-whitespace characters after
           the last semicolon.
+
+        Special case for code to be complete:
+        - %magics
         """
+
+        magic_regex = re.compile(
+            r'\A%(?P<magic>.+?)(?P<code>\s+.*)?\Z', flags=re.DOTALL + re.MULTILINE)
+        if magic_regex.search(self.input):
+            return True
 
         # block constructs
         if str(self.tokens_nocomments[-1][0]) == 'Token.MatchingBracket.Other':
