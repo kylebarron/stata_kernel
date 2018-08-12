@@ -209,7 +209,6 @@ class StataMagics():
             return code
 
         stata_globals = gregex['main'].findall(res)
-
         lens = 0
         find_name = gregex['match'] != ''
         print_globals = []
