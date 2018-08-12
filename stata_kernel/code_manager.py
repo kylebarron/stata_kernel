@@ -79,7 +79,22 @@ class CodeManager(object):
         self.tokens_nocomments = self.tokenize_code(text)
 
     def _is_complete(self):
+        """Determine whether the code provided is complete
+
+        Ways in which code entered is not complete:
+        - If in the middle of a block construct, i.e. foreach, program, input
+        - If the last token provided is inside a line-continuation comment, i.e.
+          `di 2 + ///` or `di 2 + /*`.
+        - If in a #delimit ; block and there are non-whitespace characters after
+          the last semicolon.
+        """
+
+        # block constructs
         if str(self.tokens_nocomments[-1][0]) == 'Token.MatchingBracket.Other':
+            return False
+
+        # last token a line-continuation comment
+        if str(self.tokens[-1][0]) in ['Token.Comment.Multiline', 'Token.Comment.Special']:
             return False
 
         if self.ends_sc:
