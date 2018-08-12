@@ -3,6 +3,7 @@ import re
 import platform
 import subprocess
 import base64
+from pkg_resources import resource_filename
 
 from time import sleep
 from pathlib import Path
@@ -58,7 +59,10 @@ graph_keywords = r'\b(' + '|'.join(graph_keywords) + r')\b'
 class StataSession(object):
     def __init__(self):
 
-        self.adodir = os.path.join(Path(__file__).resolve().parent, "ado")
+        adofile = resource_filename(
+            'stata_kernel', os.path.join('ado', '_StataKernelCompletions.ado'))
+        self.adodir = Path(adofile).resolve().parent
+
         config = ConfigParser()
         config.read(Path('~/.stata_kernel.conf').expanduser())
 
