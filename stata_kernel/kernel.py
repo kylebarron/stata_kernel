@@ -22,6 +22,7 @@ class StataKernel(Kernel):
         self.graphs = {}
         self.magics = StataMagics()
 
+        self.sc_delimit_mode = False
         self.stata = StataSession()
         self.completions = CompletionsManager(self)
         self.banner = self.stata.banner
@@ -56,7 +57,9 @@ class StataKernel(Kernel):
             return self.magics.quit_early
 
         # Tokenize code and return code chunks
-        cm = CodeManager(code)
+        cm = CodeManager(code, self.sc_delimit_mode)
+        self.sc_delimit_mode = cm.ends_sc
+
         rc, imgs, res = self.stata.do(cm.get_chunks(), self.magics)
         stream_content = {'text': res}
 
@@ -150,7 +153,4 @@ class StataKernel(Kernel):
         }
 
     def is_complete(self, code):
-        cm = CodeManager(code)
-        if str(cm.tokens[-1][0]) == 'Token.MatchingBracket.Other':
-            return False
-        return True
+        return CodeManager(code, self.sc_delimit_mode).is_complete
