@@ -3,6 +3,7 @@ from ipykernel.kernelbase import Kernel
 from .completions import CompletionsManager
 from .code_manager import CodeManager
 from .stata_session import StataSession
+from .stata_magics import StataMagics
 
 
 class StataKernel(Kernel):
@@ -19,6 +20,7 @@ class StataKernel(Kernel):
         super(StataKernel, self).__init__(*args, **kwargs)
 
         self.graphs = {}
+        self.magics = StataMagics()
 
         self.stata = StataSession()
         self.banner = self.stata.banner
@@ -40,9 +42,29 @@ class StataKernel(Kernel):
         if not self.is_complete(code):
             return {'status': 'error', 'execution_count': self.execution_count}
 
+        # Search for magics in the code
+        code = self.magics.magic(code, self)
+
+        # If requested, permanently set inline image display size
+        if self.magics.img_set:
+            self.stata.img_metadata = self.magics.img_metadata
+
+        # The image width and height is always from magics.img_metadata;
+        # set it to the default if not using %plot magic.
+        if (self.magics.graphs != 2):
+            self.magics.img_metadata = self.stata.img_metadata
+
+        # If the magic executed, bail out early
+        if self.magics.quit_early:
+            return self.magics.quit_early
+
+        # Tokenize code and return code chunks
         cm = CodeManager(code)
-        rc, imgs, res = self.stata.do(cm.get_chunks())
+        rc, imgs, res = self.stata.do(cm.get_chunks(), self.magics)
         stream_content = {'text': res}
+
+        # Post magic results, if applicable
+        self.magics.post(self)
 
         # The base class increments the execution count
         return_obj = {'execution_count': self.execution_count}
@@ -63,9 +85,10 @@ class StataKernel(Kernel):
         # Only send a response if there's text
         if res.strip():
             self.send_response(self.iopub_socket, 'stream', stream_content)
-            return return_obj
+            if (self.magics.graphs != 2):
+                return return_obj
 
-        if imgs:
+        if imgs or (self.magics.graphs == 2):
             img_mimetypes = {
                 'pdf': 'application/pdf',
                 'svg': 'image/svg+xml',
@@ -81,9 +104,7 @@ class StataKernel(Kernel):
                         img_mimetypes[graph_format]: img},
 
                     # We can specify the image size in the metadata field.
-                    'metadata': {
-                        'width': 600,
-                        'height': 400}}
+                    'metadata': self.magics.img_metadata}
 
                 # We send the display_data message with the contents.
                 self.send_response(self.iopub_socket, 'display_data', content)
