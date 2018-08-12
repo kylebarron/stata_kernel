@@ -7,6 +7,7 @@ import base64
 from time import sleep
 from pathlib import Path
 from xml.dom import minidom
+from timeit import default_timer
 from configparser import ConfigParser
 
 if platform.system() == 'Windows':
@@ -131,7 +132,7 @@ class StataSession(object):
         # Set banner to Stata's shell header
         self.banner = ansi_escape.sub('', '\n'.join(banner))
 
-    def do(self, syn_chunks, graphs = 1):
+    def do(self, syn_chunks, magics = None):
         """Run code in Stata
 
         This is a wrapper for the platform-dependent functions.
@@ -142,10 +143,18 @@ class StataSession(object):
                 the Token, the second is the string to send to Stata.
 
         Kwargs:
-            graphs (default 1):
-                0 dooes not look for images
-                1 looks after each line not in Token.MatchingBracket.Other
-                2 looks only after _all_ lines have executed
+            magics (StataMagics):
+                magics.graphs:
+                    0 dooes not look for images
+                    1 looks after each line not in Token.MatchingBracket.Other
+                    2 looks only after _all_ lines have executed
+                magics.timeit:
+                    0 do not time it
+                    1 time execution
+                    2 time execution and profile each line
+                magics.img_metadata (dict):
+                    width: picture width
+                    height: picture height
 
         NOTE I might end up needing more metadata about the chunks, so this is subject to change format.
 
@@ -161,15 +170,26 @@ class StataSession(object):
         NOTE: Also don't forget to prevent any empty lines from going to Stata
         """
 
+        if magics:
+            graphs = magics.graphs
+            timeit = magics.timeit
+        else:
+            graphs = 1
+            timeit = 0
+
+        time_total = 0
+        time_profile = []
         if self.execution_mode == 'console':
             log = []
             rc = 0
             err_regex = re.compile(r'\r\nr\((\d+)\);\r\n').search
             new_syn_chunks = []
             imgs = []
+
             for line in syn_chunks:
                 new_syn_chunks.append(line)
-                res = self.do_console(line[1])
+                res, timer = self.do_console(line[1])
+
                 log.append(res)
                 err = err_regex(res)
                 if err:
@@ -179,17 +199,37 @@ class StataSession(object):
                 gr = re.search(graph_keywords, line[1]) and (graphs == 1)
                 if (str(line[0]) != 'Token.MatchingBracket.Other') and gr:
 
-                    rc, img, sc = self.get_current_graph('console')
+                    rc, img, sc = self.get_current_graph(
+                        'console', magics.img_metadata)
+
                     new_syn_chunks.append(sc)
                     imgs.append(img)
                     if rc:
                         break
 
+                # Timer was moved to do_console to minimize bias
+                time_total += timer
+                if (timeit == 2):
+                    if len(line[1]) > 72:
+                        time_profile += [(timer, line[1][:68] + ' ...')]
+                    else:
+                        time_profile += [(timer, line[1])]
+
+
+            # graphs = 2 is set by the %plot magic to check for the last
+            # image after a code chunk
             if (not rc) and (graphs == 2):
-                gr_rc, img, sc = self.get_current_graph('console')
+                gr_rc, img, sc = self.get_current_graph(
+                    'console', magics.img_metadata)
+
                 if not gr_rc:
                     new_syn_chunks.append(sc)
                     imgs.append(img)
+
+            # Timer info
+            if (timeit > 0):
+                time_profile += [(time_total, '')]
+                magics.time_profile = time_profile
 
             return rc, imgs, self.clean_log_console(log, new_syn_chunks)
         else:
@@ -209,13 +249,15 @@ class StataSession(object):
                 syn_chunk_counter += 1
                 new_syn_chunks.append(line)
                 if str(line[0]) == 'Token.MatchingBracket.Other':
-                    rc = self.do_aut_async(line[1])
+                    rc, timer = self.do_aut_async(line[1])
                 else:
-                    rc = self.do_aut_sync(line[1])
+                    rc, timer = self.do_aut_sync(line[1])
                     gr = re.search(graph_keywords, line[1]) and (graphs == 1)
                     if (not rc) and gr:
 
-                        rc, img, sc = self.get_current_graph('automation')
+                        rc, img, sc = self.get_current_graph(
+                            'automation', magics.img_metadata)
+
                         syn_chunk_counter += 1
                         new_syn_chunks.append(sc)
                         imgs.append(img)
@@ -223,8 +265,20 @@ class StataSession(object):
                 if rc:
                     break
 
+                # Timer was moved to do_aut_* to minimize bias
+                time_total += timer
+                if (timeit == 2):
+                    if len(line[1]) > 72:
+                        time_profile += [(timer, line[1][:68] + ' ...')]
+                    else:
+                        time_profile += [(timer, line[1])]
+
+            # graphs = 2 is set by the %plot magic to check for the last
+            # image after a code chunk
             if (not rc) and (graphs == 2):
-                gr_rc, img, sc = self.get_current_graph('automation')
+                gr_rc, img, sc = self.get_current_graph(
+                    'automation', magics.img_metadata)
+
                 if not gr_rc:
                     new_syn_chunks.append(sc)
                     imgs.append(img)
@@ -235,6 +289,11 @@ class StataSession(object):
 
             # Don't keep chunks that weren't executed
             syn_chunks = new_syn_chunks[:syn_chunk_counter]
+
+            # Timer info
+            if (timeit > 0):
+                time_profile += [(time_total, '')]
+                magics.time_profile = time_profile
 
             return rc, imgs, self.clean_log_aut(log, syn_chunks)
 
@@ -264,12 +323,15 @@ class StataSession(object):
             line (str): literal string ready to send to Stata
         Returns:
             (str): unmodified output from line
+            (int): execution time
         """
 
-        self.child.sendline(line)
         regex = r'\r\n(\x1b\[\?1h\x1b=)?\r\n\. '
+        self.child.sendline(line)
+        timer = default_timer()
         self.child.expect(regex, timeout=20)
-        return ansi_escape.sub('', self.child.before)
+        delta = default_timer() - timer
+        return ansi_escape.sub('', self.child.before), delta
 
     def do_aut_sync(self, line):
         """Run code in Stata Automation using DoCommand
@@ -292,9 +354,13 @@ class StataSession(object):
             line (str): literal string ready to send to Stata
         Returns:
             (int): return code from Stata
+            (int): execution time
         """
+        timer = default_timer()
+        rc = self.automate('DoCommand', line)
+        delta = default_timer() - timer
 
-        return self.automate('DoCommand', line)
+        return rc, delta
 
     def do_aut_async(self, line):
         """Run code in Stata Automation using DoCommandAsync
@@ -309,18 +375,27 @@ class StataSession(object):
         and the last prefix between `qui` and `noi` is the one that determines
         output showing. So if the user wanted to have it be quiet, it would
         still be quiet with an extra `cap noi` prefixed.
+
+        Args:
+            line (str): literal string ready to send to Stata
+        Returns:
+            (int): return code from Stata
+            (int): execution time
         """
 
         line = 'cap noi ' + line
+        timer = default_timer()
         self.automate('DoCommandAsync', line)
         finished = 0
         while not finished:
             # NOTE What should the optimal sleep time be?
             # Should it be in the settings?
             sleep(0.25)
+            timer += 0.25
             finished = self.automate('UtilIsStataFree')
 
-        return self.automate('UtilStataErrorCode')
+        delta = default_timer() - timer
+        return self.automate('UtilStataErrorCode'), delta
 
     def automate(self, cmd_name, value=None, **kwargs):
         """Execute `cmd_name` through Automation in a cross-platform manner
@@ -552,8 +627,13 @@ class StataSession(object):
 
         return '\n'.join(all_log_chunks)
 
-    def get_current_graph(self, execution_mode):
+    def get_current_graph(self, execution_mode, img_metadata):
         """
+        NOTE: img_metadata contains width and height set via %plot. Pass
+
+            ' width({0}) height({1})'.format(*img_metadata.values())
+
+        to the stata graph formats that support it.
         """
         # Export graph to file
         rc = 0
@@ -562,7 +642,7 @@ class StataSession(object):
         if execution_mode == 'automation':
             rc = self.automate('DoCommand', cmd)
         else:
-            res = self.do_console(cmd)
+            res, timer = self.do_console(cmd)
             err = re.search(r'\r\nr\((\d+)\);\r\n', res)
             if err:
                 rc = int(err.group(1))
@@ -582,7 +662,7 @@ class StataSession(object):
             img = base64.b64encode(img).decode('utf-8')
 
         if self.graph_format == 'svg':
-            img = self._fix_svg_size(img, **self.img_metadata)
+            img = self._fix_svg_size(img, **img_metadata)
 
         return rc, (img, self.graph_format), ('Token.Text', cmd)
 
