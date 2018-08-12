@@ -15,7 +15,6 @@ class StataParser(argparse.ArgumentParser):
         sys.exit(1)
 
     def error(self, msg):
-        print("debug1")
         print_kernel('error: %s\n' % msg, self.kernel)
         print_kernel(self.format_usage(), self.kernel)
         sys.exit(2)
@@ -205,8 +204,11 @@ class StataMagics():
 
         cm = CodeManager("macro dir")
         rc, imgs, res = kernel.stata.do(cm.get_chunks(), self)
-        stata_globals = gregex['main'].findall(res)
+        if rc:
+            self.status = -1
+            return code
 
+        stata_globals = gregex['main'].findall(res)
         lens = 0
         find_name = gregex['match'] != ''
         print_globals = []
