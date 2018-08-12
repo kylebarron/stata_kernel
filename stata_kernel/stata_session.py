@@ -179,6 +179,11 @@ class StataSession(object):
         NOTE: Also don't forget to prevent any empty lines from going to Stata
         """
 
+        # Prevent empty whitespace from being sent to Stata
+        text = ''.join([x[1] for x in syn_chunks]).strip()
+        if not text:
+            return 0, [], ''
+
         if magics:
             graphs = magics.graphs
             timeit = magics.timeit
