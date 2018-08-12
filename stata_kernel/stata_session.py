@@ -191,7 +191,7 @@ class StataSession(object):
         if self.execution_mode == 'console':
             log = []
             rc = 0
-            err_regex = re.compile(r'\r\nr\((\d+)\);\r\n').search
+            err_regex = re.compile(r'\r\nr\((\d+)\);($|\r\n)').search
             new_syn_chunks = []
             imgs = []
 
@@ -718,7 +718,21 @@ class StataSession(object):
         parsed = minidom.parseString(img.encode('utf-8'))
         (svg, ) = parsed.getElementsByTagName('svg')
 
+        # Fix the viewbox so programs can set the correct aspect ratio
+        x1, y1, x2, y2 = svg.getAttribute("viewBox").split(' ')
+        width, height = int(width), int(height)
+        view_width = int(x2)
+        view_height = int(y2)
+        view_ratio = view_width / view_height
+        new_ratio = width / height
+        if width > height:
+            view_height = int(view_height * view_ratio / new_ratio)
+        else:
+            view_width = int(view_width * new_ratio / view_ratio)
+
         # Handle overrides in case they were not encoded.
+        view = (0, 0, view_width, view_height)
+        svg.setAttribute('viewBox', '%d %d %d %d' % view)
         svg.setAttribute('width', '%dpx' % width)
         svg.setAttribute('height', '%dpx' % height)
 
