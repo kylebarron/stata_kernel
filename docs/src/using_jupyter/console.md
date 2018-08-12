@@ -7,4 +7,4 @@ $ jupyter console --kernel stata
 
 Example:
 
-![Jupyter Notebook](../../img/jupyter_console.png)
+![Jupyter Notebook](../img/jupyter_console.png)

@@ -31,16 +31,16 @@ class MagicParsers():
             'code', nargs='*', type=str, metavar='CODE', help="Code to run")
         self.plot.add_argument(
             '--scale', dest='scale', type=float, metavar='SCALE', default=1,
-            help="Scale default height and width", required=False)
+            help="Scale default height and width. Default: 1", required=False)
         self.plot.add_argument(
             '--width', dest='width', type=int, metavar='WIDTH', default=600,
-            help="Plot width", required=False)
+            help="Plot width in pixels. Default: 600", required=False)
         self.plot.add_argument(
-            '--height', dest='height', type=int, metavar='height', default=400,
-            help="Plot height", required=False)
+            '--height', dest='height', type=int, metavar='HEIGHT', default=400,
+            help="Plot height in pixels. Default: 400", required=False)
         self.plot.add_argument(
             '--set', dest='set', action='store_true',
-            help="Set plot width and height for the session.", required=False)
+            help="Set plot width and height for the rest of the session.", required=False)
 
         self.globals = StataParser(prog='%globals', kernel=kernel)
         self.globals.add_argument(
