@@ -43,20 +43,23 @@ class CompletionsManager(object):
                     r"(?r)\s(?<fluff>.*?)`\=(?<context>\S+?)"
                     r"\([^\)\s]*?\Z", **kwargs).search,
             'line':
-                regex.compile(r"(?r)^\s*(?<context>\S+)", **kwargs).search}
+                regex.compile(r"(?r)^\s*(?<context>\S+)", **kwargs).search,
+            'delimit_line':
+                regex.compile(r"\A\s*(?<context>\S+)", **kwargs).search}
 
         self.suggestions = self.get_suggestions(kernel)
 
     def refresh(self, kernel):
         self.suggestions = self.get_suggestions(kernel)
 
-    def get_env(self, code, rdelimit):
+    def get_env(self, code, rdelimit, sc_delimit_mode):
         """Returns completions environment
 
         Args:
             code (str): Right-truncated to cursor position
             rdelimit (str): The two characters immediately after code.
                 Will be used to accurately determine rcomp.
+            sc_delimit_mode (bool): Whether #delimit ; is on.
 
         Returns:
             env (int):
@@ -92,7 +95,10 @@ class CompletionsManager(object):
 
             # Figure out if current statement is a matrix or scalar
             # statement. If so, will add them to completions list.
-            linecontext = self.context['line'](code)
+            if sc_delimit_mode:
+                linecontext = self.context['delimit_line'](code)
+            else:
+                linecontext = self.context['line'](code)
             if linecontext:
                 context = linecontext.groupdict()['context']
                 equals = (code.find('=') > 0)

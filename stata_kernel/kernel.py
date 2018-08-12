@@ -145,7 +145,8 @@ class StataKernel(Kernel):
         # Environment-aware suggestion for the current space-delimited
         # variable, local, etc.
         env, pos, chunk, rcomp = self.completions.get_env(
-            code[:cursor_pos], code[cursor_pos:(cursor_pos + 2)])
+            code[:cursor_pos], code[cursor_pos:(cursor_pos + 2)],
+            self.sc_delimit_mode)
 
         return {
             'status': 'ok',
