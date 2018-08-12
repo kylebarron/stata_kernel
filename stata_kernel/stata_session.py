@@ -197,7 +197,7 @@ class StataSession(object):
         if self.execution_mode == 'console':
             log = []
             rc = 0
-            err_regex = re.compile(r'[\r\n]{1,2}r\((\d+)\);[\r\n]{1,2}').search
+            err_regex = re.compile(r'\r\nr\((\d+)\);($|\r\n)').search
             new_syn_chunks = []
             imgs = []
 
