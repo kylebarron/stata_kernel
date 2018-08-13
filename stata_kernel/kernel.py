@@ -57,17 +57,6 @@ class StataKernel(Kernel):
 
         # Tokenize code and return code chunks
         cm = CodeManager(code, self.sc_delimit_mode)
-        # Send message if delimiter changed. NOTE: This uses the delimiter at
-        # the _end_ of the code block. It prints only if the delimiter at the
-        # end is different than the one before the chunk.
-        if cm.ends_sc != self.sc_delimit_mode:
-            delim = ';' if cm.ends_sc else 'cr'
-            self.send_response(
-                self.iopub_socket, 'stream', {
-                    'text': 'delimiter now {}'.format(delim),
-                    'name': 'stdout'})
-        self.sc_delimit_mode = cm.ends_sc
-
         rc, imgs, res = self.stata.do(cm.get_chunks(), self.magics)
         stream_content = {'text': res}
 
@@ -111,6 +100,17 @@ class StataKernel(Kernel):
 
                 # We send the display_data message with the contents.
                 self.send_response(self.iopub_socket, 'display_data', content)
+
+        # Send message if delimiter changed. NOTE: This uses the delimiter at
+        # the _end_ of the code block. It prints only if the delimiter at the
+        # end is different than the one before the chunk.
+        if cm.ends_sc != self.sc_delimit_mode:
+            delim = ';' if cm.ends_sc else 'cr'
+            self.send_response(
+                self.iopub_socket, 'stream', {
+                    'text': 'delimiter now {}'.format(delim),
+                    'name': 'stdout'})
+        self.sc_delimit_mode = cm.ends_sc
 
         return return_obj
 
