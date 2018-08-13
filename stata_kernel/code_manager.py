@@ -9,9 +9,9 @@ class CodeManager(object):
     """
 
     def __init__(self, code, semicolon_delimit=False):
+        self.input = code
         if semicolon_delimit:
             code = '#delimit ;\n' + code
-        self.input = code
         self.tokens = self.tokenize_code(code)
         self.tokens_nocomments = self.remove_comments()
 
@@ -20,10 +20,10 @@ class CodeManager(object):
 
         self.has_sc_delimits = 'Token.Keyword.Namespace' in [
             str(x[0]) for x in self.tokens_nocomments]
-        self.is_complete = self._is_complete()
-
         if self.has_sc_delimits:
             self.adjust_for_semicolons()
+
+        self.is_complete = self._is_complete()
 
     def tokenize_code(self, code):
         """Tokenize input code using custom lexer
@@ -79,7 +79,30 @@ class CodeManager(object):
         self.tokens_nocomments = self.tokenize_code(text)
 
     def _is_complete(self):
+        """Determine whether the code provided is complete
+
+        Ways in which code entered is not complete:
+        - If in the middle of a block construct, i.e. foreach, program, input
+        - If the last token provided is inside a line-continuation comment, i.e.
+          `di 2 + ///` or `di 2 + /*`.
+        - If in a #delimit ; block and there are non-whitespace characters after
+          the last semicolon.
+
+        Special case for code to be complete:
+        - %magics
+        """
+
+        magic_regex = re.compile(
+            r'\A%(?P<magic>.+?)(?P<code>\s+.*)?\Z', flags=re.DOTALL + re.MULTILINE)
+        if magic_regex.search(self.input):
+            return True
+
+        # block constructs
         if str(self.tokens_nocomments[-1][0]) == 'Token.MatchingBracket.Other':
+            return False
+
+        # last token a line-continuation comment
+        if str(self.tokens[-1][0]) in ['Token.Comment.Multiline', 'Token.Comment.Special']:
             return False
 
         if self.ends_sc:

@@ -93,6 +93,7 @@ class StataMagics():
         # 'restart',
         'locals',
         'globals',
+        'delimit',
         'time',
         'timeit']
 
@@ -253,6 +254,11 @@ class StataMagics():
 
     def magic_locals(self, code, kernel):
         return self.magic_globals(code, kernel, True)
+
+    def magic_delimit(self, code, kernel):
+        delim = ';' if kernel.sc_delimit_mode else 'cr'
+        print_kernel('The delimiter is currently: {}'.format(delim), kernel)
+        return ''
 
     def magic_time(self, code, kernel):
         try:
