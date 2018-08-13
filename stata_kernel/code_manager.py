@@ -49,7 +49,7 @@ class CodeManager(object):
                 - Keyword.Namespace (code inside #delimit ; block)
                 - Keyword.Reserved (; delimiter)
         """
-        comment_lexer = CommentAndDelimitLexer(stripall=True)
+        comment_lexer = CommentAndDelimitLexer(stripall=False)
         return [x for x in lex(code, comment_lexer)]
 
     def remove_comments(self, tokens):
@@ -102,7 +102,7 @@ class CodeManager(object):
                 - Keyword.Namespace (code inside #delimit ; block)
                 - Keyword.Reserved (; delimiter)
         """
-        block_lexer = StataLexer(stripall=True)
+        block_lexer = StataLexer(stripall=False)
         return [x for x in lex(code, block_lexer)]
 
     def _is_complete(self):
