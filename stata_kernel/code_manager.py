@@ -20,10 +20,10 @@ class CodeManager(object):
 
         self.has_sc_delimits = 'Token.Keyword.Namespace' in [
             str(x[0]) for x in self.tokens_nocomments]
-        self.is_complete = self._is_complete()
-
         if self.has_sc_delimits:
             self.adjust_for_semicolons()
+
+        self.is_complete = self._is_complete()
 
     def tokenize_code(self, code):
         """Tokenize input code using custom lexer
