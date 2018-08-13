@@ -1,5 +1,7 @@
 # stata_kernel
 
+[![Build Status](https://travis-ci.org/kylebarron/stata_kernel.svg?branch=master)](https://travis-ci.org/kylebarron/stata_kernel)
+
 `stata_kernel` is a Jupyter kernel for Stata; It works on Windows, macOS, and
 Linux.
 
