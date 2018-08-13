@@ -19,6 +19,9 @@ class CodeManager(object):
         self.tokens_fp_all = self.tokenize_first_pass(code)
         self.tokens_fp_no_comments = self.remove_comments(self.tokens_fp_all)
 
+        if not self.tokens_fp_no_comments:
+            self.tokens_fp_no_comments = [('Token.Text', '')]
+
         self.ends_sc = str(self.tokens_fp_no_comments[-1][0]) in [
             'Token.Keyword.Namespace', 'Token.Keyword.Reserved']
 
