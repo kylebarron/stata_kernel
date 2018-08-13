@@ -32,6 +32,7 @@ class CompletionsManager(object):
         #
         #     (`=)?scalar(
 
+        pre = r"(cap(t(u(re?)?)?)?|n(o(i(s(i(ly?)?)?)?)?)?|qui(e(t(ly?)?)?)?)?"
         kwargs = {'flags': regex.MULTILINE}
         self.context = {
             'function':
@@ -43,9 +44,12 @@ class CompletionsManager(object):
                     r"(?r)\s(?<fluff>.*?)`\=(?<context>\S+?)"
                     r"\([^\)\s]*?\Z", **kwargs).search,
             'line':
-                regex.compile(r"(?r)^\s*(?<context>\S+)", **kwargs).search,
+                regex.compile(
+                    r"(?r)^(\s*{0})*(?<context>\S+)".format(pre), **kwargs)
+                .search,
             'delimit_line':
-                regex.compile(r"\A\s*(?<context>\S+)", **kwargs).search}
+                regex.compile(
+                    r"\A(\s*{0})*(?<context>\S+)".format(pre), **kwargs).search}
 
         self.suggestions = self.get_suggestions(kernel)
 
