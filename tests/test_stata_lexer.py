@@ -613,6 +613,35 @@ class TestSemicolonDelimitComments(object):
             (Token.Keyword.Namespace, '\n')]
         assert tokens == expected
 
+    def test_inline_comment_inside_expr_without_whitespace(self):
+        """
+        ```stata
+        #delimit ;
+        disp
+        "
+        a
+        2
+        b
+        "
+        ;
+        // prints `a 2 b`
+        ```
+        """
+        code = '#delimit ;\na\nb\nc\nd;'
+        tokens = CodeManager(code).tokens_final
+        expected = [
+            (Token.Text, ' '),
+            (Token.Text, 'a'),
+            (Token.Text, ' '),
+            (Token.Text, 'b'),
+            (Token.Text, ' '),
+            (Token.Text, 'c'),
+            (Token.Text, ' '),
+            (Token.Text, 'd'),
+            (Token.Text, '\n')]
+        assert tokens == expected
+
+
 class TestIsComplete(object):
     @pytest.mark.parametrize(
     'code,complete',

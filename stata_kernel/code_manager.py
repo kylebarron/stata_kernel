@@ -64,18 +64,20 @@ class CodeManager(object):
 
     def convert_delimiter(self, tokens):
         """If parts of tokens are `;`-delimited, convert to `\\n`-delimited
+
+        - If there are no ;-delimiters, return
+        - Else, replace newlines with spaces, see https://github.com/kylebarron/stata_kernel/pull/70#issuecomment-412399978
+        - Then change the ; delimiters to newlines
         """
 
         # If all tokens are newline-delimited, return
         if not 'Token.Keyword.Namespace' in [str(x[0]) for x in tokens]:
             return tokens
 
-        # Remove newlines in `;`-delimited blocks
-        # These are newlines with label Token.Keyword.Namespace.
-        tokens = [
-            x for x in tokens
-            if not ((str(x[0]) == 'Token.Keyword.Namespace') and (x[1] == '\n'))
-        ]
+        # Replace newlines in `;`-delimited blocks with spaces
+        tokens = [('Space instead of newline', ' ') if
+                  (str(x[0]) == 'Token.Keyword.Namespace') and x[1] == '\n' else x
+                  for x in tokens[:-1]]
 
         # Change the ; delimiters to \n
         tokens = [('Newline delimiter', '\n') if
