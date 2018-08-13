@@ -25,7 +25,13 @@ class StataLexer(RegexLexer):
     flags = re.MULTILINE | re.DOTALL
     tokens = {
         'root': [
-            include('strings'),
+            # The prepending `^[^\n]*?` help by assigning text from the
+            # beginning of the line to the Text or MatchingBracket tokens.
+            # Otherwise, there's a token change in the middle of the line and
+            # it's a little more difficult to later separate tokens into blocks
+            # of syntactic chunks.
+            (r'^[^\n]*?`"', Text, 'string-compound'),
+            (r'^[^\n]*?(?<!`)"', Text, 'string-regular'),
             (r'^[^\n]*?\{', Token.MatchingBracket.Other, 'block'),
             (r'^\s*(pr(ogram|ogra|ogr|og|o)?)\s+(?!di|dr|l)(de(fine|fin|fi|f)?\s+)?', Token.MatchingBracket.Other, 'program'),
             (r'^\s*inp(u|ut)?', Token.MatchingBracket.Other, 'program'),
