@@ -1,5 +1,9 @@
 # Changelog
 
+## [1.3.1] - 2018-08-13
+
+- Fix pip installation by adding CHANGELOG and requirements files to `MANIFEST.in`.
+
 ## [1.3.0] - 2018-08-13
 
 - Context-aware autocompletions
