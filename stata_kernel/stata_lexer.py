@@ -211,7 +211,7 @@ class CommentAndDelimitLexer(RegexLexer):
             (r'.', Token.Keyword.Namespace)
         ],
         'delimit;-string-regular': [
-            (r'(")(?!\')|(?=\n)', Token.Keyword.Namespace, '#pop'),
+            (r'(")(?!\')', Token.Keyword.Namespace, '#pop'),
             (r'.', Token.Keyword.Namespace)
         ]
     }
