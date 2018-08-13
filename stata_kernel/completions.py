@@ -12,12 +12,30 @@ class CompletionsManager(object):
         # end of the string OR until '---+\s*end' (the latter in case
         # set trace was set to on.
         self.matchall = re.compile(
-            r"\A.*?%varlist%(?P<varlist>.*?)"
+            r"\A.*?%mata%(?P<mata>.*?)"
+            r"%varlist%(?P<varlist>.*?)"
             r"%globals%(?P<globals>.*?)"
             # r"%locals%(?P<locals>.*?)"
             r"%scalars%(?P<scalars>.*?)"
             r"%matrices%(?P<matrices>.*?)(\Z|---+\s*end)",
             flags = re.DOTALL + re.MULTILINE).match
+
+        # Match output from mata mata desc
+        self.matadesc = regex.compile(
+            r"(\A.*?---+|---+[\r\n]*\Z)", flags=regex.MULTILINE + regex.DOTALL)
+
+        self.matalist = re.compile(
+            r"(?:.*?)\s(\S+)\s*$", flags=re.MULTILINE + re.DOTALL)
+
+        self.mataclean = regex.compile(r"\W")
+
+        self.matainline = regex.compile(r"^m(ata)?\b").search
+
+        self.matacontext = regex.compile(
+            r'(?r)(^|\s+)(?<st>_?st_)'
+            r'(?<context>\S+?)\('
+            r'(?<quote>[^\)]*?")'
+            r'(?<pre>[^\)]*?)\Z', flags=regex.MULTILINE + regex.DOTALL).search
 
         # Varlist-style matching; applies to all
         self.varlist = re.compile(
@@ -56,7 +74,7 @@ class CompletionsManager(object):
     def refresh(self, kernel):
         self.suggestions = self.get_suggestions(kernel)
 
-    def get_env(self, code, rdelimit, sc_delimit_mode):
+    def get_env(self, code, rdelimit, sc_delimit_mode, mata_mode):
         """Returns completions environment
 
         Args:
@@ -64,6 +82,7 @@ class CompletionsManager(object):
             rdelimit (str): The two characters immediately after code.
                 Will be used to accurately determine rcomp.
             sc_delimit_mode (bool): Whether #delimit ; is on.
+            mata_mode (bool): Whether mata is on
 
         Returns:
             env (int):
@@ -76,6 +95,7 @@ class CompletionsManager(object):
                 6: matrices, matrix .* x* completed with x*
                 7: scalars and varlist, scalar .* = x* completed with x*
                 8: matrices and varlsit, matrix .* = x* completed with x*
+                9: mata, inline or in mata environment
             pos (int):
                 Where the completions start. This is set to the start
                 of the word to be completed.
@@ -97,50 +117,58 @@ class CompletionsManager(object):
         if pos >= 0:
             pos += 1
 
-            # Figure out if current statement is a matrix or scalar
-            # statement. If so, will add them to completions list.
-            if sc_delimit_mode:
-                linecontext = self.context['delimit_line'](code)
+            if mata_mode:
+                env_add = 9
             else:
-                linecontext = self.context['line'](code)
-            if linecontext:
-                context = linecontext.groupdict()['context']
-                equals = (code.find('=') > 0)
-                if context.strip() == 'scalar':
-                    env_add = 7 if equals else 4
-                elif context.strip() == 'matrix':
-                    env_add = 8 if equals else 6
-
-            # Constructs of the form scalar(x<tab> will be filled only
-            # with scalars. This can be preceded by = or `=
-            if env_add == 0:
-                lfuncontext = self.context['lfunction'](code)
-                if lfuncontext:
-                    lfunction = lfuncontext.groupdict()['context']
-                    fluff = lfuncontext.groupdict()['fluff']
-                    lfluff = 0 if not fluff else len(fluff)
-                    if lfunction == 'scalar':
-                        env_add = 5
-                        pos += len(lfunction) + 3 + lfluff
-                        if rdelimit == ")'":
-                            rcomp = ""
-                        elif rdelimit[0:1] == ")":
-                            rcomp = ""
-                        elif rdelimit[0:1] == "'":
-                            rcomp = ")"
-                        else:
-                            rcomp = ")'"
+                # Figure out if current statement is a matrix or scalar
+                # statement. If so, will add them to completions list.
+                if sc_delimit_mode:
+                    linecontext = self.context['delimit_line'](code)
                 else:
-                    funcontext = self.context['function'](code)
-                    if funcontext:
-                        function = funcontext.groupdict()['context']
-                        extra = 2 if funcontext.groupdict()['equals'] else 1
-                        if function == 'scalar':
+                    linecontext = self.context['line'](code)
+
+                if linecontext:
+                    context = linecontext.groupdict()['context']
+                    equals = (code.find('=') > 0)
+                    if context.strip() == 'scalar':
+                        env_add = 7 if equals else 4
+                    elif context.strip() == 'matrix':
+                        env_add = 8 if equals else 6
+                    elif self.matainline(context.strip()):
+                        env_add = 9
+
+                # Constructs of the form scalar(x<tab> will be filled only
+                # with scalars. This can be preceded by = or `=
+                if env_add == 0:
+                    lfuncontext = self.context['lfunction'](code)
+                    if lfuncontext:
+                        lfunction = lfuncontext.groupdict()['context']
+                        fluff = lfuncontext.groupdict()['fluff']
+                        lfluff = 0 if not fluff else len(fluff)
+                        if lfunction == 'scalar':
                             env_add = 5
-                            pos += len(function) + extra
-                            rcomp = "" if rdelimit[0:1] == ")" else ")"
+                            pos += len(lfunction) + 3 + lfluff
+                            if rdelimit == ")'":
+                                rcomp = ""
+                            elif rdelimit[0:1] == ")":
+                                rcomp = ""
+                            elif rdelimit[0:1] == "'":
+                                rcomp = ")"
+                            else:
+                                rcomp = ")'"
+                    else:
+                        funcontext = self.context['function'](code)
+                        if funcontext:
+                            function = funcontext.groupdict()['context']
+                            extra = 2 if funcontext.groupdict()['equals'] else 1
+                            if function == 'scalar':
+                                env_add = 5
+                                pos += len(function) + extra
+                                rcomp = "" if rdelimit[0:1] == ")" else ")"
         else:
             pos = 0
+            if mata_mode:
+                env_add = 9
 
         # Figure out if this is a local or global; env = 0 (default)
         # will suggest variables in memory.
@@ -163,6 +191,71 @@ class CompletionsManager(object):
             # so varlist is still a valid completion in a matrix or
             # scalar context.
             env += env_add
+
+        # print("debug", env, code)
+        if env == 9:
+            matacontext = self.matacontext(code)
+            if matacontext:
+                st, context, quote, pre = matacontext.groupdict().values()
+                # print("debug", st, context, quote, pre)
+                varlist = [
+                    'data',
+                    'sdata',
+                    'store',
+                    'sstore',
+                    'view',
+                    'sview',
+                    'varindex',
+                    'varrename',
+                    'vartype',
+                    'isnumvar',
+                    'isstrvar',
+                    'vartype',
+                    'varformat',
+                    'varlabel',
+                    'varvaluelabel',
+                    'dropvar',
+                    'keepvar'
+                ]
+                _globals = ['global', 'global_hcat']
+                _locals = ['local']
+                scalars = ['numscalar', 'strnumscalar', 'strnumscalar_hcat']
+                matrices = [
+                    'matrix',
+                    'matrix_hcat',
+                    'matrixrowstripe',
+                    'matrixcolstripe',
+                    'replacematrix'
+                ]
+
+                posextra = 0
+                if st:
+                    posextra += len(st)
+                if context:
+                    posextra += len(context)
+                if quote:
+                    posextra += len(quote) + 1
+
+                # print("debug", posextra)
+                if context in varlist:
+                    env = 0
+                elif context in _globals:
+                    env = 2
+                    rcomp = ''
+                elif context in _locals:
+                    env = 1
+                    rcomp = ''
+                elif context in scalars:
+                    env = 4
+                    rcomp = ''
+                elif context in matrices:
+                    env = 6
+                    rcomp = ''
+                else:
+                    posextra = 0
+
+                pos += posextra
+                # print("debug", env, pos, posextra, code[:pos])
 
         return env, pos, code[pos:], rcomp
 
@@ -212,18 +305,27 @@ class CompletionsManager(object):
                 if var.startswith(starts)] + [
                     var for var in self.suggestions['varlist']
                     if var.startswith(starts)]
+        elif env == 9:
+            return [
+                var for var in self.suggestions['mata']
+                if var.startswith(starts)]
 
     def get_suggestions(self, kernel):
         match = self.matchall(self.quickdo('_StataKernelCompletions', kernel))
         if match:
             suggestions = match.groupdict()
+            suggestions['mata'] = self._parse_mata_desc(suggestions['mata'])
             for k, v in suggestions.items():
+                if k == 'mata':
+                    continue
                 suggestions[k] = self.varlist.findall(self.varclean('', v))
 
             all_locals = """mata : invtokens(st_dir("local", "macro", "*")')"""
-            res = '\r\n'.join(self.quickdo(all_locals, kernel).split('\r\n')[1:])
+            res = '\r\n'.join(
+                self.quickdo(all_locals, kernel).split('\r\n')[1:])
             if res.strip():
-                suggestions['locals'] = self.varlist.findall(self.varclean('', res))
+                suggestions['locals'] = self.varlist.findall(
+                    self.varclean('', res))
             else:
                 suggestions['locals'] = []
         else:
@@ -259,3 +361,20 @@ class CompletionsManager(object):
                 fh.close()
 
         return res
+
+    def _parse_mata_desc(self, desc):
+        """Parse output from mata desc
+        """
+        mata_objects = self.matalist.findall(
+            self.matadesc.sub('', self.varclean('', desc)))
+
+        mata_suggestions = []
+        for x in mata_objects:
+            if x.startswith('::'):
+                # TODO: Class-aware method suggestions
+                continue
+                mata_suggestions.append('.' + self.mataclean.sub('', x))
+            else:
+                mata_suggestions.append(self.mataclean.sub('', x))
+
+        return mata_suggestions

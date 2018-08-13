@@ -187,7 +187,7 @@ class StataKernel(Kernel):
         # variable, local, etc.
         env, pos, chunk, rcomp = self.completions.get_env(
             code[:cursor_pos], code[cursor_pos:(cursor_pos + 2)],
-            self.sc_delimit_mode)
+            self.sc_delimit_mode, self.stata.mata_mode)
 
         return {
             'status': 'ok',
