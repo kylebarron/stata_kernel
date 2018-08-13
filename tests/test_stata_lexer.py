@@ -1,3 +1,4 @@
+import pytest
 from pygments.token import Token
 from stata_kernel.code_manager import CodeManager
 
@@ -611,3 +612,66 @@ class TestSemicolonDelimitComments(object):
             (Token.Keyword.Reserved, ';'),
             (Token.Keyword.Namespace, '\n')]
         assert tokens == expected
+
+class TestIsComplete(object):
+    @pytest.mark.parametrize(
+    'code,complete',
+    [
+     ('//', True),
+     ('// sdfsa', True),
+     ('/// sdfsa', False),
+     ('/// \n', False),
+     ('/// \n\n', True),
+     ('/* \n\n', False),
+     ('/* \n\n*/', True),
+     ]) # yapf: disable
+    def test_is_comment_complete(self, code, complete):
+        assert CodeManager(code, False).is_complete == complete
+
+    @pytest.mark.parametrize(
+    'code,complete',
+    [
+     ('//', False),
+     ('// sdfsa', False),
+     ('/// sdfsa', False),
+     ('/// \n', False),
+     ('/// \n\n', False),
+     ('/// \n;', True),
+     ('/// \n\n;', True),
+     ('/* \n\n', False),
+     ('/* \n\n*/', False),
+     ('/* \n\n*/ di hi;', True),
+     ('/* \n\n*/;', True),
+     ]) # yapf: disable
+    def test_is_comment_complete_in_sc_delimit_block(self, code, complete):
+        assert CodeManager(code, True).is_complete == complete
+
+    @pytest.mark.parametrize(
+    'code,complete',
+    [
+     ('di 1', True),
+     (';', True),
+     ('foreach i in 1 ', True),
+     ('foreach i in 1 {', False),
+     ('foreach i in 1 2 {\nif {\n }', False),
+     ]) # yapf: disable
+    def test_is_block_complete(self, code, complete):
+        assert CodeManager(code, False).is_complete == complete
+
+    @pytest.mark.parametrize(
+    'code,complete',
+    [
+     ('di 1', False),
+     ('di 1;', True),
+     ('di "{" 1;', True),
+     ('di "}" 1;', True),
+     (';', True),
+     ('foreach i in 1 2 3 4', False),
+     ('foreach i in 1 2 3 4 {', False),
+     ('foreach i in 1 2 3 4 {;', False),
+     ('foreach i in 1 2 {;\nif {\n }', False),
+     ('foreach i in 1 2 {;\nif {;\n };', False),
+     ('foreach i in 1 2 {;\nif {;\n };\n};', True),
+     ]) # yapf: disable
+    def test_is_block_complete_in_sc_delimit_block(self, code, complete):
+        assert CodeManager(code, True).is_complete == complete
