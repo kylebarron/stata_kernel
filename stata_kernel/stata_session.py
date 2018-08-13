@@ -83,8 +83,10 @@ class StataSession(object):
         self.mata_mode = False
         self.stata_prompt = '\r\n\. '
         self.stata_prompt_regex = r'\r\n(\x1b\[\?1h\x1b=)?\r\n\. '
+
         self.mata_prompt = '\r\n: '
         self.mata_prompt_regex = r'(\r\n|---+)(\x1b\[\?1h\x1b=)?\r\n: '
+
         self.prompt = self.stata_prompt
         self.prompt_regex = self.stata_prompt_regex
 
@@ -209,7 +211,6 @@ class StataSession(object):
             imgs = []
 
             for line in syn_chunks:
-                print('debugk0', line)
                 new_syn_chunks.append(line)
                 res, timer = self.do_console(line[1])
 
@@ -350,7 +351,6 @@ class StataSession(object):
             (int): execution time
         """
 
-        print('debugc0', line, self.prompt_regex)
         self.child.sendline(line)
         timer = default_timer()
         try:

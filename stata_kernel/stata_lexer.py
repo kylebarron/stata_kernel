@@ -29,13 +29,30 @@ class StataLexer(RegexLexer):
         'root': [
             include('comments'),
             include('strings'),
+            (r'^\s*m(ata)?[^\r\n\S]*:?[^\r\n\S]*$', Token.Other, 'mata'),
             (r'^[^\n]*?\{', Token.MatchingBracket.Other, 'block'),
             (r'^\s*(pr(ogram|ogra|ogr|og|o)?)\s+(?!di|dr|l)(de(fine|fin|fi|f)?\s+)?', Token.MatchingBracket.Other, 'program'),
             (r'^\s*inp(u|ut)?', Token.MatchingBracket.Other, 'program'),
             (r'^\s*#d(e|el|eli|elim|elimi|elimit)?\s*;\s*?$', Comment.Single, 'delimit;'),
-            (r'^\s*m(ata)?[^\r\n\S]*:?[^\r\n\S]*$', Token.Other, 'mata'),
             (r'.', Text),
         ],
+
+        'mata': [
+            ('^\s*end(\s|[^\s\w\.]).*?$', Token.Other, '#pop'),
+            include('mata-comments'),
+            include('strings'),
+            (r'[\r\n]\s*end(?=(\s|[^\s\w\.]).*?$|$)', Token.Keyword.Reserved),
+            (r'^[^\n]*?\{', Token.MatchingBracket.Other, 'block'),
+            (r'^\s*#d(e|el|eli|elim|elimi|elimit)?\s*;\s*?$', Comment.Single, 'delimit;'),
+            (r'.', Text),
+        ],
+        'mata-comments': [
+            # Just exclude linestar
+            (r'(^//|(?<=\s)//)(?!/)', Comment.Single, 'comments-double-slash'),
+            (r'/\*', Comment.Multiline, 'comments-block'),
+            (r'(^///|(?<=\s)///)', Comment.Special, 'comments-triple-slash')
+        ],
+
         'block': [
             (r'\{', Token.MatchingBracket.Other, '#push'),
             (r'\}', Token.MatchingBracket.Other, '#pop'),
@@ -112,20 +129,6 @@ class StataLexer(RegexLexer):
         'string-regular-inside-blocks': [
             (r'(")(?!\')|(?=\n)', Token.MatchingBracket.Other, '#pop'),
             (r'.', Token.MatchingBracket.Other)
-        ],
-
-        'mata': [
-            ('^\s*end(\s|[^\s\w\.]).*?$', Token.Other, '#pop'),
-            include('mata-comments'),
-            include('strings'),
-            (r'[\r\n]\s*end(?=(\s|[^\s\w\.]).*?$|$)', Token.Keyword.Reserved),
-            # (r'.', Token.Keyword.Namespace),
-        ],
-        'mata-comments': [
-            # Just exclude linestar
-            (r'(^//|(?<=\s)//)(?!/)', Comment.Single, 'comments-double-slash'),
-            (r'/\*', Comment.Multiline, 'comments-block'),
-            (r'(^///|(?<=\s)///)', Comment.Special, 'comments-triple-slash')
         ],
 
         'delimit;': [
