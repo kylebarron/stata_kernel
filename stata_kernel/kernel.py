@@ -62,15 +62,18 @@ class StataKernel(Kernel):
         # Enter mata if applicable
         self.stata.mata_mode = cm.has_mata_mode and not cm.ends_mata
         if self.stata.mata_mode:
+            # print('\tdebug1', 'mata')
             self.stata.prompt = self.stata.mata_prompt
             self.stata.prompt_regex = self.stata.mata_prompt_regex
             if (self.magics.graphs != 2):
                 self.magics.graphs = 0
         else:
+            # print('\tdebug1', 'stata')
             self.stata.prompt = self.stata.stata_prompt
             self.stata.prompt_regex = self.stata.stata_prompt_regex
 
         # Execute code chunk
+        # print('\tdebug2', cm.get_chunks())
         rc, imgs, res = self.stata.do(cm.get_chunks(), self.magics)
         stream_content = {'text': res}
 

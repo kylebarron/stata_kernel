@@ -11,19 +11,22 @@ class CodeManager(object):
 
     def __init__(self, code, semicolon_delimit=False, mata_mode=False):
 
-        # mata goes first since it obeys #delimit!
+        # mata goes second since it obeys #delimit!
         code = re.sub(r'\r\n', r'\n', code)
         self.input = code
         if semicolon_delimit:
-            code = '#delimit ;\n' + code
             if mata_mode:
                 code = 'mata;\n' + code
+
+            code = '#delimit ;\n' + code
         elif mata_mode:
             code = 'mata\n' + code
 
         # First use the Comment and Delimiting lexer
         # first pass
+        # print('debugz0', code)
         self.tokens_fp_all = self.tokenize_first_pass(code)
+        # print('debugz0', self.tokens_fp_all)
         self.tokens_fp_no_comments = self.remove_comments(self.tokens_fp_all)
 
         if not self.tokens_fp_no_comments:
@@ -33,22 +36,23 @@ class CodeManager(object):
             'Token.Keyword.Namespace', 'Token.Keyword.Reserved']
 
         # print('debugz1', self.tokens_fp_no_comments)
-        # check if in mata
-        self.ends_mata = False
-        if len(self.tokens_fp_no_comments) > 1:
-            token, chunk = self.tokens_fp_no_comments[-2]
-            # print('debugz2', token, chunk)
-            self.ends_mata = str(token) == 'Token.Keyword.Reserved'
-
         tokens_nl_delim = self.convert_delimiter(self.tokens_fp_no_comments)
         text = ''.join([x[1] for x in tokens_nl_delim])
         self.tokens_final = self.tokenize_second_pass(text)
         self.has_mata_mode = 'Token.Other' in [
             str(x[0]) for x in self.tokens_final]
+        if mata_mode:
+            self.ends_mata = 'Token.Aborted' in [
+                str(x[0]) for x in self.tokens_final]
+        else:
+            self.ends_mata = False
 
+        # print('debugz3', mata_mode, self.has_mata_mode, self.ends_mata)
+        # print('debugz4', self.tokens_final)
         if mata_mode:
             self.tokens_final = self.tokens_final[1:]
 
+        # print('debugz4', self.tokens_final)
         self.is_complete = self._is_complete()
 
     def tokenize_first_pass(self, code):
@@ -69,7 +73,9 @@ class CodeManager(object):
                 - Keyword.Namespace (code inside #delimit ; block)
                 - Keyword.Reserved (; delimiter)
         """
+        # print("debugfp", code)
         comment_lexer = CommentAndDelimitLexer(stripall=False, stripnl=False)
+        # print("debugfp", list(lex(code, comment_lexer)))
         return [x for x in lex(code, comment_lexer)]
 
     def remove_comments(self, tokens):
