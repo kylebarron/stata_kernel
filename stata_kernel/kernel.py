@@ -62,37 +62,30 @@ class StataKernel(Kernel):
         # Enter mata if applicable
         self.stata.mata_mode = cm.has_mata_mode and not cm.ends_mata
         if self.stata.mata_mode:
-            # print('\tdebug1', 'mata')
             self.stata.prompt = self.stata.mata_prompt
             self.stata.prompt_regex = self.stata.mata_prompt_regex
             # Turn off plot magic in mata
             # if (self.magics.graphs != 2):
             self.magics.graphs = 0
         else:
-            # print('\tdebug1', 'stata')
             self.stata.prompt = self.stata.stata_prompt
             self.stata.prompt_regex = self.stata.stata_prompt_regex
 
         # Execute code chunk
-        # print('\tdebug2', cm.get_chunks())
         rc, imgs, res = self.stata.do(cm.get_chunks(), self.magics)
 
         # If mata error, restart
-        # print("debug0", self.stata.mata_mode)
         if self.stata.mata_mode and (rc == 3000):
             self.stata.prompt = self.stata.stata_prompt
             self.stata.prompt_regex = self.stata.stata_prompt_regex
             mata_restart = [('Token.Text', 'end')]
             _rc, _imgs, _res = self.stata.do(mata_restart, self.magics)
-            # print("debuge", res)
             self.stata.prompt = self.stata.mata_prompt
             self.stata.prompt_regex = self.stata.mata_prompt_regex
             _rc, _imgs, _res = self.stata.do([('Token.Text', 'mata')], self.magics)
-            # print("debugf", _res)
             res = "Incomplete or invalid input; restarting...\n"
             res += _res
         elif self.stata.mata_mode and (rc == 0):
-            # print('debug', self.stata.mata_trim.search(res))
             res = self.stata.mata_trim.sub('', res)
 
         stream_content = {'text': res}
@@ -174,12 +167,9 @@ class StataKernel(Kernel):
         when closed.
 
         """
-        # print("debugic")
         if self.is_complete(code):
-            # print("debugic1")
             return {'status': 'complete'}
 
-        # print("debugic2")
         return {'status': 'incomplete', 'indent': '    '}
 
     def do_complete(self, code, cursor_pos):
@@ -199,5 +189,4 @@ class StataKernel(Kernel):
     def is_complete(self, code):
         c = CodeManager(
             code, self.sc_delimit_mode, self.stata.mata_mode).is_complete
-        # print("debugc", c)
         return c

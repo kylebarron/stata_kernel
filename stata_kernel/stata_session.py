@@ -226,10 +226,8 @@ class StataSession(object):
 
             for line in syn_chunks:
                 sleep(0.1)
-                # print('debugl', line)
                 new_syn_chunks.append(line)
                 res, timer = self.do_console(line[1])
-                # print('debugb', res)
 
                 log.append(res)
                 err = err_regex(res)
@@ -258,8 +256,6 @@ class StataSession(object):
 
             # Only full input allowed: If command ended in line
             # continuation, yell at the user.
-            # print('debugm', self.child.after, self.mata_bad_end(self.child.after))
-            # print('debugm', self.child.after)
             if self.mata_mode and self.child.after.endswith('> '):
                 rc = 3000
 
@@ -536,9 +532,7 @@ class StataSession(object):
         syn_chunks = syn_chunks[:len(log)]
 
         # Take out line continuations for both input and results
-        # print("debuglog0", log)
         log = [re.sub(r'\r\n> ', '', x) for x in log]
-        # print("debuglog1", log)
 
         log_all = []
         for (Token, code_line), log_line in zip(syn_chunks, log):
@@ -547,8 +541,6 @@ class StataSession(object):
                 # block, the first line should equal the text sent
                 # The assert is just a sanity check for now.
                 log_line = log_line.split('\r\n')
-                # print("debuglog2", code_line)
-                # print("debuglog3", log_line)
                 assert log_line[0] == code_line
                 log_all.extend(log_line[1:])
                 log_all.append('')

@@ -192,12 +192,10 @@ class CompletionsManager(object):
             # scalar context.
             env += env_add
 
-        # print("debug", env, code)
         if env == 9:
             matacontext = self.matacontext(code)
             if matacontext:
                 st, context, quote, pre = matacontext.groupdict().values()
-                # print("debug", st, context, quote, pre)
                 varlist = [
                     'data',
                     'sdata',
@@ -236,7 +234,6 @@ class CompletionsManager(object):
                 if quote:
                     posextra += len(quote) + 1
 
-                # print("debug", posextra)
                 if context in varlist:
                     env = 0
                 elif context in _globals:
@@ -255,7 +252,6 @@ class CompletionsManager(object):
                     posextra = 0
 
                 pos += posextra
-                # print("debug", env, pos, posextra, code[:pos])
 
         return env, pos, code[pos:], rcomp
 

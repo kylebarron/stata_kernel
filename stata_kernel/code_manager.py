@@ -25,9 +25,7 @@ class CodeManager(object):
 
         # First use the Comment and Delimiting lexer
         # first pass
-        # print('debugz0', code)
         self.tokens_fp_all = self.tokenize_first_pass(code)
-        # print('debugz0', self.tokens_fp_all)
         self.tokens_fp_no_comments = self.remove_comments(self.tokens_fp_all)
 
         if not self.tokens_fp_no_comments:
@@ -36,7 +34,6 @@ class CodeManager(object):
         self.ends_sc = str(self.tokens_fp_no_comments[-1][0]) in [
             'Token.Keyword.Namespace', 'Token.Keyword.Reserved']
 
-        # print('debugz1', self.tokens_fp_no_comments)
         tokens_nl_delim = self.convert_delimiter(self.tokens_fp_no_comments)
         text = ''.join([x[1] for x in tokens_nl_delim])
         self.tokens_final = self.tokenize_second_pass(text)
@@ -63,20 +60,11 @@ class CodeManager(object):
         # else:
         #     self.ends_mata = False
 
-        # print('debugz3', mata_mode, self.has_mata_mode, self.ends_mata)
-        # print('debugz4', self.tokens_final)
-        # if mata_mode:
-        #     self.tokens_final = self.tokens_final[1:]
-
-        # print('debugz4', self.tokens_final)
         self.is_complete = self._is_complete()
-        # print('debugz5', self.is_complete)
 
         # Append "" to mata to force statements like "if" to end.
         if self.has_mata_mode:
             self.tokens_final += [('Token.Text', '""')]
-
-        # print('debugz6', self.tokens_final)
 
     def tokenize_first_pass(self, code):
         """Tokenize input code for Comments and Delimit blocks
@@ -96,9 +84,7 @@ class CodeManager(object):
                 - Keyword.Namespace (code inside #delimit ; block)
                 - Keyword.Reserved (; delimiter)
         """
-        # print("debugfp", code)
         comment_lexer = CommentAndDelimitLexer(stripall=False, stripnl=False)
-        # print("debugfp", list(lex(code, comment_lexer)))
         return [x for x in lex(code, comment_lexer)]
 
     def remove_comments(self, tokens):
@@ -187,7 +173,6 @@ class CodeManager(object):
                 ind for ind, x in enumerate(self.tokens_fp_all)
                 if (str(x[0]) == 'Token.Keyword.Reserved') and x[1] == ';']
 
-            # print('debugi1', inds)
             if not inds:
                 inds = [0]
 
@@ -195,7 +180,6 @@ class CodeManager(object):
             # If so, then it's not complete
             tr_text = ''.join([
                 x[1] for x in self.tokens_fp_all[max(inds) + 1:]]).strip()
-            # print('debugi2', tr_text)
             if tr_text:
                 return False
 
