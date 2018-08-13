@@ -6,6 +6,12 @@ import regex
 
 class CompletionsManager(object):
     def __init__(self, kernel):
+        self.status = 'on'
+        self.on = True
+
+        # Magic completion
+        self.magic_completion = re.compile(
+            r'\A%(?P<magic>\S*)\Z', flags=re.DOTALL + re.MULTILINE).match
 
         # NOTE(mauricio): Locals have to be listed sepparately because
         # inside a Stata program they would only list the locals for
@@ -52,9 +58,12 @@ class CompletionsManager(object):
                     r"\A(\s*{0})*(?<context>\S+)".format(pre), **kwargs).search}
 
         self.suggestions = self.get_suggestions(kernel)
+        self.suggestions['magics'] = kernel.magics.available_magics
 
     def refresh(self, kernel):
-        self.suggestions = self.get_suggestions(kernel)
+        if kernel.completions.on:
+            self.suggestions = self.get_suggestions(kernel)
+            self.suggestions['magics'] = kernel.magics.available_magics
 
     def get_env(self, code, rdelimit, sc_delimit_mode):
         """Returns completions environment
@@ -67,6 +76,7 @@ class CompletionsManager(object):
 
         Returns:
             env (int):
+                -1: magics, %x*
                 0: varlist
                 1: locals, `x* completed with `x*'
                 2: globals, $x* completed with $x*
@@ -88,6 +98,12 @@ class CompletionsManager(object):
                     scalars: )
                     scalars (if start with `): )'
         """
+
+        if self.magic_completion(code.lstrip()):
+            pos = code.rfind("%") + 1
+            env = -1
+            rcomp = ""
+            return env, pos, code[pos:], rcomp
 
         # Detect space-delimited word.
         env = 0
@@ -145,18 +161,21 @@ class CompletionsManager(object):
         # Figure out if this is a local or global; env = 0 (default)
         # will suggest variables in memory.
         chunk = code[pos:]
-        if chunk.find('`') >= 0:
-            pos += chunk.find('`') + 1
+        lfind = chunk.rfind('`')
+        gfind = chunk.rfind('$')
+        if lfind >= 0 and (lfind > gfind):
+            pos += lfind + 1
             env = 1
             rcomp = "" if rdelimit[0:1] == "'" else "'"
-        elif chunk.find('$') >= 0:
-            if chunk.find('{') >= 0:
-                pos += chunk.find('{') + 1
+        elif gfind >= 0:
+            bfind = chunk.rfind('{')
+            if bfind >= 0 and (bfind > gfind):
+                pos += bfind + 1
                 env = 3
                 rcomp = "" if rdelimit[0:1] == "}" else "}"
             else:
                 env = 2
-                pos += chunk.find('$') + 1
+                pos += gfind + 1
         else:
             # Set to matrix or scalar environment, if applicable. Note
             # that matrices and scalars can be set to variable values,
@@ -169,7 +188,11 @@ class CompletionsManager(object):
     def get(self, starts, env, rcomp):
         """Return environment-aware completions list.
         """
-        if env == 0:
+        if env == -1:
+            return [
+                var for var in self.suggestions['magics']
+                if var.startswith(starts)]
+        elif env == 0:
             return [
                 var for var in self.suggestions['varlist']
                 if var.startswith(starts)]

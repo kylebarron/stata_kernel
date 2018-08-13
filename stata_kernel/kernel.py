@@ -144,17 +144,24 @@ class StataKernel(Kernel):
         return {'status': 'incomplete', 'indent': '    '}
 
     def do_complete(self, code, cursor_pos):
-        # Environment-aware suggestion for the current space-delimited
-        # variable, local, etc.
-        env, pos, chunk, rcomp = self.completions.get_env(
-            code[:cursor_pos], code[cursor_pos:(cursor_pos + 2)],
-            self.sc_delimit_mode)
+        if self.completions.on:
+            # Environment-aware suggestion for the current space-delimited
+            # variable, local, etc.
+            env, pos, chunk, rcomp = self.completions.get_env(
+                code[:cursor_pos], code[cursor_pos:(cursor_pos + 2)],
+                self.sc_delimit_mode)
 
-        return {
-            'status': 'ok',
-            'cursor_start': pos,
-            'cursor_end': cursor_pos,
-            'matches': self.completions.get(chunk, env, rcomp)}
+            return {
+                'status': 'ok',
+                'cursor_start': pos,
+                'cursor_end': cursor_pos,
+                'matches': self.completions.get(chunk, env, rcomp)}
+        else:
+            return {
+                'status': 'ok',
+                'cursor_start': cursor_pos,
+                'cursor_end': cursor_pos,
+                'matches': []}
 
     def is_complete(self, code):
         return CodeManager(code, self.sc_delimit_mode).is_complete

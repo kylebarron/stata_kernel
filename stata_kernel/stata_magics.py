@@ -45,18 +45,18 @@ class MagicParsers():
 
         self.globals = StataParser(prog='%globals', kernel=kernel)
         self.globals.add_argument(
-            'code', nargs='*', type=str, metavar='CODE', help="Code to run")
+            'code', nargs='*', type=str, metavar='REGEX', help="regex to match")
         self.globals.add_argument(
-            '-t', '--truncate', dest='truncate', action='store_true',
-            help="Truncate macro values to first line printed by Stata",
+            '-v', '--verbose', dest='verbose', action='store_true',
+            help="Verbose output (print full contents of matched globals).",
             required=False)
 
         self.locals = StataParser(prog='%locals', kernel=kernel)
         self.locals.add_argument(
-            'code', nargs='*', type=str, metavar='CODE', help="Code to run")
+            'code', nargs='*', type=str, metavar='REGEX', help="regex to match")
         self.locals.add_argument(
-            '-t', '--truncate', dest='truncate', action='store_true',
-            help="Truncate macro values to first line printed by Stata",
+            '-v', '--verbose', dest='verbose', action='store_true',
+            help="Verbose output (print full contents of matched locals).",
             required=False)
 
         self.time = StataParser(prog='%time', kernel=kernel)
@@ -75,6 +75,11 @@ class MagicParsers():
         self.timeit.add_argument(
             '-n', dest='n', type=int, metavar='N', default=None,
             help="Execute statement N times per loop.", required=False)
+
+        self.completions = StataParser(prog='%completions', kernel=kernel)
+        self.completions.add_argument(
+            'on', nargs=1, type=str, metavar='{on|off}',
+            help="Turn completions on or off", choices=["on", "off"])
 
 
 # ---------------------------------------------------------------------
@@ -96,7 +101,8 @@ class StataMagics():
         'globals',
         'delimit',
         'time',
-        'timeit']
+        'timeit',
+        'completions']
 
     def __init__(self):
         self.quit_early = None
@@ -187,17 +193,17 @@ class StataMagics():
 
             code = ' '.join(args['code'])
             gregex['match'] = re.compile(code.strip())
-            if args['truncate']:
-                gregex['main'] = re.compile(
-                    r"^(?P<macro>_?[\w\d]*?):"
-                    r"(?P<cr>[\r\n]{0,2} {1,16})"
-                    r"(?P<contents>.*?$)", flags=re.DOTALL + re.MULTILINE)
-            else:
+            if args['verbose']:
                 gregex['main'] = re.compile(
                     r"^(?P<macro>_?[\w\d]*?):"
                     r"(?P<cr>[\r\n]{0,2} {1,16})"
                     r"(?P<contents>.*?$(?:[\r\n]{0,2} {16,16}.*?$)*)",
                     flags=re.DOTALL + re.MULTILINE)
+            else:
+                gregex['main'] = re.compile(
+                    r"^(?P<macro>_?[\w\d]*?):"
+                    r"(?P<cr>[\r\n]{0,2} {1,16})"
+                    r"(?P<contents>.*?$)", flags=re.DOTALL + re.MULTILINE)
         except:
             self.status = -1
 
@@ -212,6 +218,7 @@ class StataMagics():
 
         stata_globals = gregex['main'].findall(res)
         lens = 0
+        note = False
         find_name = gregex['match'] != ''
         print_globals = []
         if len(stata_globals) > 0:
@@ -243,6 +250,20 @@ class StataMagics():
                 else:
                     print_globals += [(macro, contents.lstrip('\r\n'))]
 
+                if len(contents) > 24:
+                    note = True
+
+        if len(print_globals) > 0:
+            if not args['verbose'] and note:
+                if local:
+                    wmacro = 'local'
+                else:
+                    wmacro = 'global'
+
+                msg = "(note: showing first line of " + wmacro
+                msg += " values; run with --verbose)\n"
+                print_kernel(msg, kernel)
+
         fmt = "{{0:{0}}} {{1}}".format(lens)
         for macro, contents in print_globals:
             print_kernel(
@@ -260,6 +281,20 @@ class StataMagics():
         delim = ';' if kernel.sc_delimit_mode else 'cr'
         print_kernel('The delimiter is currently: {}'.format(delim), kernel)
         return ''
+
+    def magic_completions(self, code, kernel):
+        try:
+            status = code.strip().split(' ')
+            on = vars(self.parse.completions.parse_args(status))['on'][0]
+            kernel.completions.status = on
+            kernel.completions.on = (on == 'on')
+            print_kernel('(code completion is {0})'.format(on), kernel)
+            kernel.completions.refresh(kernel)
+            self.status = -1
+            return ''
+        except:
+            self.status = -1
+            return ''
 
     def magic_time(self, code, kernel):
         try:
