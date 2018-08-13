@@ -40,7 +40,8 @@ class MagicParsers():
             help="Plot height in pixels. Default: 400", required=False)
         self.plot.add_argument(
             '--set', dest='set', action='store_true',
-            help="Set plot width and height for the rest of the session.", required=False)
+            help="Set plot width and height for the rest of the session.",
+            required=False)
 
         self.globals = StataParser(prog='%globals', kernel=kernel)
         self.globals.add_argument(

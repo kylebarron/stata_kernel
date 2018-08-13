@@ -8,7 +8,7 @@ from .stata_magics import StataMagics
 
 class StataKernel(Kernel):
     implementation = 'stata_kernel'
-    implementation_version = '1.2.0'
+    implementation_version = '1.3.1'
     language = 'stata'
     language_version = '15.1'
     language_info = {
@@ -183,8 +183,7 @@ class StataKernel(Kernel):
             'status': 'ok',
             'cursor_start': pos,
             'cursor_end': cursor_pos,
-            'matches': self.completions.get(chunk, env, rcomp)
-        }
+            'matches': self.completions.get(chunk, env, rcomp)}
 
     def is_complete(self, code):
         c = CodeManager(

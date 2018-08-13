@@ -215,7 +215,7 @@ class CommentAndDelimitLexer(RegexLexer):
         # Made changes for //, // inside of *, and ending character for *
         'delimit;-comments': [
             # Either after a ; delimiter or has whitespace after beginning of the line
-            (r'((^\s+//)|(?<=;\s)\s*//)(?!/)', Comment.Single, 'delimit;-comments-double-slash'),
+            (r'((^\s+//)|(?<=\s)\s*//)(?!/)', Comment.Single, 'delimit;-comments-double-slash'),
             (r'^\s*\*', Comment.Single, 'delimit;-comments-star'),
             (r'/\*', Comment.Multiline, 'delimit;-comments-block'),
             (r'(^///|(?<=\s)///)', Comment.Special, 'delimit;-comments-triple-slash')
@@ -260,7 +260,7 @@ class CommentAndDelimitLexer(RegexLexer):
             (r'.', Token.Keyword.Namespace)
         ],
         'delimit;-string-regular': [
-            (r'(")(?!\')|(?=\n)', Token.Keyword.Namespace, '#pop'),
+            (r'(")(?!\')', Token.Keyword.Namespace, '#pop'),
             (r'.', Token.Keyword.Namespace)
         ]
     }

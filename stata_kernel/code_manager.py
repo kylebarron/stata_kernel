@@ -24,7 +24,6 @@ class CodeManager(object):
             code = 'mata\n' + code + '\n'
 
         # First use the Comment and Delimiting lexer
-        # first pass
         self.tokens_fp_all = self.tokenize_first_pass(code)
         self.tokens_fp_no_comments = self.remove_comments(self.tokens_fp_all)
 
@@ -94,23 +93,24 @@ class CodeManager(object):
             (List[Tuple[Token, str]]):
                 list of non-comment tokens
         """
-        return [
-            x for x in tokens if not str(x[0]).startswith('Token.Comment')]
+        return [x for x in tokens if not str(x[0]).startswith('Token.Comment')]
 
     def convert_delimiter(self, tokens):
         """If parts of tokens are `;`-delimited, convert to `\\n`-delimited
+
+        - If there are no ;-delimiters, return
+        - Else, replace newlines with spaces, see https://github.com/kylebarron/stata_kernel/pull/70#issuecomment-412399978
+        - Then change the ; delimiters to newlines
         """
 
         # If all tokens are newline-delimited, return
         if not 'Token.Keyword.Namespace' in [str(x[0]) for x in tokens]:
             return tokens
 
-        # Remove newlines in `;`-delimited blocks
-        # These are newlines with label Token.Keyword.Namespace.
-        tokens = [
-            x for x in tokens
-            if not ((str(x[0]) == 'Token.Keyword.Namespace') and (x[1] == '\n'))
-        ]
+        # Replace newlines in `;`-delimited blocks with spaces
+        tokens = [('Space instead of newline', ' ')
+                  if (str(x[0]) == 'Token.Keyword.Namespace') and x[1] == '\n'
+                  else x for x in tokens[:-1]]
 
         # Change the ; delimiters to \n
         tokens = [('Newline delimiter', '\n') if
@@ -155,7 +155,8 @@ class CodeManager(object):
         """
 
         magic_regex = re.compile(
-            r'\A%(?P<magic>.+?)(?P<code>\s+.*)?\Z', flags=re.DOTALL + re.MULTILINE)
+            r'\A%(?P<magic>.+?)(?P<code>\s+.*)?\Z',
+            flags=re.DOTALL + re.MULTILINE)
         if magic_regex.search(self.input):
             return True
 
@@ -164,13 +165,14 @@ class CodeManager(object):
             return False
 
         # last token a line-continuation comment
-        if str(self.tokens_fp_all[-1][0]) in ['Token.Comment.Multiline', 'Token.Comment.Special']:
+        if str(self.tokens_fp_all[-1][0]) in ['Token.Comment.Multiline',
+                                              'Token.Comment.Special']:
             return False
 
         if self.ends_sc:
             # Find indices of `;`
             inds = [
-                ind for ind, x in enumerate(self.tokens_fp_all)
+                ind for ind, x in enumerate(self.tokens_fp_no_comments)
                 if (str(x[0]) == 'Token.Keyword.Reserved') and x[1] == ';']
 
             if not inds:
@@ -179,7 +181,8 @@ class CodeManager(object):
             # Check if there's non whitespace text after the last semicolon
             # If so, then it's not complete
             tr_text = ''.join([
-                x[1] for x in self.tokens_fp_all[max(inds) + 1:]]).strip()
+                x[1]
+                for x in self.tokens_fp_no_comments[max(inds) + 1:]]).strip()
             if tr_text:
                 return False
 

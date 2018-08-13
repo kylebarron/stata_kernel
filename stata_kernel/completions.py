@@ -1,5 +1,6 @@
 import re
 import regex
+
 # NOTE: Using regex for (?r) flag
 
 
@@ -18,7 +19,7 @@ class CompletionsManager(object):
             # r"%locals%(?P<locals>.*?)"
             r"%scalars%(?P<scalars>.*?)"
             r"%matrices%(?P<matrices>.*?)(\Z|---+\s*end)",
-            flags = re.DOTALL + re.MULTILINE).match
+            flags=re.DOTALL + re.MULTILINE).match
 
         # Match output from mata mata desc
         self.matadesc = regex.compile(
@@ -38,8 +39,7 @@ class CompletionsManager(object):
             r'(?<pre>[^\)]*?)\Z', flags=regex.MULTILINE + regex.DOTALL).search
 
         # Varlist-style matching; applies to all
-        self.varlist = re.compile(
-            r"(?:\s+)(\S+)", flags=re.MULTILINE)
+        self.varlist = re.compile(r"(?:\s+)(\S+)", flags=re.MULTILINE)
 
         # Clean line-breaks.
         self.varclean = re.compile(
@@ -330,8 +330,7 @@ class CompletionsManager(object):
                 'scalars': [],
                 'matrices': [],
                 'globals': [],
-                'locals': []
-            }
+                'locals': []}
 
         return suggestions
 

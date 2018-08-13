@@ -1,4 +1,4 @@
-from distutils.core import setup
+from setuptools import setup
 
 with open('README.md') as f:
     readme = f.read()
@@ -48,6 +48,6 @@ setup(
     test_suite='tests',
     tests_require=test_requirements,
     url='https://github.com/kylebarron/stata_kernel',
-    version='1.2.0',
+    version='1.3.1',
     include_package_data=True
 )

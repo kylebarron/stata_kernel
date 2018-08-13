@@ -34,8 +34,8 @@ Atom             |  Jupyter Notebook
 - [x] Work with a remote session of Stata
 - [ ] Receive results as they appear, not after the entire command finishes.
 - [x] Special shorthand "magics" to aid with, for example benchmarking code.
-- [ ] Autocompletions as you type based on the variables, macros, and return objects currently in memory.
+- [x] Autocompletions as you type based on the variables, macros, and return objects currently in memory.
 - [ ] Mata interactive support
-- [ ] `#delimit ;` support.
+- [x] `#delimit ;` interactive support.
 - [ ] Cross-session history file
 - [ ] Pull up help files within the kernel.
