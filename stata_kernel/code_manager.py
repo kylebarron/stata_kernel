@@ -4,6 +4,7 @@ from pygments import lex
 from .stata_lexer import StataLexer
 from .stata_lexer import CommentAndDelimitLexer
 
+
 class CodeManager(object):
     """Class to deal with text before sending to Stata
     """
@@ -58,8 +59,7 @@ class CodeManager(object):
             (List[Tuple[Token, str]]):
                 list of non-comment tokens
         """
-        return [
-            x for x in tokens if not str(x[0]).startswith('Token.Comment')]
+        return [x for x in tokens if not str(x[0]).startswith('Token.Comment')]
 
     def convert_delimiter(self, tokens):
         """If parts of tokens are `;`-delimited, convert to `\\n`-delimited
@@ -74,9 +74,9 @@ class CodeManager(object):
             return tokens
 
         # Replace newlines in `;`-delimited blocks with spaces
-        tokens = [('Space instead of newline', ' ') if
-                  (str(x[0]) == 'Token.Keyword.Namespace') and x[1] == '\n' else x
-                  for x in tokens[:-1]]
+        tokens = [('Space instead of newline', ' ')
+                  if (str(x[0]) == 'Token.Keyword.Namespace') and x[1] == '\n'
+                  else x for x in tokens[:-1]]
 
         # Change the ; delimiters to \n
         tokens = [('Newline delimiter', '\n') if
@@ -121,7 +121,8 @@ class CodeManager(object):
         """
 
         magic_regex = re.compile(
-            r'\A%(?P<magic>.+?)(?P<code>\s+.*)?\Z', flags=re.DOTALL + re.MULTILINE)
+            r'\A%(?P<magic>.+?)(?P<code>\s+.*)?\Z',
+            flags=re.DOTALL + re.MULTILINE)
         if magic_regex.search(self.input):
             return True
 
@@ -130,7 +131,8 @@ class CodeManager(object):
             return False
 
         # last token a line-continuation comment
-        if str(self.tokens_fp_all[-1][0]) in ['Token.Comment.Multiline', 'Token.Comment.Special']:
+        if str(self.tokens_fp_all[-1][0]) in ['Token.Comment.Multiline',
+                                              'Token.Comment.Special']:
             return False
 
         if self.ends_sc:
@@ -145,7 +147,8 @@ class CodeManager(object):
             # Check if there's non whitespace text after the last semicolon
             # If so, then it's not complete
             tr_text = ''.join([
-                x[1] for x in self.tokens_fp_no_comments[max(inds) + 1:]]).strip()
+                x[1]
+                for x in self.tokens_fp_no_comments[max(inds) + 1:]]).strip()
             if tr_text:
                 return False
 

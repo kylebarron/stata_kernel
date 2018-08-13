@@ -3,6 +3,7 @@ from pygments.token import Token
 from stata_kernel.code_manager import CodeManager
 
 
+# yapf: disable
 class TestCommentsFromStataList(object):
     """
     Tests derived from
@@ -708,3 +709,5 @@ class TestIsComplete(object):
      ]) # yapf: disable
     def test_is_block_complete_in_sc_delimit_block(self, code, complete):
         assert CodeManager(code, True).is_complete == complete
+
+# yapf: enable

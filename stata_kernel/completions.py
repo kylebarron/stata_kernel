@@ -1,5 +1,6 @@
 import re
 import regex
+
 # NOTE: Using regex for (?r) flag
 
 
@@ -17,11 +18,10 @@ class CompletionsManager(object):
             # r"%locals%(?P<locals>.*?)"
             r"%scalars%(?P<scalars>.*?)"
             r"%matrices%(?P<matrices>.*?)(\Z|---+\s*end)",
-            flags = re.DOTALL + re.MULTILINE).match
+            flags=re.DOTALL + re.MULTILINE).match
 
         # Varlist-style matching; applies to all
-        self.varlist = re.compile(
-            r"(?:\s+)(\S+)", flags=re.MULTILINE)
+        self.varlist = re.compile(r"(?:\s+)(\S+)", flags=re.MULTILINE)
 
         # Clean line-breaks.
         self.varclean = re.compile(
@@ -221,9 +221,11 @@ class CompletionsManager(object):
                 suggestions[k] = self.varlist.findall(self.varclean('', v))
 
             all_locals = """mata : invtokens(st_dir("local", "macro", "*")')"""
-            res = '\r\n'.join(self.quickdo(all_locals, kernel).split('\r\n')[1:])
+            res = '\r\n'.join(
+                self.quickdo(all_locals, kernel).split('\r\n')[1:])
             if res.strip():
-                suggestions['locals'] = self.varlist.findall(self.varclean('', res))
+                suggestions['locals'] = self.varlist.findall(
+                    self.varclean('', res))
             else:
                 suggestions['locals'] = []
         else:
@@ -232,8 +234,7 @@ class CompletionsManager(object):
                 'scalars': [],
                 'matrices': [],
                 'globals': [],
-                'locals': []
-            }
+                'locals': []}
 
         return suggestions
 
