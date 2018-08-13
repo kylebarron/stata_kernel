@@ -8,7 +8,7 @@ from .stata_magics import StataMagics
 
 class StataKernel(Kernel):
     implementation = 'stata_kernel'
-    implementation_version = '1.2.0'
+    implementation_version = '1.3.0'
     language = 'stata'
     language_version = '15.1'
     language_info = {
