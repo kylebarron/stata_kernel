@@ -2,10 +2,6 @@ from pygments.token import Token
 from stata_kernel.code_manager import CodeManager
 
 
-def get_tokens(code, comment_lexer=True):
-    return CodeManager(code)
-
-
 class TestCommentsFromStataList(object):
     """
     Tests derived from
@@ -21,7 +17,7 @@ class TestCommentsFromStataList(object):
         ```
         """
         code = '* /* a\na\n*/'
-        tokens = get_tokens(code).tokens_fp_all
+        tokens = CodeManager(code).tokens_fp_all
         expected = [
             (Token.Comment.Single, '*'),
             (Token.Comment.Single, ' '),
@@ -43,7 +39,7 @@ class TestCommentsFromStataList(object):
         ```
         """
         code = '* // /* a\na'
-        tokens = get_tokens(code).tokens_fp_all
+        tokens = CodeManager(code).tokens_fp_all
         expected = [
             (Token.Comment.Single, '*'),
             (Token.Comment.Single, ' '),
@@ -66,7 +62,7 @@ class TestCommentsFromStataList(object):
         ```
         """
         code = '// /* a\na'
-        tokens = get_tokens(code).tokens_fp_all
+        tokens = CodeManager(code).tokens_fp_all
         expected = [
             (Token.Comment.Single, '//'),
             (Token.Comment.Single, ' '),
@@ -88,7 +84,7 @@ class TestCommentsFromStataList(object):
         ```
         """
         code = '*// /* a\na\n*/'
-        tokens = get_tokens(code).tokens_fp_all
+        tokens = CodeManager(code).tokens_fp_all
         expected = [
             (Token.Comment.Single, '*'),
             (Token.Comment.Single, '/'),
@@ -112,7 +108,7 @@ class TestCommentsFromStataList(object):
         ```
         """
         code = '* ///\na\na'
-        tokens = get_tokens(code).tokens_fp_all
+        tokens = CodeManager(code).tokens_fp_all
         expected = [
             (Token.Comment.Single, '*'),
             (Token.Comment.Single, ' '),
@@ -131,7 +127,7 @@ class TestCommentsFromStataList(object):
         ```
         """
         code = '// /// a\na'
-        tokens = get_tokens(code).tokens_fp_all
+        tokens = CodeManager(code).tokens_fp_all
         expected = [
             (Token.Comment.Single, '//'),
             (Token.Comment.Single, ' '),
@@ -159,7 +155,7 @@ class TestCommentsFromStataList(object):
         ```
         """
         code = '/*\n/* a */\na\n*/* a\na\n*/\na'
-        tokens = get_tokens(code).tokens_fp_all
+        tokens = CodeManager(code).tokens_fp_all
         expected = [
             (Token.Comment.Multiline, '/*'),
             (Token.Comment.Multiline, '\n'),
@@ -192,7 +188,7 @@ class TestCommentsFromStataList(object):
         ```
         """
         code = '* a ///\n// a ///\na'
-        tokens = get_tokens(code).tokens_fp_all
+        tokens = CodeManager(code).tokens_fp_all
         expected = [
             (Token.Comment.Single, '*'),
             (Token.Comment.Single, ' '),
@@ -214,7 +210,7 @@ class TestCommentsFromStataList(object):
         ```
         """
         code = 'a ///\n// a ///\na'
-        tokens = get_tokens(code).tokens_fp_all
+        tokens = CodeManager(code).tokens_fp_all
         expected = [
             (Token.Text, 'a'),
             (Token.Text, ' '),
@@ -242,7 +238,7 @@ class TestMultilineComments(object):
         ```
         """
         code = 'a /*\n\n*/ a'
-        tokens = get_tokens(code).tokens_fp_all
+        tokens = CodeManager(code).tokens_fp_all
         expected = [
             (Token.Text, 'a'),
             (Token.Text, ' '),
@@ -257,7 +253,7 @@ class TestMultilineComments(object):
 
     def test_multiline1(self):
         code = 'a/* a */a'
-        tokens = get_tokens(code).tokens_fp_all
+        tokens = CodeManager(code).tokens_fp_all
         expected = [
             (Token.Text, 'a'),
             (Token.Comment.Multiline, '/*'),
@@ -272,7 +268,7 @@ class TestMultilineComments(object):
 class TestLineContinuationComments(object):
     def test1(self):
         code = 'a ///\na'
-        tokens = get_tokens(code).tokens_fp_all
+        tokens = CodeManager(code).tokens_fp_all
         expected = [
             (Token.Text, 'a'),
             (Token.Text, ' '),
@@ -284,7 +280,7 @@ class TestLineContinuationComments(object):
 
     def test2(self):
         code = 'a///\na'
-        tokens = get_tokens(code).tokens_fp_all
+        tokens = CodeManager(code).tokens_fp_all
         expected = [
             (Token.Text, 'a'),
             (Token.Text, '/'),
@@ -297,7 +293,7 @@ class TestLineContinuationComments(object):
 
     def test3(self):
         code = '///\na'
-        tokens = get_tokens(code).tokens_fp_all
+        tokens = CodeManager(code).tokens_fp_all
         expected = [
             (Token.Comment.Special, '///'),
             (Token.Comment.Special, '\n'),
@@ -308,7 +304,7 @@ class TestLineContinuationComments(object):
 class TestSingleLineComments(object):
     def test1(self):
         code = 'di//*\n*/1'
-        tokens = get_tokens(code).tokens_fp_all
+        tokens = CodeManager(code).tokens_fp_all
         expected = [
             (Token.Text, 'd'),
             (Token.Text, 'i'),
@@ -322,7 +318,7 @@ class TestSingleLineComments(object):
 
     def test2(self):
         code = '//\n'
-        tokens = get_tokens(code).tokens_fp_all
+        tokens = CodeManager(code).tokens_fp_all
         expected = [
             (Token.Comment.Single, '//'),
             (Token.Text, '\n')]
@@ -331,7 +327,7 @@ class TestSingleLineComments(object):
 class TestStrings(object):
     def test_multiline_comment_inside_string(self):
         code = 'di "/*"'
-        tokens = get_tokens(code).tokens_fp_all
+        tokens = CodeManager(code).tokens_fp_all
         expected = [
             (Token.Text, 'd'),
             (Token.Text, 'i'),
@@ -345,7 +341,7 @@ class TestStrings(object):
 
     def test_inline_comment_inside_string(self):
         code = 'di "//"'
-        tokens = get_tokens(code).tokens_fp_all
+        tokens = CodeManager(code).tokens_fp_all
         expected = [
             (Token.Text, 'd'),
             (Token.Text, 'i'),
@@ -359,7 +355,7 @@ class TestStrings(object):
 
     def test_star_comment_inside_string(self):
         code = 'a "*"'
-        tokens = get_tokens(code).tokens_fp_all
+        tokens = CodeManager(code).tokens_fp_all
         expected = [
             (Token.Text, 'a'),
             (Token.Text, ' '),
@@ -372,7 +368,7 @@ class TestStrings(object):
 class TestBlocks(object):
     def test_cap_chunk(self):
         code = 'cap {\n a\n}'
-        tokens = get_tokens(code).tokens_final
+        tokens = CodeManager(code).tokens_final
         expected = [
             (Token.MatchingBracket.Other, 'cap {'),
             (Token.MatchingBracket.Other, '\n'),
@@ -385,7 +381,7 @@ class TestBlocks(object):
 
     def test_cap_chunk_recursive(self):
         code = 'cap {\n{\n a\n}\n}'
-        tokens = get_tokens(code).tokens_final
+        tokens = CodeManager(code).tokens_final
         expected = [
             (Token.MatchingBracket.Other, 'cap {'),
             (Token.MatchingBracket.Other, '\n'),
@@ -402,7 +398,7 @@ class TestBlocks(object):
 
     def test_cap_chunk_with_inner_line_comment(self):
         code = 'cap {\n*{\n a\n}'
-        tokens = get_tokens(code).tokens_final
+        tokens = CodeManager(code).tokens_final
         expected = [
             (Token.MatchingBracket.Other, 'cap {'),
             (Token.MatchingBracket.Other, '\n'),
@@ -416,7 +412,7 @@ class TestBlocks(object):
 
     def test_cap_chunk_with_inner_multiline_comment(self):
         code = 'cap {\n/*{*/\n a\n}'
-        tokens = get_tokens(code).tokens_final
+        tokens = CodeManager(code).tokens_final
         expected = [
             (Token.MatchingBracket.Other, 'cap {'),
             (Token.MatchingBracket.Other, '\n'),
@@ -430,7 +426,7 @@ class TestBlocks(object):
 
     def test_if_block_not_matching_preceding_newline(self):
         code = 'di 1\nif {\na\n}'
-        tokens = get_tokens(code).tokens_final
+        tokens = CodeManager(code).tokens_final
         expected = [
             (Token.Text, 'd'),
             (Token.Text, 'i'),
@@ -455,7 +451,7 @@ class TestSemicolonDelimitComments(object):
         ```
         """
         code = '#delimit ;\n// a\na;'
-        tokens = get_tokens(code).tokens_fp_all
+        tokens = CodeManager(code).tokens_fp_all
         expected = [
             (Token.Comment.Single, '#delimit ;'),
             (Token.Keyword.Namespace, '\n'),
@@ -477,7 +473,7 @@ class TestSemicolonDelimitComments(object):
         ```
         """
         code = '#delimit ;\n// /* a\na;'
-        tokens = get_tokens(code).tokens_fp_all
+        tokens = CodeManager(code).tokens_fp_all
         expected = [
             (Token.Comment.Single, '#delimit ;'),
             (Token.Keyword.Namespace, '\n'),
@@ -502,7 +498,7 @@ class TestSemicolonDelimitComments(object):
         ```
         """
         code = '#delimit ;\n* a\na;'
-        tokens = get_tokens(code).tokens_fp_all
+        tokens = CodeManager(code).tokens_fp_all
         expected = [
             (Token.Comment.Single, '#delimit ;'),
             (Token.Keyword.Namespace, '\n'),
@@ -524,7 +520,7 @@ class TestSemicolonDelimitComments(object):
         ```
         """
         code = '#delimit ;\n* /* a\na;'
-        tokens = get_tokens(code).tokens_fp_all
+        tokens = CodeManager(code).tokens_fp_all
         expected = [
             (Token.Comment.Single, '#delimit ;'),
             (Token.Keyword.Namespace, '\n'),
@@ -549,7 +545,7 @@ class TestSemicolonDelimitComments(object):
         ```
         """
         code = '#delimit ;\n* // a\na;'
-        tokens = get_tokens(code).tokens_fp_all
+        tokens = CodeManager(code).tokens_fp_all
         expected = [
             (Token.Comment.Single, '#delimit ;'),
             (Token.Keyword.Namespace, '\n'),
@@ -575,7 +571,7 @@ class TestSemicolonDelimitComments(object):
         ```
         """
         code = '#delimit ;\na\n // c\na;'
-        tokens = get_tokens(code).tokens_fp_all
+        tokens = CodeManager(code).tokens_fp_all
         expected = [
             (Token.Comment.Single, '#delimit ;'),
             (Token.Keyword.Namespace, '\n'),
@@ -600,7 +596,7 @@ class TestSemicolonDelimitComments(object):
         ```
         """
         code = '#delimit ;\na\n// c\na;'
-        tokens = get_tokens(code).tokens_fp_all
+        tokens = CodeManager(code).tokens_fp_all
         expected = [
             (Token.Comment.Single, '#delimit ;'),
             (Token.Keyword.Namespace, '\n'),
