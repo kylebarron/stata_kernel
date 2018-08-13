@@ -1,2 +1,3 @@
 include README.md
 include LICENSE
+include stata_kernel/ado/*.ado

@@ -3,6 +3,7 @@ import re
 import platform
 import subprocess
 import base64
+from pkg_resources import resource_filename
 
 from time import sleep
 from pathlib import Path
@@ -58,6 +59,10 @@ graph_keywords = r'\b(' + '|'.join(graph_keywords) + r')\b'
 class StataSession(object):
     def __init__(self):
 
+        adofile = resource_filename(
+            'stata_kernel', os.path.join('ado', '_StataKernelCompletions.ado'))
+        self.adodir = Path(adofile).resolve().parent
+
         config = ConfigParser()
         config.read(Path('~/.stata_kernel.conf').expanduser())
 
@@ -106,6 +111,7 @@ class StataSession(object):
 
         # Change to this directory and set more off
         text = [
+            ('Token.Text', 'adopath + `"{}"\''.format(self.adodir)),
             ('Token.Text', 'cd `"{}"\''.format(os.getcwd())),
             ('Token.Text', 'set more off'),
             ('Token.Text', 'clear all'),
@@ -200,6 +206,10 @@ class StataSession(object):
         else:
             graphs = 1
             timeit = 0
+
+        # NOTE(mauricio): On some systems, the error regex does not
+        # capture the exit code if surrounded by \r\n; I made it catch
+        # either or both.
 
         time_total = 0
         time_profile = []
