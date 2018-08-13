@@ -89,8 +89,12 @@ class StataSession(object):
         self.stata_prompt = '\r\n\. '
         self.stata_prompt_regex = r'\r\n(\x1b\[\?1h\x1b=)?\r\n\. '
 
-        self.mata_prompt = '\r\n: '
-        self.mata_prompt_regex = r'(\r\n|---+)(\x1b\[\?1h\x1b=)?\r\n: '
+        self.mata_prompt = '[\r\n]{1,2}: '
+        self.mata_prompt_regex = re.compile(
+            r'(([\r\n]{1,2}|---+)(\x1b\[\?1h\x1b=)?[\r\n]{1,2}: )|'
+            r'([\r\n]{1,2}> \Z)', flags = re.MULTILINE)
+        self.mata_trim = re.compile(
+            r'((\r\n|\r|\n)\s+?)?(\r\n|\r|\n)\Z', flags=re.MULTILINE)
 
         self.prompt = self.stata_prompt
         self.prompt_regex = self.stata_prompt_regex
@@ -221,8 +225,11 @@ class StataSession(object):
             imgs = []
 
             for line in syn_chunks:
+                sleep(0.1)
+                # print('debugl', line)
                 new_syn_chunks.append(line)
                 res, timer = self.do_console(line[1])
+                # print('debugb', res)
 
                 log.append(res)
                 err = err_regex(res)
@@ -248,6 +255,13 @@ class StataSession(object):
                         time_profile += [(timer, line[1][:68] + ' ...')]
                     else:
                         time_profile += [(timer, line[1])]
+
+            # Only full input allowed: If command ended in line
+            # continuation, yell at the user.
+            # print('debugm', self.child.after, self.mata_bad_end(self.child.after))
+            # print('debugm', self.child.after)
+            if self.mata_mode and self.child.after.endswith('> '):
+                rc = 3000
 
             # graphs = 2 is set by the %plot magic to check for the last
             # image after a code chunk
@@ -321,6 +335,11 @@ class StataSession(object):
             self.automate('DoCommand', self._mata_escape('cap log close'))
             with open(log_path, 'r') as f:
                 log = f.read()
+
+            # Only full input allowed: If command ended in line
+            # continuation, yell at the user.
+            if self.mata_mode and log.endswith('> '):
+                rc = 3000
 
             # Don't keep chunks that weren't executed
             syn_chunks = new_syn_chunks[:syn_chunk_counter]
@@ -517,7 +536,9 @@ class StataSession(object):
         syn_chunks = syn_chunks[:len(log)]
 
         # Take out line continuations for both input and results
+        # print("debuglog0", log)
         log = [re.sub(r'\r\n> ', '', x) for x in log]
+        # print("debuglog1", log)
 
         log_all = []
         for (Token, code_line), log_line in zip(syn_chunks, log):
@@ -526,6 +547,8 @@ class StataSession(object):
                 # block, the first line should equal the text sent
                 # The assert is just a sanity check for now.
                 log_line = log_line.split('\r\n')
+                # print("debuglog2", code_line)
+                # print("debuglog3", log_line)
                 assert log_line[0] == code_line
                 log_all.extend(log_line[1:])
                 log_all.append('')

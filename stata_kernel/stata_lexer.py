@@ -44,13 +44,19 @@ class StataLexer(RegexLexer):
         ],
 
         'mata': [
-            (r'[\r\n][^\r\n\S]*end(?=(\s|[^\s\w\.]).*?$|$)', Token.Aborted, '#pop'),
             include('strings'),
-            # (r'[\r\n][^\r\n\S]*end(?=(\s|[^\s\w\.]).*?$|$)', Token.Aborted),
             (r'^[^\n]*?\{', Token.MatchingBracket.Other, 'block'),
+            (r'^[^\n]*?\(', Token.MatchingBracket.Other, 'paren'),
+            (r'[\r\n][^\r\n\S]*end(?=(\s|[^\s\w\.]).*?$|$)', Token.Aborted, '#pop'),
             (r'.', Text),
         ],
 
+        'paren': [
+            (r'\(', Token.MatchingBracket.Other, '#push'),
+            (r'\)', Token.MatchingBracket.Other, '#pop'),
+            include('strings-inside-blocks'),
+            (r'.', Token.MatchingBracket.Other)
+        ],
         'block': [
             (r'\{', Token.MatchingBracket.Other, '#push'),
             (r'\}', Token.MatchingBracket.Other, '#pop'),
@@ -122,30 +128,29 @@ class CommentAndDelimitLexer(RegexLexer):
     tokens = {
         'root': [
             # NOTE(mauricio): Is it important to include comments and strings first?
-            (r'^\s*#d(e|el|eli|elim|elimi|elimit)?\s*;\s*?$', Comment.Single, 'delimit;'),
             include('comments'),
             include('strings'),
+            (r'^\s*#d(e|el|eli|elim|elimi|elimit)?\s*;\s*?$', Comment.Single, 'delimit;'),
             (r'^[^\n]*?[^\r\n\S]*m(ata)?[^\r\n\S]*:?[^\r\n\S]*$', Token.Other, 'mata'),
             (r'.', Text),
         ],
         'mata': [
             # Just exclude linestar
-            (r'[\r\n][^\r\n\S]*end(?=(\s|[^\s\w\.]).*?$|$)', Token.Aborted, '#pop'),
             (r'(^//|(?<=\s)//)(?!/)', Comment.Single, 'comments-double-slash'),
             (r'/\*', Comment.Multiline, 'comments-block'),
             (r'(^///|(?<=\s)///)', Comment.Special, 'comments-triple-slash'),
             include('strings'),
-            # (r'[\r\n][^\r\n\S]*end(?=(\s|[^\s\w\.]).*?$|$)', Token.Aborted),
+            (r'[\r\n][^\r\n\S]*end(?=(\s|[^\s\w\.]).*?$|$)', Token.Aborted, '#pop'),
             (r'.', Text),
         ],
         'mata-delimit': [
             # Just exclude linestar
-            (r'(\A|;)\s*end(?=(\s|[^\s\w\.]).*?$|$)', Token.Aborted, '#pop'),
             (r'((^\s+//)|(?<=;\s)\s*//)(?!/)', Comment.Single, 'delimit;-comments-double-slash'),
             (r'/\*', Comment.Multiline, 'delimit;-comments-block'),
             (r'(^///|(?<=\s)///)', Comment.Special, 'delimit;-comments-triple-slash'),
             include('delimit;-strings'),
-            # (r'(\A|;)\s*end(?=(\s|[^\s\w\.]).*?$|$)', Token.Aborted),
+            (r'(\A|;)\s*end(?=(\s|[^\s\w\.]).*?$|$)', Token.Aborted, '#pop'),
+            (r';', Token.Keyword.Reserved),
             (r'.', Text),
         ],
 

@@ -238,18 +238,24 @@ class CompletionsManager(object):
         return suggestions
 
     def quickdo(self, code, kernel):
+        """Runs a single line in the Stata console or session
+        """
         if kernel.stata.execution_mode == 'console':
-            res, timer = kernel.stata.do_console(code)
+            res, timer = kernel.stata.do_console(
+                kernel.stata._mata_escape(code))
         else:
             log_path = kernel.stata.cache_dir / '.stata_kernel_completions.log'
             log_cmd = 'log using `"{}"\', replace text'.format(log_path)
-            rc = kernel.stata.automate('DoCommand', log_cmd)
+            rc = kernel.stata.automate(
+                'DoCommand', kernel.stata._mata_escape(log_cmd))
             if not rc:
                 fh = open(log_path, 'r')
                 fh.read()
-                rc, timer = kernel.stata.do_aut_sync(code)
+                rc, timer = kernel.stata.do_aut_sync(
+                    kernel.stata._mata_escape(code))
                 res = fh.read()
-                kernel.stata.automate('DoCommand', 'cap log close')
+                kernel.stata.automate(
+                    'DoCommand', kernel.stata._mata_escape('cap log close'))
                 fh.close()
 
         return res

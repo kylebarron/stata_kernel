@@ -11,16 +11,17 @@ class CodeManager(object):
 
     def __init__(self, code, semicolon_delimit=False, mata_mode=False):
 
-        # mata goes second since it obeys #delimit!
+        # mata goes second since it obeys #delimit! Append \n to detect
+        # whenever input ends but mata was left in a line continuaton
         code = re.sub(r'\r\n', r'\n', code)
         self.input = code
         if semicolon_delimit:
             if mata_mode:
-                code = 'mata;\n' + code
+                code = 'mata;\n' + code + '\n'
 
-            code = '#delimit ;\n' + code
+            code = '#delimit ;\n' + code + '\n'
         elif mata_mode:
-            code = 'mata\n' + code
+            code = 'mata\n' + code + '\n'
 
         # First use the Comment and Delimiting lexer
         # first pass
@@ -39,21 +40,43 @@ class CodeManager(object):
         tokens_nl_delim = self.convert_delimiter(self.tokens_fp_no_comments)
         text = ''.join([x[1] for x in tokens_nl_delim])
         self.tokens_final = self.tokenize_second_pass(text)
-        self.has_mata_mode = 'Token.Other' in [
-            str(x[0]) for x in self.tokens_final]
+
+        self.has_mata_mode = False
         if mata_mode:
-            self.ends_mata = 'Token.Aborted' in [
-                str(x[0]) for x in self.tokens_final]
-        else:
-            self.ends_mata = False
+            self.has_mata_mode = True
+            self.tokens_final = self.tokens_final[1:]
+
+        self.ends_mata = False
+        for token, chunk in self.tokens_final:
+            if str(token) == 'Token.Aborted':
+                self.ends_mata = True
+                self.has_mata_mode = False
+            elif str(token) == 'Token.Other':
+                self.ends_mata = False
+                self.has_mata_mode = True
+
+        # = 'Token.Other' in [
+        #     str(x[0]) for x in self.tokens_final]
+        # if mata_mode:
+        #     self.ends_mata = 'Token.Aborted' in [
+        #         str(x[0]) for x in self.tokens_final]
+        # else:
+        #     self.ends_mata = False
 
         # print('debugz3', mata_mode, self.has_mata_mode, self.ends_mata)
         # print('debugz4', self.tokens_final)
-        if mata_mode:
-            self.tokens_final = self.tokens_final[1:]
+        # if mata_mode:
+        #     self.tokens_final = self.tokens_final[1:]
 
         # print('debugz4', self.tokens_final)
         self.is_complete = self._is_complete()
+        # print('debugz5', self.is_complete)
+
+        # Append "" to mata to force statements like "if" to end.
+        if self.has_mata_mode:
+            self.tokens_final += [('Token.Text', '""')]
+
+        # print('debugz6', self.tokens_final)
 
     def tokenize_first_pass(self, code):
         """Tokenize input code for Comments and Delimit blocks
@@ -164,6 +187,7 @@ class CodeManager(object):
                 ind for ind, x in enumerate(self.tokens_fp_all)
                 if (str(x[0]) == 'Token.Keyword.Reserved') and x[1] == ';']
 
+            # print('debugi1', inds)
             if not inds:
                 inds = [0]
 
@@ -171,6 +195,7 @@ class CodeManager(object):
             # If so, then it's not complete
             tr_text = ''.join([
                 x[1] for x in self.tokens_fp_all[max(inds) + 1:]]).strip()
+            # print('debugi2', tr_text)
             if tr_text:
                 return False
 
