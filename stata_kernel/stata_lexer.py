@@ -21,6 +21,8 @@ class StataLexer(RegexLexer):
 
     Text: Arbitrary text
     Token.Keyword.Reserved: Delimiter (either \\n or ;), depending on the block
+
+    Token.Other is used to detect mata
     """
     flags = re.MULTILINE | re.DOTALL
     tokens = {
@@ -31,6 +33,7 @@ class StataLexer(RegexLexer):
             (r'^\s*(pr(ogram|ogra|ogr|og|o)?)\s+(?!di|dr|l)(de(fine|fin|fi|f)?\s+)?', Token.MatchingBracket.Other, 'program'),
             (r'^\s*inp(u|ut)?', Token.MatchingBracket.Other, 'program'),
             (r'^\s*#d(e|el|eli|elim|elimi|elimit)?\s*;\s*?$', Comment.Single, 'delimit;'),
+            (r'^\s*m(ata)?[^\r\n\S]*:?[^\r\n\S]*$', Token.Other, 'mata'),
             (r'.', Text),
         ],
         'block': [
@@ -111,6 +114,19 @@ class StataLexer(RegexLexer):
             (r'.', Token.MatchingBracket.Other)
         ],
 
+        'mata': [
+            ('^\s*end(\s|[^\s\w\.]).*?$', Token.Other, '#pop'),
+            include('mata-comments'),
+            include('strings'),
+            (r'[\r\n]\s*end(?=(\s|[^\s\w\.]).*?$|$)', Token.Keyword.Reserved),
+            # (r'.', Token.Keyword.Namespace),
+        ],
+        'mata-comments': [
+            # Just exclude linestar
+            (r'(^//|(?<=\s)//)(?!/)', Comment.Single, 'comments-double-slash'),
+            (r'/\*', Comment.Multiline, 'comments-block'),
+            (r'(^///|(?<=\s)///)', Comment.Special, 'comments-triple-slash')
+        ],
 
         'delimit;': [
             (r'^\s*#d(e|el|eli|elim|elimi|elimit)?\s+cr\s*?$', Comment.Single, '#pop'),

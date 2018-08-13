@@ -8,18 +8,43 @@ class CodeManager(object):
     """Class to deal with text before sending to Stata
     """
 
-    def __init__(self, code, semicolon_delimit=False):
+    def __init__(self, code, semicolon_delimit=False, mata_mode=False):
+
+        # mata goes first since it obeys #delimit!
         if semicolon_delimit:
             code = '#delimit ;\n' + code
+            if mata_mode:
+                code = 'mata;\n' + code
+        elif mata_mode:
+            code = 'mata\n' + code
+
+        print('debugz0', code)
         self.input = code
         self.tokens = self.tokenize_code(code)
+        print('debugz1', self.tokens)
         self.tokens_nocomments = self.remove_comments()
+        print('debugz2', self.tokens_nocomments)
 
         self.ends_sc = str(self.tokens_nocomments[-1][0]) in [
             'Token.Keyword.Namespace', 'Token.Keyword.Reserved']
 
+        self.ends_mata = False
+        if len(self.tokens_nocomments) > 1:
+            token, chunk = self.tokens_nocomments[-2]
+            self.ends_mata = str(token) == 'Token.Keyword.Reserved'
+            print('debugz3.1', token, chunk)
+
+        print('debugz3', self.ends_sc, self.ends_mata, self.tokens_nocomments)
+
         self.has_sc_delimits = 'Token.Keyword.Namespace' in [
             str(x[0]) for x in self.tokens_nocomments]
+        self.has_mata_mode = 'Token.Other' in [
+            str(x[0]) for x in self.tokens_nocomments]
+        print('debugz4', self.has_sc_delimits, self.has_mata_mode)
+
+        if mata_mode:
+            self.tokens_nocomments = self.tokens_nocomments[1:]
+
         self.is_complete = self._is_complete()
 
         if self.has_sc_delimits:

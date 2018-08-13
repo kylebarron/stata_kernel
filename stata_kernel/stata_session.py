@@ -80,6 +80,14 @@ class StataSession(object):
         self.img_metadata = {'width': 600, 'height': 400}
         self.banner = 'stata_kernel: A Jupyter kernel for Stata.'
 
+        self.mata_mode = False
+        self.stata_prompt = '\r\n\. '
+        self.stata_prompt_regex = r'\r\n(\x1b\[\?1h\x1b=)?\r\n\. '
+        self.mata_prompt = '\r\n: '
+        self.mata_prompt_regex = r'(\r\n|---+)(\x1b\[\?1h\x1b=)?\r\n: '
+        self.prompt = self.stata_prompt
+        self.prompt_regex = self.stata_prompt_regex
+
         if platform.system() == 'Windows':
             self.execution_mode = 'automation'
             self.init_windows()
@@ -126,7 +134,7 @@ class StataSession(object):
         self.child.logfile = open(self.cache_dir / 'console_debug.log', 'w')
         banner = []
         try:
-            self.child.expect('\r\n\. ', timeout=0.2)
+            self.child.expect(self.prompt, timeout=0.2)
             banner.append(self.child.before)
         except pexpect.TIMEOUT:
             try:
@@ -135,7 +143,7 @@ class StataSession(object):
                     banner.append(self.child.before)
                     self.child.send('q')
             except pexpect.TIMEOUT:
-                self.child.expect('\r\n\. ')
+                self.child.expect(self.prompt)
                 banner.append(self.child.before)
 
         # Set banner to Stata's shell header
@@ -201,6 +209,7 @@ class StataSession(object):
             imgs = []
 
             for line in syn_chunks:
+                print('debugk0', line)
                 new_syn_chunks.append(line)
                 res, timer = self.do_console(line[1])
 
@@ -250,7 +259,9 @@ class StataSession(object):
             # will be sent through docommand
             log_path = self.cache_dir / '.stata_kernel_log.log'
             rc = self.automate(
-                'DoCommand', 'log using `"{}"\', replace text'.format(log_path))
+                'DoCommand',
+                self._mata_escape(
+                    'log using `"{}"\', replace text'.format(log_path)))
             if rc:
                 return rc, ''
 
@@ -296,7 +307,7 @@ class StataSession(object):
                     new_syn_chunks.append(sc)
                     imgs.append(img)
 
-            self.automate('DoCommand', 'cap log close')
+            self.automate('DoCommand', self._mata_escape('cap log close'))
             with open(log_path, 'r') as f:
                 log = f.read()
 
@@ -339,14 +350,14 @@ class StataSession(object):
             (int): execution time
         """
 
-        regex = r'\r\n(\x1b\[\?1h\x1b=)?\r\n\. '
+        print('debugc0', line, self.prompt_regex)
         self.child.sendline(line)
         timer = default_timer()
         try:
-            self.child.expect(regex, timeout=20)
+            self.child.expect(self.prompt_regex, timeout=20)
         except KeyboardInterrupt:
             self.child.sendcontrol('c')
-            self.child.expect(regex, timeout=20)
+            self.child.expect(self.prompt_regex, timeout=20)
 
         delta = default_timer() - timer
         return ansi_escape.sub('', self.child.before), delta
@@ -659,8 +670,10 @@ class StataSession(object):
         """
         # Export graph to file
         rc = 0
-        cmd = 'qui graph export `"{0}/graph.{1}"\' , as({1}) replace'.format(
-            self.cache_dir, self.graph_format)
+        cmd = self._mata_escape(
+            'qui graph export `"{0}/graph.{1}"\' , as({1}) replace'.format(
+                self.cache_dir, self.graph_format))
+
         if execution_mode == 'automation':
             rc = self.automate('DoCommand', cmd)
         else:
@@ -712,7 +725,8 @@ class StataSession(object):
 
     def shutdown(self):
         if self.execution_mode == 'automation':
-            self.automate('DoCommandAsync', 'exit, clear')
+            self.automate(
+                'DoCommandAsync', self._mata_escape('exit, clear'))
         else:
             self.child.close(force=True)
         return
@@ -742,3 +756,6 @@ class StataSession(object):
         svg.setAttribute('height', '%dpx' % height)
 
         return svg.toxml()
+
+    def _mata_escape(self, line):
+        return 'stata(`"{0}"\')'.format(line) if self.mata_mode else line

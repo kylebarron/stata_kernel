@@ -94,7 +94,8 @@ class StataMagics():
         'locals',
         'globals',
         'time',
-        'timeit']
+        'timeit',
+        'status']
 
     def __init__(self):
         self.quit_early = None
@@ -291,6 +292,18 @@ class StataMagics():
         self.status = -1
         print_kernel("Magic restart has not been implemented.", kernel)
         return code
+
+    def magic_status(self, code, kernel):
+        self.status = -1
+        delim = ';' if kernel.sc_delimit_mode else 'cr'
+        env = 'mata' if kernel.stata.mata_mode else 'stata'
+        info = (
+            kernel.implementation, kernel.implementation_version,
+            kernel.language, kernel.language_version)
+        print_kernel('{0} {1} for {2} {3}'.format(*info), kernel)
+        print_kernel('\tDelimiter:   {}'.format(delim), kernel)
+        print_kernel('\tEnvironment: {}'.format(env), kernel)
+        return ''
 
 
 # ---------------------------------------------------------------------

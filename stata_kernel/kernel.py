@@ -56,9 +56,25 @@ class StataKernel(Kernel):
             return self.magics.quit_early
 
         # Tokenize code and return code chunks
-        cm = CodeManager(code, self.sc_delimit_mode)
-        self.sc_delimit_mode = cm.ends_sc
+        print('debug0', code)
+        cm = CodeManager(code, self.sc_delimit_mode, self.stata.mata_mode)
 
+        # Enter #delimit ; or mata mode
+        self.sc_delimit_mode = cm.ends_sc
+        self.stata.mata_mode = cm.has_mata_mode and not cm.ends_mata
+        if self.stata.mata_mode:
+            print('debug1', 'mata')
+            self.stata.prompt = self.stata.mata_prompt
+            self.stata.prompt_regex = self.stata.mata_prompt_regex
+            if (self.magics.graphs != 2):
+                self.magics.graphs = 0
+        else:
+            print('debug2', 'stata')
+            self.stata.prompt = self.stata.stata_prompt
+            self.stata.prompt_regex = self.stata.stata_prompt_regex
+
+        # Execute code chunk
+        print('debug3', cm.get_chunks())
         rc, imgs, res = self.stata.do(cm.get_chunks(), self.magics)
         stream_content = {'text': res}
 
@@ -140,4 +156,5 @@ class StataKernel(Kernel):
         return {}
 
     def is_complete(self, code):
-        return CodeManager(code, self.sc_delimit_mode).is_complete
+        return CodeManager(
+            code, self.sc_delimit_mode, self.stata.mata_mode).is_complete
