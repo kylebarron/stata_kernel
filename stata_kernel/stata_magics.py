@@ -40,7 +40,8 @@ class MagicParsers():
             help="Plot height in pixels. Default: 400", required=False)
         self.plot.add_argument(
             '--set', dest='set', action='store_true',
-            help="Set plot width and height for the rest of the session.", required=False)
+            help="Set plot width and height for the rest of the session.",
+            required=False)
 
         self.globals = StataParser(prog='%globals', kernel=kernel)
         self.globals.add_argument(
@@ -93,6 +94,7 @@ class StataMagics():
         # 'restart',
         'locals',
         'globals',
+        'delimit',
         'time',
         'timeit']
 
@@ -253,6 +255,11 @@ class StataMagics():
 
     def magic_locals(self, code, kernel):
         return self.magic_globals(code, kernel, True)
+
+    def magic_delimit(self, code, kernel):
+        delim = ';' if kernel.sc_delimit_mode else 'cr'
+        print_kernel('The delimiter is currently: {}'.format(delim), kernel)
+        return ''
 
     def magic_time(self, code, kernel):
         try:

@@ -25,20 +25,87 @@ class StataLexer(RegexLexer):
     flags = re.MULTILINE | re.DOTALL
     tokens = {
         'root': [
-            include('comments'),
-            include('strings'),
+            # The prepending `^[^\n]*?` help by assigning text from the
+            # beginning of the line to the Text or MatchingBracket tokens.
+            # Otherwise, there's a token change in the middle of the line and
+            # it's a little more difficult to later separate tokens into blocks
+            # of syntactic chunks.
+            (r'^[^\n]*?`"', Text, 'string-compound'),
+            (r'^[^\n]*?(?<!`)"', Text, 'string-regular'),
             (r'^[^\n]*?\{', Token.MatchingBracket.Other, 'block'),
             (r'^\s*(pr(ogram|ogra|ogr|og|o)?)\s+(?!di|dr|l)(de(fine|fin|fi|f)?\s+)?', Token.MatchingBracket.Other, 'program'),
             (r'^\s*inp(u|ut)?', Token.MatchingBracket.Other, 'program'),
-            (r'^\s*#d(e|el|eli|elim|elimi|elimit)?\s*;\s*?$', Comment.Single, 'delimit;'),
             (r'.', Text),
         ],
         'block': [
             (r'\{', Token.MatchingBracket.Other, '#push'),
             (r'\}', Token.MatchingBracket.Other, '#pop'),
-            include('comments'),
             include('strings-inside-blocks'),
             (r'.', Token.MatchingBracket.Other)
+        ],
+        'program': [
+            include('strings-inside-blocks'),
+            (r'^\s*end\b', Token.MatchingBracket.Other, '#pop'),
+            (r'.', Token.MatchingBracket.Other)
+        ],
+        'strings': [
+            # `"compound string"'
+            (r'`"', Text, 'string-compound'),
+            # "string"
+            (r'(?<!`)"', Text, 'string-regular'),
+        ],
+        'strings-inside-blocks': [
+            # `"compound string"'
+            (r'`"', Token.MatchingBracket.Other, 'string-compound-inside-blocks'),
+            # "string"
+            (r'(?<!`)"', Token.MatchingBracket.Other, 'string-regular-inside-blocks'),
+        ],
+        'string-compound': [
+            (r'`"', Text, '#push'),
+            (r'"\'', Text, '#pop'),
+            (r'.', Text)
+        ],
+        'string-regular': [
+            (r'(")(?!\')|(?=\n)', Text, '#pop'),
+            (r'.', Text)
+        ],
+        'string-compound-inside-blocks': [
+            (r'`"', Token.MatchingBracket.Other, '#push'),
+            (r'"\'', Token.MatchingBracket.Other, '#pop'),
+            (r'.', Token.MatchingBracket.Other)
+        ],
+        'string-regular-inside-blocks': [
+            (r'(")(?!\')|(?=\n)', Token.MatchingBracket.Other, '#pop'),
+            (r'.', Token.MatchingBracket.Other)
+        ],
+    }
+
+class CommentAndDelimitLexer(RegexLexer):
+    """Lexer for Comments and Delimit blocks
+
+    This lexer:
+    - Removes all comments
+    - Removes newlines from ;-delimited code and then replace ; with newlines
+    - Determines the delimiter at the end of the block
+
+    The StataLexer then uses the output of this lexer to form semantic blocks
+    that can be sent through Stata.
+
+    Notes:
+    - If current delimiter is `;`, prepend `#delimit ;` to the input string before running this lexer.
+
+    I have to use the Pygments token types, which don't really let me express what I want to express.
+
+    Text: Arbitrary text
+    Token.Keyword.Reserved: Delimiter (either \\n or ;), depending on the block
+    """
+    flags = re.MULTILINE | re.DOTALL
+    tokens = {
+        'root': [
+            include('comments'),
+            include('strings'),
+            (r'^\s*#d(e|el|eli|elim|elimi|elimit)?\s*;\s*?$', Comment.Single, 'delimit;'),
+            (r'.', Text),
         ],
         'comments': [
             (r'(^//|(?<=\s)//)(?!/)', Comment.Single, 'comments-double-slash'),
@@ -74,23 +141,11 @@ class StataLexer(RegexLexer):
             (r'\n', Text, '#pop'),
             (r'.', Comment.Single),
         ],
-        'program': [
-            include('comments'),
-            include('strings-inside-blocks'),
-            (r'^\s*end\b', Token.MatchingBracket.Other, '#pop'),
-            (r'.', Token.MatchingBracket.Other)
-        ],
         'strings': [
             # `"compound string"'
             (r'`"', Text, 'string-compound'),
             # "string"
             (r'(?<!`)"', Text, 'string-regular'),
-        ],
-        'strings-inside-blocks': [
-            # `"compound string"'
-            (r'`"', Token.MatchingBracket.Other, 'string-compound-inside-blocks'),
-            # "string"
-            (r'(?<!`)"', Token.MatchingBracket.Other, 'string-regular-inside-blocks'),
         ],
         'string-compound': [
             (r'`"', Text, '#push'),
@@ -101,17 +156,6 @@ class StataLexer(RegexLexer):
             (r'(")(?!\')|(?=\n)', Text, '#pop'),
             (r'.', Text)
         ],
-        'string-compound-inside-blocks': [
-            (r'`"', Token.MatchingBracket.Other, '#push'),
-            (r'"\'', Token.MatchingBracket.Other, '#pop'),
-            (r'.', Token.MatchingBracket.Other)
-        ],
-        'string-regular-inside-blocks': [
-            (r'(")(?!\')|(?=\n)', Token.MatchingBracket.Other, '#pop'),
-            (r'.', Token.MatchingBracket.Other)
-        ],
-
-
         'delimit;': [
             (r'^\s*#d(e|el|eli|elim|elimi|elimit)?\s+cr\s*?$', Comment.Single, '#pop'),
             include('delimit;-comments'),
@@ -122,7 +166,7 @@ class StataLexer(RegexLexer):
         # Made changes for //, // inside of *, and ending character for *
         'delimit;-comments': [
             # Either after a ; delimiter or has whitespace after beginning of the line
-            (r'((^\s+//)|(?<=;\s)\s*//)(?!/)', Comment.Single, 'delimit;-comments-double-slash'),
+            (r'((^\s+//)|(?<=\s)\s*//)(?!/)', Comment.Single, 'delimit;-comments-double-slash'),
             (r'^\s*\*', Comment.Single, 'delimit;-comments-star'),
             (r'/\*', Comment.Multiline, 'delimit;-comments-block'),
             (r'(^///|(?<=\s)///)', Comment.Special, 'delimit;-comments-triple-slash')
@@ -167,9 +211,8 @@ class StataLexer(RegexLexer):
             (r'.', Token.Keyword.Namespace)
         ],
         'delimit;-string-regular': [
-            (r'(")(?!\')|(?=\n)', Token.Keyword.Namespace, '#pop'),
+            (r'(")(?!\')', Token.Keyword.Namespace, '#pop'),
             (r'.', Token.Keyword.Namespace)
-        ],
-
+        ]
     }
 # yapf: enable

@@ -58,8 +58,6 @@ class StataKernel(Kernel):
 
         # Tokenize code and return code chunks
         cm = CodeManager(code, self.sc_delimit_mode)
-        self.sc_delimit_mode = cm.ends_sc
-
         rc, imgs, res = self.stata.do(cm.get_chunks(), self.magics)
         stream_content = {'text': res}
 
@@ -82,15 +80,8 @@ class StataKernel(Kernel):
             self.completions.refresh(self)
             return return_obj
 
-        # At the moment, can only send either an image _or_ text to support
-        # Hydrogen
-        # Only send a response if there's text
         if res.strip():
             self.send_response(self.iopub_socket, 'stream', stream_content)
-            if (self.magics.graphs != 2):
-                # Refresh completions
-                self.completions.refresh(self)
-                return return_obj
 
         if imgs or (self.magics.graphs == 2):
             img_mimetypes = {
@@ -112,6 +103,17 @@ class StataKernel(Kernel):
 
                 # We send the display_data message with the contents.
                 self.send_response(self.iopub_socket, 'display_data', content)
+
+        # Send message if delimiter changed. NOTE: This uses the delimiter at
+        # the _end_ of the code block. It prints only if the delimiter at the
+        # end is different than the one before the chunk.
+        if cm.ends_sc != self.sc_delimit_mode:
+            delim = ';' if cm.ends_sc else 'cr'
+            self.send_response(
+                self.iopub_socket, 'stream', {
+                    'text': 'delimiter now {}'.format(delim),
+                    'name': 'stdout'})
+        self.sc_delimit_mode = cm.ends_sc
 
         # Refresh completions
         self.completions.refresh(self)
@@ -152,8 +154,7 @@ class StataKernel(Kernel):
             'status': 'ok',
             'cursor_start': pos,
             'cursor_end': cursor_pos,
-            'matches': self.completions.get(chunk, env, rcomp)
-        }
+            'matches': self.completions.get(chunk, env, rcomp)}
 
     def is_complete(self, code):
         return CodeManager(code, self.sc_delimit_mode).is_complete
