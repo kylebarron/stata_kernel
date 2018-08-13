@@ -10,7 +10,7 @@ requirements = [
     'jupyter_client>=5.2.3', 'IPython>=6.5.0', 'ipykernel>=4.8.2',
     'pexpect>=4.6.0;platform_system=="Darwin"',
     'pexpect>=4.6.0;platform_system=="Linux"', 'python-dateutil>=2.7.3',
-    'pygments>=2.2.0']
+    'pygments>=2.2.0', "regex>=2018.7.11"]
 
 setup_requirements = [
     'setuptools >= 38.6.0',
@@ -59,4 +59,5 @@ setup(
     tests_require=test_requirements,
     url='https://github.com/kylebarron/stata_kernel',
     version='1.2.0',
+    include_package_data=True
 )

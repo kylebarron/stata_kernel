@@ -24,6 +24,7 @@ class StataKernel(Kernel):
 
         self.sc_delimit_mode = False
         self.stata = StataSession()
+        self.completions = CompletionsManager(self)
         self.banner = self.stata.banner
 
     def do_execute(
@@ -77,6 +78,8 @@ class StataKernel(Kernel):
             stream_content['name'] = 'stdout'
 
         if silent:
+            # Refresh completions
+            self.completions.refresh(self)
             return return_obj
 
         # At the moment, can only send either an image _or_ text to support
@@ -85,6 +88,8 @@ class StataKernel(Kernel):
         if res.strip():
             self.send_response(self.iopub_socket, 'stream', stream_content)
             if (self.magics.graphs != 2):
+                # Refresh completions
+                self.completions.refresh(self)
                 return return_obj
 
         if imgs or (self.magics.graphs == 2):
@@ -108,6 +113,8 @@ class StataKernel(Kernel):
                 # We send the display_data message with the contents.
                 self.send_response(self.iopub_socket, 'display_data', content)
 
+        # Refresh completions
+        self.completions.refresh(self)
         return return_obj
 
     def do_shutdown(self, restart):
@@ -135,9 +142,18 @@ class StataKernel(Kernel):
         return {'status': 'incomplete', 'indent': '    '}
 
     def do_complete(self, code, cursor_pos):
-        env = self.stata.env
-        suggestions = CompletionsManager(env)
-        return {}
+        # Environment-aware suggestion for the current space-delimited
+        # variable, local, etc.
+        env, pos, chunk, rcomp = self.completions.get_env(
+            code[:cursor_pos], code[cursor_pos:(cursor_pos + 2)],
+            self.sc_delimit_mode)
+
+        return {
+            'status': 'ok',
+            'cursor_start': pos,
+            'cursor_end': cursor_pos,
+            'matches': self.completions.get(chunk, env, rcomp)
+        }
 
     def is_complete(self, code):
         return CodeManager(code, self.sc_delimit_mode).is_complete
