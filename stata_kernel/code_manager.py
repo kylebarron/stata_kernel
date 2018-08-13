@@ -2,53 +2,54 @@ import re
 from pygments import lex
 
 from .stata_lexer import StataLexer
-
+from .stata_lexer import CommentAndDelimitLexer
 
 class CodeManager(object):
     """Class to deal with text before sending to Stata
     """
 
     def __init__(self, code, semicolon_delimit=False):
+        code = re.sub(r'\r\n', r'\n', code)
         self.input = code
         if semicolon_delimit:
             code = '#delimit ;\n' + code
-        self.tokens = self.tokenize_code(code)
-        self.tokens_nocomments = self.remove_comments()
 
-        self.ends_sc = str(self.tokens_nocomments[-1][0]) in [
+        # First use the Comment and Delimiting lexer
+        # first pass
+        self.tokens_fp_all = self.tokenize_first_pass(code)
+        self.tokens_fp_no_comments = self.remove_comments(self.tokens_fp_all)
+
+        self.ends_sc = str(self.tokens_fp_no_comments[-1][0]) in [
             'Token.Keyword.Namespace', 'Token.Keyword.Reserved']
 
-        self.has_sc_delimits = 'Token.Keyword.Namespace' in [
-            str(x[0]) for x in self.tokens_nocomments]
-        if self.has_sc_delimits:
-            self.adjust_for_semicolons()
+        tokens_nl_delim = self.convert_delimiter(self.tokens_fp_no_comments)
+        text = ''.join([x[1] for x in tokens_nl_delim])
+        self.tokens_final = self.tokenize_second_pass(text)
 
         self.is_complete = self._is_complete()
 
-    def tokenize_code(self, code):
-        """Tokenize input code using custom lexer
+    def tokenize_first_pass(self, code):
+        """Tokenize input code for Comments and Delimit blocks
 
         Args:
             code (str):
-                Input string. I make no assumptions about the structure
-                of the code entered here. It could have any line separator and
-                comprise of any number of lines.
+                Input string. Should use `\\n` for end of lines.
 
         Return:
             (List[Tuple[Token, str]]):
                 List of token tuples. The only token types currently used in the
                 lexer are:
-                - Token.MatchingBracket.Other
-                - Text
-                - Comment.Single
-                - Comment.Special
-                - Comment.Multiline
+                - Text (plain text)
+                - Comment.Single (// and *)
+                - Comment.Special (///)
+                - Comment.Multiline (/* */)
+                - Keyword.Namespace (code inside #delimit ; block)
+                - Keyword.Reserved (; delimiter)
         """
-        lexer = StataLexer(stripall=True)
-        code = re.sub(r'\r\n', r'\n', code)
-        return [x for x in lex(code, lexer)]
+        comment_lexer = CommentAndDelimitLexer(stripall=True)
+        return [x for x in lex(code, comment_lexer)]
 
-    def remove_comments(self):
+    def remove_comments(self, tokens):
         """Remove comments from tokens
 
         Return:
@@ -56,14 +57,20 @@ class CodeManager(object):
                 list of non-comment tokens
         """
         return [
-            x for x in self.tokens if not str(x[0]).startswith('Token.Comment')]
+            x for x in tokens if not str(x[0]).startswith('Token.Comment')]
 
-    def adjust_for_semicolons(self):
-        # Remove any \n with label Token.Keyword.Namespace
-        # These are embedded newlines inside #delimit ; blocks
+    def convert_delimiter(self, tokens):
+        """If parts of tokens are `;`-delimited, convert to `\\n`-delimited
+        """
 
+        # If all tokens are newline-delimited, return
+        if not 'Token.Keyword.Namespace' in [str(x[0]) for x in tokens]:
+            return tokens
+
+        # Remove newlines in `;`-delimited blocks
+        # These are newlines with label Token.Keyword.Namespace.
         tokens = [
-            x for x in self.tokens_nocomments
+            x for x in tokens
             if not ((str(x[0]) == 'Token.Keyword.Namespace') and (x[1] == '\n'))
         ]
 
@@ -71,12 +78,29 @@ class CodeManager(object):
         tokens = [('Newline delimiter', '\n') if
                   (str(x[0]) == 'Token.Keyword.Reserved') and x[1] == ';' else x
                   for x in tokens]
+        return tokens
 
-        # and then join all text together
-        text = ''.join([x[1] for x in tokens])
+    def tokenize_second_pass(self, code):
+        """Tokenize clean code for syntactic blocks
 
-        # Then run it through the tokenizer again once more to get blocks
-        self.tokens_nocomments = self.tokenize_code(text)
+        Args:
+            code (str):
+                Input string. Should have `\\n` as the delimiter. Should have no
+                comments. Should use `\\n` for end of lines.
+
+        Return:
+            (List[Tuple[Token, str]]):
+                List of token tuples. The only token types currently used in the
+                lexer are:
+                - Text (plain text)
+                - Comment.Single (// and *)
+                - Comment.Special (///)
+                - Comment.Multiline (/* */)
+                - Keyword.Namespace (code inside #delimit ; block)
+                - Keyword.Reserved (; delimiter)
+        """
+        block_lexer = StataLexer(stripall=True)
+        return [x for x in lex(code, block_lexer)]
 
     def _is_complete(self):
         """Determine whether the code provided is complete
@@ -98,17 +122,17 @@ class CodeManager(object):
             return True
 
         # block constructs
-        if str(self.tokens_nocomments[-1][0]) == 'Token.MatchingBracket.Other':
+        if str(self.tokens_final[-1][0]) == 'Token.MatchingBracket.Other':
             return False
 
         # last token a line-continuation comment
-        if str(self.tokens[-1][0]) in ['Token.Comment.Multiline', 'Token.Comment.Special']:
+        if str(self.tokens_fp_all[-1][0]) in ['Token.Comment.Multiline', 'Token.Comment.Special']:
             return False
 
         if self.ends_sc:
             # Find indices of `;`
             inds = [
-                ind for ind, x in enumerate(self.tokens)
+                ind for ind, x in enumerate(self.tokens_fp_all)
                 if (str(x[0]) == 'Token.Keyword.Reserved') and x[1] == ';']
 
             if not inds:
@@ -117,7 +141,7 @@ class CodeManager(object):
             # Check if there's non whitespace text after the last semicolon
             # If so, then it's not complete
             tr_text = ''.join([
-                x[1] for x in self.tokens[max(inds) + 1:]]).strip()
+                x[1] for x in self.tokens_fp_all[max(inds) + 1:]]).strip()
             if tr_text:
                 return False
 
@@ -142,7 +166,7 @@ class CodeManager(object):
             List[Tuple[Token, str]]
         """
 
-        tokens = self.tokens_nocomments
+        tokens = self.tokens_final
 
         sem_chunks = []
         token_names = []
