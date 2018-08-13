@@ -15,7 +15,6 @@ class CodeManager(object):
             code = '#delimit ;\n' + code
 
         # First use the Comment and Delimiting lexer
-        # first pass
         self.tokens_fp_all = self.tokenize_first_pass(code)
         self.tokens_fp_no_comments = self.remove_comments(self.tokens_fp_all)
 
@@ -137,7 +136,7 @@ class CodeManager(object):
         if self.ends_sc:
             # Find indices of `;`
             inds = [
-                ind for ind, x in enumerate(self.tokens_fp_all)
+                ind for ind, x in enumerate(self.tokens_fp_no_comments)
                 if (str(x[0]) == 'Token.Keyword.Reserved') and x[1] == ';']
 
             if not inds:
@@ -146,7 +145,7 @@ class CodeManager(object):
             # Check if there's non whitespace text after the last semicolon
             # If so, then it's not complete
             tr_text = ''.join([
-                x[1] for x in self.tokens_fp_all[max(inds) + 1:]]).strip()
+                x[1] for x in self.tokens_fp_no_comments[max(inds) + 1:]]).strip()
             if tr_text:
                 return False
 

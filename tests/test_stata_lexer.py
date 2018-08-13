@@ -660,15 +660,15 @@ class TestIsComplete(object):
     @pytest.mark.parametrize(
     'code,complete',
     [
-     ('//', False),
-     ('// sdfsa', False),
+     ('//', True),
+     ('// sdfsa', True),
      ('/// sdfsa', False),
      ('/// \n', False),
-     ('/// \n\n', False),
+     ('/// \n\n', True),
      ('/// \n;', True),
      ('/// \n\n;', True),
      ('/* \n\n', False),
-     ('/* \n\n*/', False),
+     ('/* \n\n*/', True),
      ('/* \n\n*/ di hi;', True),
      ('/* \n\n*/;', True),
      ]) # yapf: disable
@@ -683,6 +683,8 @@ class TestIsComplete(object):
      ('foreach i in 1 ', True),
      ('foreach i in 1 {', False),
      ('foreach i in 1 2 {\nif {\n }', False),
+     ('disp "hi"; // also hangs', True),
+     ('disp "hi" // also hangs', True)
      ]) # yapf: disable
     def test_is_block_complete(self, code, complete):
         assert CodeManager(code, False).is_complete == complete
@@ -701,6 +703,8 @@ class TestIsComplete(object):
      ('foreach i in 1 2 {;\nif {\n }', False),
      ('foreach i in 1 2 {;\nif {;\n };', False),
      ('foreach i in 1 2 {;\nif {;\n };\n};', True),
+     ('disp "hi"; // also hangs', True),
+     ('disp "hi" // also hangs', False)
      ]) # yapf: disable
     def test_is_block_complete_in_sc_delimit_block(self, code, complete):
         assert CodeManager(code, True).is_complete == complete
