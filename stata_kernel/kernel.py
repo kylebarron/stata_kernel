@@ -88,13 +88,8 @@ class StataKernel(Kernel):
         if silent:
             return return_obj
 
-        # At the moment, can only send either an image _or_ text to support
-        # Hydrogen
-        # Only send a response if there's text
         if res.strip():
             self.send_response(self.iopub_socket, 'stream', stream_content)
-            if (self.magics.graphs != 2):
-                return return_obj
 
         if imgs or (self.magics.graphs == 2):
             img_mimetypes = {
