@@ -28,7 +28,7 @@ class CompletionsManager(object):
         self.matalist = re.compile(
             r"(?:.*?)\s(\S+)\s*$", flags=re.MULTILINE + re.DOTALL)
 
-        self.mataclean = regex.compile(r"\W")
+        self.mataclean = regex.compile(r"\W.*?(\b|$)")
 
         self.matainline = regex.compile(r"^m(ata)?\b").search
 

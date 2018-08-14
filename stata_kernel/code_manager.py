@@ -11,6 +11,7 @@ class CodeManager(object):
 
     def __init__(self, code, semicolon_delimit=False, mata_mode=False):
 
+        # print('debug?1', mata_mode, code)
         # mata goes second since it obeys #delimit! Append \n to detect
         # whenever input ends but mata was left in a line continuaton
         code = re.sub(r'\r\n', r'\n', code)
@@ -23,6 +24,7 @@ class CodeManager(object):
         elif mata_mode:
             code = 'mata\n' + code + '\n'
 
+        # print('debug?2', code)
         # First use the Comment and Delimiting lexer
         self.tokens_fp_all = self.tokenize_first_pass(code)
         self.tokens_fp_no_comments = self.remove_comments(self.tokens_fp_all)
@@ -33,6 +35,7 @@ class CodeManager(object):
         self.ends_sc = str(self.tokens_fp_no_comments[-1][0]) in [
             'Token.Keyword.Namespace', 'Token.Keyword.Reserved']
 
+        # print('debug?3', self.tokens_fp_no_comments)
         tokens_nl_delim = self.convert_delimiter(self.tokens_fp_no_comments)
         text = ''.join([x[1] for x in tokens_nl_delim])
         self.tokens_final = self.tokenize_second_pass(text)
@@ -44,10 +47,11 @@ class CodeManager(object):
 
         self.ends_mata = False
         for token, chunk in self.tokens_final:
-            if str(token) == 'Token.Aborted':
+            # print('debugo', token, chunk)
+            if str(token) == 'Token.Mata.Close':
                 self.ends_mata = True
                 self.has_mata_mode = False
-            elif str(token) == 'Token.Other':
+            elif str(token) == 'Token.Mata.Open':
                 self.ends_mata = False
                 self.has_mata_mode = True
 
@@ -161,7 +165,7 @@ class CodeManager(object):
             return True
 
         # block constructs
-        if str(self.tokens_final[-1][0]) == 'Token.MatchingBracket.Other':
+        if str(self.tokens_final[-1][0]).startswith('Token.MatchingBracket'):
             return False
 
         # last token a line-continuation comment
@@ -226,7 +230,8 @@ class CodeManager(object):
         sem_chunks = [''.join(x).strip() for x in sem_chunks]
         syn_chunks = []
         for chunk, token in zip(sem_chunks, token_names):
-            if str(token) != 'Token.MatchingBracket.Other':
+            # print('debugbb', chunk, token)
+            if not str(token).startswith('Token.MatchingBracket.Other'):
                 syn_chunks.extend([[token, x] for x in chunk.split('\n')])
             else:
                 syn_chunks.append([token, chunk])
