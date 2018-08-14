@@ -66,6 +66,14 @@ class MagicParsers():
             '--profile', dest='profile', action='store_true',
             help="Profile each line of code", required=False)
 
+        self.timer = StataParser(prog='%timer', kernel=kernel)
+        self.timer.add_argument(
+            'on', nargs=1, type=str, metavar='{on|off}',
+            help="Timer on (time everything) or off", choices=["on", "off"])
+        self.timer.add_argument(
+            '--profile', dest='profile', action='store_true',
+            help="Profile each chunk of code", required=False)
+
         self.timeit = StataParser(prog='%timeit', kernel=kernel)
         self.timeit.add_argument(
             'code', nargs='*', type=str, metavar='CODE', help="Code to run")
@@ -87,6 +95,9 @@ class StataMagics():
     magic_regex = re.compile(
         r'\A%(?P<magic>.+?)(?P<code>\s+.*)?\Z', flags=re.DOTALL + re.MULTILINE)
 
+    timer = False
+    timer_profile = False
+
     available_magics = [
         'plot',
         'graph',
@@ -96,7 +107,9 @@ class StataMagics():
         'globals',
         'delimit',
         'time',
-        'timeit']
+        'timer',
+        'timeit',
+        'status']
 
     def __init__(self):
         self.quit_early = None
@@ -142,7 +155,7 @@ class StataMagics():
     def post(self, kernel):
         if self.timeit in [1, 2]:
             total, _ = self.time_profile.pop()
-            print_kernel("Wall time (seconds): {0:.2f}".format(total), kernel)
+            print_kernel("Wall time (Stata): {0:.2f}".format(total), kernel)
 
             if (len(self.time_profile) > 0) and (self.timeit == 2):
                 lens = 0
@@ -298,6 +311,30 @@ class StataMagics():
         self.status = -1
         print_kernel("Magic restart has not been implemented.", kernel)
         return code
+
+    def magic_status(self, code, kernel):
+        self.status = -1
+        delim = ';' if kernel.sc_delimit_mode else 'cr'
+        env = 'mata' if kernel.stata.mata_mode else 'stata'
+        info = (
+            kernel.implementation, kernel.implementation_version,
+            kernel.language, kernel.language_version)
+        print_kernel('{0} {1} for {2} {3}'.format(*info), kernel)
+        print_kernel('\tDelimiter:   {}'.format(delim), kernel)
+        print_kernel('\tEnvironment: {}'.format(env), kernel)
+        return ''
+
+    def magic_timer(self, code, kernel):
+        try:
+            timer = code.strip().split(' ')
+            args = vars(self.parse.timer.parse_args(timer))
+            kernel.magics.timer = (args['on'][0] == 'on')
+            kernel.magics.timer_profile = args['profile']
+            self.status = -1
+            return ''
+        except:
+            self.status = -1
+            return ''
 
 
 # ---------------------------------------------------------------------

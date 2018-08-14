@@ -1,8 +1,9 @@
 import os
 import re
+import base64
+import hashlib
 import platform
 import subprocess
-import base64
 from pkg_resources import resource_filename
 
 from time import sleep
@@ -59,6 +60,7 @@ graph_keywords = r'\b(' + '|'.join(graph_keywords) + r')\b'
 class StataSession(object):
     def __init__(self):
 
+        self.timer_dict = {}
         adofile = resource_filename(
             'stata_kernel', os.path.join('ado', '_StataKernelCompletions.ado'))
         self.adodir = Path(adofile).resolve().parent
@@ -84,6 +86,25 @@ class StataSession(object):
         self.graph_format = config['stata_kernel'].get('graph_format', 'svg')
         self.img_metadata = {'width': 600, 'height': 400}
         self.banner = 'stata_kernel: A Jupyter kernel for Stata.'
+
+        self.mata_mode = False
+        self.stata_prompt = '\r\n\. '
+        # self.stata_prompt_regex = r'\r\n(\x1b\[\?1h\x1b=)?\r\n\. '
+        # re.compile(
+        #     r'(\r\n(\x1b\[\?1h\x1b=)?\r\n\. )|'
+        #     r'([\r\n]{1,2}\. \Z)', flags = re.MULTILINE)
+        self.stata_prompt_regex = r'[\r\n]{1,2}\. '
+
+        self.mata_prompt = '[\r\n]{1,2}: '
+        # self.mata_prompt_regex = re.compile(
+        #     r'(([\r\n]{1,2}|---+)(\x1b\[\?1h\x1b=)?[\r\n]{1,2}: )|'
+        #     r'([\r\n]{1,2}> \Z)', flags = re.MULTILINE)
+        self.mata_prompt_regex = r'[\r\n]{1,2}[:\>] '
+        self.mata_trim = re.compile(
+            r'((\r\n|\r|\n)\s+?)?(\r\n|\r|\n)\Z', flags=re.MULTILINE)
+
+        self.prompt = self.stata_prompt
+        self.prompt_regex = self.stata_prompt_regex
 
         if platform.system() == 'Windows':
             self.execution_mode = 'automation'
@@ -132,7 +153,7 @@ class StataSession(object):
         self.child.logfile = open(self.cache_dir / 'console_debug.log', 'w')
         banner = []
         try:
-            self.child.expect('\r\n\. ', timeout=0.2)
+            self.child.expect(self.prompt, timeout=0.2)
             banner.append(self.child.before)
         except pexpect.TIMEOUT:
             try:
@@ -141,7 +162,7 @@ class StataSession(object):
                     banner.append(self.child.before)
                     self.child.send('q')
             except pexpect.TIMEOUT:
-                self.child.expect('\r\n\. ')
+                self.child.expect(self.prompt)
                 banner.append(self.child.before)
 
         # Set banner to Stata's shell header
@@ -201,6 +222,7 @@ class StataSession(object):
         # capture the exit code if surrounded by \r\n; I made it catch
         # either or both.
 
+        self._timer()
         time_total = 0
         time_profile = []
         if self.execution_mode == 'console':
@@ -210,9 +232,12 @@ class StataSession(object):
             new_syn_chunks = []
             imgs = []
 
+            self._timer('do_console')
+            self._timer('do_post')
             for line in syn_chunks:
                 new_syn_chunks.append(line)
                 res, timer = self.do_console(line[1])
+                self._timer('do_console', append = True)
 
                 log.append(res)
                 err = err_regex(res)
@@ -221,7 +246,7 @@ class StataSession(object):
                     break
 
                 gr = re.search(graph_keywords, line[1]) and (graphs == 1)
-                if (str(line[0]) != 'Token.MatchingBracket.Other') and gr:
+                if (not str(line[0]).startswith('Token.MatchingBracket')) and gr:
 
                     rc, img, sc = self.get_current_graph(
                         'console', magics.img_metadata)
@@ -239,6 +264,13 @@ class StataSession(object):
                     else:
                         time_profile += [(timer, line[1])]
 
+                self._timer('do_post', append = True)
+
+            # Only full input allowed: If command ended in line
+            # continuation, yell at the user.
+            if self.mata_mode and self.child.after.endswith('> '):
+                rc = 3000
+
             # graphs = 2 is set by the %plot magic to check for the last
             # image after a code chunk
             if (not rc) and (graphs == 2):
@@ -254,15 +286,24 @@ class StataSession(object):
                 time_profile += [(time_total, '')]
                 magics.time_profile = time_profile
 
+            self._timer('do_post', append = True)
             return rc, imgs, self.clean_log_console(log, new_syn_chunks)
         else:
+            self._timer('do_log')
+            self._timer('do_automate')
+            self._timer('do_post')
+
             # Blocks will be sent through DoCommandAsync while everything else
             # will be sent through docommand
             log_path = self.cache_dir / '.stata_kernel_log.log'
             rc = self.automate(
-                'DoCommand', 'log using `"{}"\', replace text'.format(log_path))
+                'DoCommand',
+                self._mata_escape(
+                    'log using `"{}"\', replace text'.format(log_path)))
             if rc:
                 return rc, ''
+
+            self._timer('do_log', append = True)
 
             # Keep track of how many chunks have been executed
             new_syn_chunks = []
@@ -273,8 +314,10 @@ class StataSession(object):
                 new_syn_chunks.append(line)
                 if str(line[0]) == 'Token.MatchingBracket.Other':
                     rc, timer = self.do_aut_async(line[1])
+                    self._timer('do_automate', append = True)
                 else:
                     rc, timer = self.do_aut_sync(line[1])
+                    self._timer('do_automate', append = True)
                     gr = re.search(graph_keywords, line[1]) and (graphs == 1)
                     if (not rc) and gr:
 
@@ -296,6 +339,8 @@ class StataSession(object):
                     else:
                         time_profile += [(timer, line[1])]
 
+                self._timer('do_post', append = True)
+
             # graphs = 2 is set by the %plot magic to check for the last
             # image after a code chunk
             if (not rc) and (graphs == 2):
@@ -306,9 +351,16 @@ class StataSession(object):
                     new_syn_chunks.append(sc)
                     imgs.append(img)
 
-            self.automate('DoCommand', 'cap log close')
+            self._timer('do_post', append = True)
+            self.automate('DoCommand', self._mata_escape('cap log close'))
             with open(log_path, 'r') as f:
                 log = f.read()
+
+            self._timer('do_log', append = True)
+            # Only full input allowed: If command ended in line
+            # continuation, yell at the user.
+            if self.mata_mode and log.endswith('> '):
+                rc = 3000
 
             # Don't keep chunks that weren't executed
             syn_chunks = new_syn_chunks[:syn_chunk_counter]
@@ -318,6 +370,7 @@ class StataSession(object):
                 time_profile += [(time_total, '')]
                 magics.time_profile = time_profile
 
+            self._timer('do_post', append = True)
             return rc, imgs, self.clean_log_aut(log, syn_chunks)
 
     def do_console(self, line):
@@ -349,15 +402,24 @@ class StataSession(object):
             (int): execution time
         """
 
-        regex = r'\r\n(\x1b\[\?1h\x1b=)?\r\n\. '
-        self.child.sendline(line)
+        str_hash = "{0}{1}".format(default_timer(), line)
+        code_hash = hashlib.md5(str_hash.encode('utf-8')).hexdigest()
+        code_match = "`{0}'".format(code_hash)
+        hash_regex = r"({0})?{1}{0}".format(self.prompt_regex, code_match)
+        self.child.sendline(line + "\n" + code_match)
+        # self.child.sendline(line)
         timer = default_timer()
         try:
-            self.child.expect(regex, timeout=20)
+            # self.child.expect(self.prompt_regex, timeout=20)
+            self.child.expect(hash_regex, timeout=None)
         except KeyboardInterrupt:
             self.child.sendcontrol('c')
-            self.child.expect(regex, timeout=20)
+            self.child.sendline("\n" + code_match)
+            # self.child.expect(self.prompt_regex, timeout=20)
+            self.child.expect(hash_regex, timeout=None)
 
+        # print('debug1', self.child.before)
+        # print('debug2', self.child.after)
         delta = default_timer() - timer
         return ansi_escape.sub('', self.child.before), delta
 
@@ -510,6 +572,7 @@ class StataSession(object):
 
         log_all = []
         for (Token, code_line), log_line in zip(syn_chunks, log):
+            # if not str(Token).startswith('Token.MatchingBracket'):
             if str(Token) != 'Token.MatchingBracket.Other':
                 # Since I'm sending one line at a time, and since it's not a
                 # block, the first line should equal the text sent
@@ -669,8 +732,10 @@ class StataSession(object):
         """
         # Export graph to file
         rc = 0
-        cmd = 'qui graph export `"{0}/graph.{1}"\' , as({1}) replace'.format(
-            self.cache_dir, self.graph_format)
+        cmd = self._mata_escape(
+            'qui graph export `"{0}/graph.{1}"\' , as({1}) replace'.format(
+                self.cache_dir, self.graph_format))
+
         if execution_mode == 'automation':
             rc = self.automate('DoCommand', cmd)
         else:
@@ -722,7 +787,8 @@ class StataSession(object):
 
     def shutdown(self):
         if self.execution_mode == 'automation':
-            self.automate('DoCommandAsync', 'exit, clear')
+            self.automate(
+                'DoCommandAsync', self._mata_escape('exit, clear'))
         else:
             self.child.close(force=True)
         return
@@ -752,3 +818,19 @@ class StataSession(object):
         svg.setAttribute('height', '%dpx' % height)
 
         return svg.toxml()
+
+    def _mata_escape(self, line):
+        return 'stata(`"{0}"\')'.format(line) if self.mata_mode else line
+
+    def _timer(self, step = None, append = False):
+        if step:
+            if append:
+                self.timer_dict[step] += default_timer() - self.timer_dict['timer']
+                self.timer_dict['timer'] = default_timer()
+            else:
+                self.timer_dict[step] = default_timer() - self.timer_dict['timer']
+                self.timer_dict['timer'] = default_timer()
+        else:
+            self.timer_dict = {}
+            self.timer_dict['all'] = default_timer()
+            self.timer_dict['timer'] = default_timer()

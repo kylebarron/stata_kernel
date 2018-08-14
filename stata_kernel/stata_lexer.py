@@ -21,6 +21,8 @@ class StataLexer(RegexLexer):
 
     Text: Arbitrary text
     Token.Keyword.Reserved: Delimiter (either \\n or ;), depending on the block
+
+    NOTE: Test mata does not end if end is inside a string, comment
     """
     flags = re.MULTILINE | re.DOTALL
     tokens = {
@@ -32,11 +34,43 @@ class StataLexer(RegexLexer):
             # of syntactic chunks.
             (r'^[^\n]*?`"', Text, 'string-compound'),
             (r'^[^\n]*?(?<!`)"', Text, 'string-regular'),
+            (r'^[^\r\n\S]*m(ata)?[^\r\n\S]*:?[^\r\n\S]*$', Token.Mata.Open, 'mata'),
             (r'^[^\n]*?\{', Token.MatchingBracket.Other, 'block'),
             (r'^\s*(pr(ogram|ogra|ogr|og|o)?)\s+(?!di|dr|l)(de(fine|fin|fi|f)?\s+)?', Token.MatchingBracket.Other, 'program'),
             (r'^\s*inp(u|ut)?', Token.MatchingBracket.Other, 'program'),
             (r'.', Text),
         ],
+
+        'mata': [
+            include('strings'),
+            (r'^[^\n]*?\{', Token.MatchingBracket.Other, 'block'),
+            (r'^[^\r\n]*?\(', Token.MatchingBracket.Paren, 'paren'),
+            (r'[\r\n][^\r\n\S]*end(?=(\s|[^\s\w\.]).*?$|$)', Token.Mata.Close, '#pop'),
+            (r'.', Text),
+        ],
+        'paren': [
+            (r'\(', Token.MatchingBracket.Paren, '#push'),
+            (r'\)[^\r\n]*?(?=\)|$|[\r\n])', Token.MatchingBracket.Paren, '#pop'),
+            (r'\)[^\r\n]*?\(', Token.MatchingBracket.Paren),
+            include('strings-inside-paren'),
+            (r'.', Token.MatchingBracket.Paren)
+        ],
+        'strings-inside-paren': [
+            # `"compound string"'
+            (r'`"', Token.MatchingBracket.Paren, 'string-compound-inside-paren'),
+            # "string"
+            (r'(?<!`)"', Token.MatchingBracket.Paren, 'string-regular-inside-paren'),
+        ],
+        'string-compound-inside-paren': [
+            (r'`"', Token.MatchingBracket.Paren, '#push'),
+            (r'"\'', Token.MatchingBracket.Paren, '#pop'),
+            (r'.', Token.MatchingBracket.Paren)
+        ],
+        'string-regular-inside-paren': [
+            (r'(")(?!\')|(?=\n)', Token.MatchingBracket.Paren, '#pop'),
+            (r'.', Token.MatchingBracket.Paren)
+        ],
+
         'block': [
             (r'\{', Token.MatchingBracket.Other, '#push'),
             (r'\}', Token.MatchingBracket.Other, '#pop'),
@@ -80,6 +114,7 @@ class StataLexer(RegexLexer):
         ],
     }
 
+
 class CommentAndDelimitLexer(RegexLexer):
     """Lexer for Comments and Delimit blocks
 
@@ -98,15 +133,39 @@ class CommentAndDelimitLexer(RegexLexer):
 
     Text: Arbitrary text
     Token.Keyword.Reserved: Delimiter (either \\n or ;), depending on the block
+
+    NOTE: Test mata does not end if end is inside a string, comment even multi-line
     """
     flags = re.MULTILINE | re.DOTALL
     tokens = {
         'root': [
+            # NOTE(mauricio): Is it important to include comments and strings first?
             include('comments'),
             include('strings'),
             (r'^\s*#d(e|el|eli|elim|elimi|elimit)?\s*;\s*?$', Comment.Single, 'delimit;'),
+            (r'^[^\r\n\S]*m(ata)?[^\r\n\S]*:?[^\r\n\S]*$', Token.Mata.Open, 'mata'),
             (r'.', Text),
         ],
+        'mata': [
+            # Just exclude linestar
+            (r'(^//|(?<=\s)//)(?!/)', Comment.Single, 'comments-double-slash'),
+            (r'/\*', Comment.Multiline, 'comments-block'),
+            (r'(^///|(?<=\s)///)', Comment.Special, 'comments-triple-slash'),
+            include('strings'),
+            (r'[\r\n][^\r\n\S]*end(?=(\s|[^\s\w\.]).*?$|$)', Token.Mata.Close, '#pop'),
+            (r'.', Text),
+        ],
+        'mata-delimit': [
+            # Just exclude linestar
+            (r'((^\s+//)|(?<=;\s)\s*//)(?!/)', Comment.Single, 'delimit;-comments-double-slash'),
+            (r'/\*', Comment.Multiline, 'delimit;-comments-block'),
+            (r'(^///|(?<=\s)///)', Comment.Special, 'delimit;-comments-triple-slash'),
+            include('delimit;-strings'),
+            (r'(\A|;)\s*end(?=(\s|[^\s\w\.]).*?$|$)', Token.Mata.Close, '#pop'),
+            (r';', Token.Keyword.Reserved),
+            (r'.', Text),
+        ],
+
         'comments': [
             (r'(^//|(?<=\s)//)(?!/)', Comment.Single, 'comments-double-slash'),
             (r'^\s*\*', Comment.Single, 'comments-star'),
@@ -158,6 +217,8 @@ class CommentAndDelimitLexer(RegexLexer):
         ],
         'delimit;': [
             (r'^\s*#d(e|el|eli|elim|elimi|elimit)?\s+cr\s*?$', Comment.Single, '#pop'),
+            # NOTE(mauricio): XX check nesting as mata captures ; as text
+            (r'(\A|;)\s*m(ata)?\s*:?\s*;', Token.Mata.Open, 'mata-delimit'),
             include('delimit;-comments'),
             include('delimit;-strings'),
             (r';', Token.Keyword.Reserved),
