@@ -84,25 +84,8 @@ class StataKernel(Kernel):
             self.send_response(self.iopub_socket, 'stream', stream_content)
 
         if imgs or (self.magics.graphs == 2):
-            img_mimetypes = {
-                'pdf': 'application/pdf',
-                'svg': 'image/svg+xml',
-                'tif': 'image/tiff',
-                'png': 'image/png'}
             for (img, graph_format) in imgs:
-
-                content = {
-                    # This dict may contain different MIME representations
-                    # of the output.
-                    'data': {
-                        'text/plain': 'text',
-                        img_mimetypes[graph_format]: img},
-
-                    # We can specify the image size in the metadata field.
-                    'metadata': self.magics.img_metadata}
-
-                # We send the display_data message with the contents.
-                self.send_response(self.iopub_socket, 'display_data', content)
+                self.send_image(img, graph_format)
 
         # Send message if delimiter changed. NOTE: This uses the delimiter at
         # the _end_ of the code block. It prints only if the delimiter at the
@@ -118,6 +101,29 @@ class StataKernel(Kernel):
         # Refresh completions
         self.completions.refresh(self)
         return return_obj
+
+    def send_image(self, img, img_format):
+        """Helper function to send an image back to the client
+
+        Args:
+            img: Image data
+            img_format (str): Image format. Can be pdf, svg, tif, png
+        """
+        mimetypes = {
+            'pdf': 'application/pdf',
+            'svg': 'image/svg+xml',
+            'tif': 'image/tiff',
+            'png': 'image/png'}
+
+        no_display_msg = 'This front-end cannot display the desired image type.'
+        content = {
+            # dict with different MIME representations of the output.
+            'data': {
+                'text/plain': no_display_msg,
+                mimetypes[img_format]: img},
+            'metadata': self.magics.img_metadata}
+
+        self.send_response(self.iopub_socket, 'display_data', content)
 
     def do_shutdown(self, restart):
         """Shutdown the Stata session
