@@ -7,7 +7,6 @@ from pkg_resources import resource_filename
 
 from time import sleep
 from pathlib import Path
-from xml.dom import minidom
 from timeit import default_timer
 from textwrap import dedent
 from configparser import ConfigParser
@@ -79,9 +78,17 @@ class StataSession(object):
         if not stata_path:
             self.raise_config_error('stata_path')
 
+        graph_export_size = {
+            'pdf': None,
+            'svg': ' width({0}px) height({1}px)',
+            'tif': ' width({0}) height({1})',
+            'png': ' width({0}) height({1})'}
+
         self.stata_path = stata_path
         self.cache_dir = cache_dir
         self.graph_format = config['stata_kernel'].get('graph_format', 'svg')
+        self.graph_size = graph_export_size[self.graph_format]
+        self.graph_cmd = 'qui graph export `"{0}/graph.{1}"\' , as({1}) replace'
         self.img_metadata = {'width': 600, 'height': 400}
         self.banner = 'stata_kernel: A Jupyter kernel for Stata.'
 
@@ -669,8 +676,10 @@ class StataSession(object):
         """
         # Export graph to file
         rc = 0
-        cmd = 'qui graph export `"{0}/graph.{1}"\' , as({1}) replace'.format(
-            self.cache_dir, self.graph_format)
+        cmd = self.graph_cmd.format(self.cache_dir, self.graph_format)
+        if self.graph_size:
+            cmd += ' ' + self.graph_size.format(*img_metadata.values())
+
         if execution_mode == 'automation':
             rc = self.automate('DoCommand', cmd)
         else:
@@ -692,9 +701,6 @@ class StataSession(object):
 
         if read_format == 'rb':
             img = base64.b64encode(img).decode('utf-8')
-
-        if self.graph_format == 'svg':
-            img = self._fix_svg_size(img, **img_metadata)
 
         return rc, (img, self.graph_format), ('Token.Text', cmd)
 
@@ -726,29 +732,3 @@ class StataSession(object):
         else:
             self.child.close(force=True)
         return
-
-    def _fix_svg_size(self, img, width, height):
-        # Minidom does not support parseUnicode, so it must be decoded
-        # to accept unicode characters
-        parsed = minidom.parseString(img.encode('utf-8'))
-        (svg, ) = parsed.getElementsByTagName('svg')
-
-        # Fix the viewbox so programs can set the correct aspect ratio
-        x1, y1, x2, y2 = svg.getAttribute("viewBox").split(' ')
-        width, height = int(width), int(height)
-        view_width = int(x2)
-        view_height = int(y2)
-        view_ratio = view_width / view_height
-        new_ratio = width / height
-        if width > height:
-            view_height = int(view_height * view_ratio / new_ratio)
-        else:
-            view_width = int(view_width * new_ratio / view_ratio)
-
-        # Handle overrides in case they were not encoded.
-        view = (0, 0, view_width, view_height)
-        svg.setAttribute('viewBox', '%d %d %d %d' % view)
-        svg.setAttribute('width', '%dpx' % width)
-        svg.setAttribute('height', '%dpx' % height)
-
-        return svg.toxml()
