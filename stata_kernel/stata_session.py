@@ -6,10 +6,8 @@ import base64
 from pkg_resources import resource_filename
 
 from time import sleep
-from pathlib import Path
 from timeit import default_timer
-from textwrap import dedent
-from configparser import ConfigParser
+from pathlib import Path
 
 if platform.system() == 'Windows':
     import win32com.client
@@ -37,26 +35,17 @@ ansi_escape = re.compile(ansi_regex, flags=re.IGNORECASE)
 
 
 class StataSession(object):
-    def __init__(self):
+    def __init__(self, config):
+        """
+        Args:
+            config (ConfigParser): config class
+        """
 
         adofile = resource_filename(
-            'stata_kernel', os.path.join('ado', '_StataKernelCompletions.ado'))
-        self.adodir = Path(adofile).resolve().parent
+            'stata_kernel', 'ado/_StataKernelCompletions.ado')
+        adodir = Path(adofile).resolve().parent
 
-        config = ConfigParser()
-        config.read(Path('~/.stata_kernel.conf').expanduser())
-
-        self.cache_dir = Path(config['stata_kernel'].get(
-            'cache_directory', '~/.stata_kernel_cache')).expanduser()
-        self.cache_dir.mkdir(parents=True, exist_ok=True)
-        self.execution_mode = config['stata_kernel'].get('execution_mode')
-
-        stata_path = config['stata_kernel'].get('stata_path')
-        if platform.system() == 'Darwin':
-            stata_path = self.get_mac_stata_path_variant(
-                stata_path, self.execution_mode)
-        if not stata_path:
-            self.raise_config_error('stata_path')
+        self.config = config
 
         graph_export_size = {
             'pdf': None,
@@ -64,30 +53,24 @@ class StataSession(object):
             'tif': ' width({0}) height({1})',
             'png': ' width({0}) height({1})'}
 
-        self.stata_path = stata_path
-        self.graph_format = config['stata_kernel'].get('graph_format', 'svg')
-        self.graph_size = graph_export_size[self.graph_format]
+        self.graph_size = graph_export_size[self.config.get('graph_format')]
         self.graph_cmd = 'qui graph export `"{0}/graph.{1}"\' , as({1}) replace'
         self.img_metadata = {'width': 600, 'height': 400}
         self.banner = 'stata_kernel: A Jupyter kernel for Stata.'
 
         if platform.system() == 'Windows':
-            self.execution_mode = 'automation'
             self.init_windows()
         elif platform.system() == 'Darwin':
-            if not self.execution_mode:
-                self.raise_config_error('execution_mode')
-            if self.execution_mode == 'automation':
+            if self.config.get('execution_mode') == 'automation':
                 self.init_mac_automation()
             else:
                 self.init_console()
         else:
-            self.execution_mode = 'console'
             self.init_console()
 
         # Change to this directory and set more off
         text = [
-            ('Token.Text', 'adopath + `"{}"\''.format(self.adodir)),
+            ('Token.Text', 'adopath + `"{}"\''.format(adodir)),
             ('Token.Text', 'cd `"{}"\''.format(os.getcwd())),
             ('Token.Text', 'set more off'),
             ('Token.Text', 'clear all'),
@@ -98,7 +81,7 @@ class StataSession(object):
     def init_windows(self):
         # The WinExec step is necessary for some reason to make graphs
         # work. Stata can't be launched directly with Dispatch()
-        WinExec(self.stata_path)
+        WinExec(self.config.get('stata_path'))
         sleep(0.25)
         self.stata = win32com.client.Dispatch("stata.StataOLEApp")
         self.automate(cmd_name='UtilShowStata', value=2)
@@ -117,8 +100,8 @@ class StataSession(object):
         there's a `more` stopping it, and presses `q` until the more has
         gone away.
         """
-        self.child = pexpect.spawn(self.stata_path, encoding='utf-8')
-        self.child.logfile = open(self.cache_dir / 'console_debug.log', 'w')
+        self.child = pexpect.spawn(self.config.get('stata_path'), encoding='utf-8')
+        self.child.logfile = open(self.config.get('cache_dir') / 'console_debug.log', 'w')
         banner = []
         try:
             self.child.expect('\r\n\. ', timeout=0.2)
@@ -247,7 +230,7 @@ class StataSession(object):
                 return getattr(self.stata, cmd_name)()
             return getattr(self.stata, cmd_name)(value, **kwargs)
 
-        app_name = Path(self.stata_path).name
+        app_name = Path(self.config.get('stata_path')).name
         cmd = 'tell application "{}" to {}'.format(app_name, cmd_name)
         if value is not None:
             value = str(value).replace('\n', '\\n').replace('\r', '\\r')
@@ -480,30 +463,8 @@ class StataSession(object):
 
         return img
 
-    def get_mac_stata_path_variant(self, stata_path, execution_mode):
-        if stata_path == '':
-            return ''
-
-        path = Path(stata_path)
-        if execution_mode == 'automation':
-            d = {'stata': 'Stata', 'stata-se': 'StataSE', 'stata-mp': 'StataMP'}
-        else:
-            d = {'Stata': 'stata', 'StataSE': 'stata-se', 'StataMP': 'stata-mp'}
-
-        bin_name = d.get(path.name, path.name)
-        return str(path.parent / bin_name)
-
-    def raise_config_error(self, config_opt):
-        msg = """\
-        {} option in configuration file is missing
-        Refer to the documentation to see how to set it manually:
-
-        https://kylebarron.github.io/stata_kernel/user_guide/configuration/
-        """.format(config_opt)
-        raise ValueError(dedent(msg))
-
     def shutdown(self):
-        if self.execution_mode == 'automation':
+        if self.config.get('execution_mode') == 'automation':
             self.automate('DoCommandAsync', 'exit, clear')
         else:
             self.child.close(force=True)

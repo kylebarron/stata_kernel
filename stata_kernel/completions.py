@@ -5,7 +5,9 @@ import regex
 
 
 class CompletionsManager(object):
-    def __init__(self, kernel):
+    def __init__(self, kernel, config):
+
+        self.config = config
 
         # NOTE(mauricio): Locals have to be listed sepparately because
         # inside a Stata program they would only list the locals for
@@ -239,7 +241,7 @@ class CompletionsManager(object):
         return suggestions
 
     def quickdo(self, code, kernel):
-        if kernel.stata.execution_mode == 'console':
+        if self.config.get('execution_mode') == 'console':
             res, timer = kernel.stata.do_console(code)
         else:
             log_path = kernel.stata.cache_dir / '.stata_kernel_completions.log'
