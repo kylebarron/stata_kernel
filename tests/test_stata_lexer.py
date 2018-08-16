@@ -372,12 +372,12 @@ class TestBlocks(object):
         code = 'cap {\n a\n}'
         tokens = CodeManager(code).tokens_final
         expected = [
-            (Token.MatchingBracket.Other, 'cap {'),
-            (Token.MatchingBracket.Other, '\n'),
-            (Token.MatchingBracket.Other, ' '),
-            (Token.MatchingBracket.Other, 'a'),
-            (Token.MatchingBracket.Other, '\n'),
-            (Token.MatchingBracket.Other, '}'),
+            (Token.TextBlock, 'cap {'),
+            (Token.TextBlock, '\n'),
+            (Token.TextBlock, ' '),
+            (Token.TextBlock, 'a'),
+            (Token.TextBlock, '\n'),
+            (Token.TextBlock, '}'),
             (Token.Text, '\n')]
         assert tokens == expected
 
@@ -385,16 +385,16 @@ class TestBlocks(object):
         code = 'cap {\n{\n a\n}\n}'
         tokens = CodeManager(code).tokens_final
         expected = [
-            (Token.MatchingBracket.Other, 'cap {'),
-            (Token.MatchingBracket.Other, '\n'),
-            (Token.MatchingBracket.Other, '{'),
-            (Token.MatchingBracket.Other, '\n'),
-            (Token.MatchingBracket.Other, ' '),
-            (Token.MatchingBracket.Other, 'a'),
-            (Token.MatchingBracket.Other, '\n'),
-            (Token.MatchingBracket.Other, '}'),
-            (Token.MatchingBracket.Other, '\n'),
-            (Token.MatchingBracket.Other, '}'),
+            (Token.TextBlock, 'cap {'),
+            (Token.TextBlock, '\n'),
+            (Token.TextBlock, '{'),
+            (Token.TextBlock, '\n'),
+            (Token.TextBlock, ' '),
+            (Token.TextBlock, 'a'),
+            (Token.TextBlock, '\n'),
+            (Token.TextBlock, '}'),
+            (Token.TextBlock, '\n'),
+            (Token.TextBlock, '}'),
             (Token.Text, '\n')]
         assert tokens == expected
 
@@ -402,13 +402,13 @@ class TestBlocks(object):
         code = 'cap {\n*{\n a\n}'
         tokens = CodeManager(code).tokens_final
         expected = [
-            (Token.MatchingBracket.Other, 'cap {'),
-            (Token.MatchingBracket.Other, '\n'),
-            (Token.MatchingBracket.Other, '\n'),
-            (Token.MatchingBracket.Other, ' '),
-            (Token.MatchingBracket.Other, 'a'),
-            (Token.MatchingBracket.Other, '\n'),
-            (Token.MatchingBracket.Other, '}'),
+            (Token.TextBlock, 'cap {'),
+            (Token.TextBlock, '\n'),
+            (Token.TextBlock, '\n'),
+            (Token.TextBlock, ' '),
+            (Token.TextBlock, 'a'),
+            (Token.TextBlock, '\n'),
+            (Token.TextBlock, '}'),
             (Token.Text, '\n')]
         assert tokens == expected
 
@@ -416,13 +416,13 @@ class TestBlocks(object):
         code = 'cap {\n/*{*/\n a\n}'
         tokens = CodeManager(code).tokens_final
         expected = [
-            (Token.MatchingBracket.Other, 'cap {'),
-            (Token.MatchingBracket.Other, '\n'),
-            (Token.MatchingBracket.Other, '\n'),
-            (Token.MatchingBracket.Other, ' '),
-            (Token.MatchingBracket.Other, 'a'),
-            (Token.MatchingBracket.Other, '\n'),
-            (Token.MatchingBracket.Other, '}'),
+            (Token.TextBlock, 'cap {'),
+            (Token.TextBlock, '\n'),
+            (Token.TextBlock, '\n'),
+            (Token.TextBlock, ' '),
+            (Token.TextBlock, 'a'),
+            (Token.TextBlock, '\n'),
+            (Token.TextBlock, '}'),
             (Token.Text, '\n')]
         assert tokens == expected
 
@@ -435,11 +435,11 @@ class TestBlocks(object):
             (Token.Text, ' '),
             (Token.Text, '1'),
             (Token.Text, '\n'),
-            (Token.MatchingBracket.Other, 'if {'),
-            (Token.MatchingBracket.Other, '\n'),
-            (Token.MatchingBracket.Other, 'a'),
-            (Token.MatchingBracket.Other, '\n'),
-            (Token.MatchingBracket.Other, '}'),
+            (Token.TextBlock, 'if {'),
+            (Token.TextBlock, '\n'),
+            (Token.TextBlock, 'a'),
+            (Token.TextBlock, '\n'),
+            (Token.TextBlock, '}'),
             (Token.Text, '\n')]
         assert tokens == expected
 
@@ -456,14 +456,14 @@ class TestSemicolonDelimitComments(object):
         tokens = CodeManager(code).tokens_fp_all
         expected = [
             (Token.Comment.Single, '#delimit ;'),
-            (Token.Keyword.Namespace, '\n'),
+            (Token.TextInSemicolonBlock, '\n'),
             (Token.Comment.Single, '//'),
             (Token.Comment.Single, ' '),
             (Token.Comment.Single, 'a'),
-            (Token.Keyword.Namespace, '\n'),
-            (Token.Keyword.Namespace, 'a'),
-            (Token.Keyword.Reserved, ';'),
-            (Token.Keyword.Namespace, '\n')]
+            (Token.TextInSemicolonBlock, '\n'),
+            (Token.TextInSemicolonBlock, 'a'),
+            (Token.SemicolonDelimiter, ';'),
+            (Token.TextInSemicolonBlock, '\n')]
         assert tokens == expected
 
     def test_multiline_comment_after_inline_comment(self):
@@ -478,17 +478,17 @@ class TestSemicolonDelimitComments(object):
         tokens = CodeManager(code).tokens_fp_all
         expected = [
             (Token.Comment.Single, '#delimit ;'),
-            (Token.Keyword.Namespace, '\n'),
+            (Token.TextInSemicolonBlock, '\n'),
             (Token.Comment.Single, '//'),
             (Token.Comment.Single, ' '),
             (Token.Comment.Single, '/'),
             (Token.Comment.Single, '*'),
             (Token.Comment.Single, ' '),
             (Token.Comment.Single, 'a'),
-            (Token.Keyword.Namespace, '\n'),
-            (Token.Keyword.Namespace, 'a'),
-            (Token.Keyword.Reserved, ';'),
-            (Token.Keyword.Namespace, '\n')]
+            (Token.TextInSemicolonBlock, '\n'),
+            (Token.TextInSemicolonBlock, 'a'),
+            (Token.SemicolonDelimiter, ';'),
+            (Token.TextInSemicolonBlock, '\n')]
         assert tokens == expected
 
     def test_star_comment(self):
@@ -503,14 +503,14 @@ class TestSemicolonDelimitComments(object):
         tokens = CodeManager(code).tokens_fp_all
         expected = [
             (Token.Comment.Single, '#delimit ;'),
-            (Token.Keyword.Namespace, '\n'),
+            (Token.TextInSemicolonBlock, '\n'),
             (Token.Comment.Single, '*'),
             (Token.Comment.Single, ' '),
             (Token.Comment.Single, 'a'),
             (Token.Comment.Single, '\n'),
             (Token.Comment.Single, 'a'),
-            (Token.Keyword.Reserved, ';'),
-            (Token.Keyword.Namespace, '\n')]
+            (Token.SemicolonDelimiter, ';'),
+            (Token.TextInSemicolonBlock, '\n')]
         assert tokens == expected
 
     def test_multiline_comment_after_star(self):
@@ -525,7 +525,7 @@ class TestSemicolonDelimitComments(object):
         tokens = CodeManager(code).tokens_fp_all
         expected = [
             (Token.Comment.Single, '#delimit ;'),
-            (Token.Keyword.Namespace, '\n'),
+            (Token.TextInSemicolonBlock, '\n'),
             (Token.Comment.Single, '*'),
             (Token.Comment.Single, ' '),
             (Token.Comment.Multiline, '/*'),
@@ -550,7 +550,7 @@ class TestSemicolonDelimitComments(object):
         tokens = CodeManager(code).tokens_fp_all
         expected = [
             (Token.Comment.Single, '#delimit ;'),
-            (Token.Keyword.Namespace, '\n'),
+            (Token.TextInSemicolonBlock, '\n'),
             (Token.Comment.Single, '*'),
             (Token.Comment.Single, ' '),
             (Token.Comment.Single, '/'),
@@ -559,8 +559,8 @@ class TestSemicolonDelimitComments(object):
             (Token.Comment.Single, 'a'),
             (Token.Comment.Single, '\n'),
             (Token.Comment.Single, 'a'),
-            (Token.Keyword.Reserved, ';'),
-            (Token.Keyword.Namespace, '\n')]
+            (Token.SemicolonDelimiter, ';'),
+            (Token.TextInSemicolonBlock, '\n')]
         assert tokens == expected
 
     def test_inline_comment_inside_expr_with_whitespace(self):
@@ -576,16 +576,16 @@ class TestSemicolonDelimitComments(object):
         tokens = CodeManager(code).tokens_fp_all
         expected = [
             (Token.Comment.Single, '#delimit ;'),
-            (Token.Keyword.Namespace, '\n'),
-            (Token.Keyword.Namespace, 'a'),
-            (Token.Keyword.Namespace, '\n'),
+            (Token.TextInSemicolonBlock, '\n'),
+            (Token.TextInSemicolonBlock, 'a'),
+            (Token.TextInSemicolonBlock, '\n'),
             (Token.Comment.Single, ' //'),
             (Token.Comment.Single, ' '),
             (Token.Comment.Single, 'c'),
-            (Token.Keyword.Namespace, '\n'),
-            (Token.Keyword.Namespace, 'a'),
-            (Token.Keyword.Reserved, ';'),
-            (Token.Keyword.Namespace, '\n')]
+            (Token.TextInSemicolonBlock, '\n'),
+            (Token.TextInSemicolonBlock, 'a'),
+            (Token.SemicolonDelimiter, ';'),
+            (Token.TextInSemicolonBlock, '\n')]
         assert tokens == expected
 
     def test_inline_comment_inside_expr_without_whitespace(self):
@@ -602,17 +602,17 @@ class TestSemicolonDelimitComments(object):
         # tokens = CodeManager(code).tokens_fp_all
         # expected = [
         #     (Token.Comment.Single, '#delimit ;'),
-        #     (Token.Keyword.Namespace, '\n'),
-        #     (Token.Keyword.Namespace, 'a'),
-        #     (Token.Keyword.Namespace, '\n'),
-        #     (Token.Keyword.Namespace, '/'),
-        #     (Token.Keyword.Namespace, '/'),
-        #     (Token.Keyword.Namespace, ' '),
-        #     (Token.Keyword.Namespace, 'c'),
-        #     (Token.Keyword.Namespace, '\n'),
-        #     (Token.Keyword.Namespace, 'a'),
-        #     (Token.Keyword.Reserved, ';'),
-        #     (Token.Keyword.Namespace, '\n')]
+        #     (Token.TextInSemicolonBlock, '\n'),
+        #     (Token.TextInSemicolonBlock, 'a'),
+        #     (Token.TextInSemicolonBlock, '\n'),
+        #     (Token.TextInSemicolonBlock, '/'),
+        #     (Token.TextInSemicolonBlock, '/'),
+        #     (Token.TextInSemicolonBlock, ' '),
+        #     (Token.TextInSemicolonBlock, 'c'),
+        #     (Token.TextInSemicolonBlock, '\n'),
+        #     (Token.TextInSemicolonBlock, 'a'),
+        #     (Token.SemicolonDelimiter, ';'),
+        #     (Token.TextInSemicolonBlock, '\n')]
         # assert tokens == expected
 
     def test_newlines_in_semicolon_block_become_spaces(self):
