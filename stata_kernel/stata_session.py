@@ -167,8 +167,8 @@ class StataSession(object):
         Kwargs:
             magics (StataMagics):
                 magics.graphs:
-                    0 dooes not look for images
-                    1 looks after each line not in Token.MatchingBracket.Other
+                    0 does not look for images
+                    1 looks after each line not in Token.TextBlock
                     2 looks only after _all_ lines have executed
                 magics.timeit:
                     0 do not time it
@@ -228,7 +228,7 @@ class StataSession(object):
                     break
 
                 gr = re.search(graph_keywords, line[1]) and (graphs == 1)
-                if (str(line[0]) != 'Token.MatchingBracket.Other') and gr:
+                if (str(line[0]) != 'Token.TextBlock') and gr:
 
                     rc, img, sc = self.get_current_graph(
                         'console', magics.img_metadata)
@@ -278,7 +278,7 @@ class StataSession(object):
             for line in syn_chunks:
                 syn_chunk_counter += 1
                 new_syn_chunks.append(line)
-                if str(line[0]) == 'Token.MatchingBracket.Other':
+                if str(line[0]) == 'Token.TextBlock':
                     rc, timer = self.do_aut_async(line[1])
                 else:
                     rc, timer = self.do_aut_sync(line[1])
@@ -517,7 +517,7 @@ class StataSession(object):
 
         log_all = []
         for (Token, code_line), log_line in zip(syn_chunks, log):
-            if str(Token) != 'Token.MatchingBracket.Other':
+            if str(Token) != 'Token.TextBlock':
                 # Since I'm sending one line at a time, and since it's not a
                 # block, the first line should equal the text sent
                 # The assert is just a sanity check for now.
@@ -565,7 +565,7 @@ class StataSession(object):
         # DoCommandAsync
         syn_chunks_new = []
         for (Token, code_lines) in syn_chunks:
-            if str(Token) == 'Token.MatchingBracket.Other':
+            if str(Token) == 'Token.TextBlock':
                 syn_chunks_new.append((Token, 'cap noi ' + code_lines))
             else:
                 syn_chunks_new.append((Token, code_lines))
@@ -580,7 +580,7 @@ class StataSession(object):
         # this for loop, I set the first line to `inexact` matching.
         last_whitespace = ''
         for (Token, code_lines) in syn_chunks:
-            if str(Token) != 'Token.MatchingBracket.Other':
+            if str(Token) != 'Token.TextBlock':
                 # Means I sent it with DoCommand; there should be no leading
                 # spaces. Also means it should be a single line
                 all_code_lines.append(['exact', last_whitespace + code_lines])

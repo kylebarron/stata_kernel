@@ -23,7 +23,7 @@ class CodeManager(object):
             self.tokens_fp_no_comments = [('Token.Text', '')]
 
         self.ends_sc = str(self.tokens_fp_no_comments[-1][0]) in [
-            'Token.Keyword.Namespace', 'Token.Keyword.Reserved']
+            'Token.TextInSemicolonBlock', 'Token.SemicolonDelimiter']
 
         tokens_nl_delim = self.convert_delimiter(self.tokens_fp_no_comments)
         text = ''.join([x[1] for x in tokens_nl_delim])
@@ -70,17 +70,17 @@ class CodeManager(object):
         """
 
         # If all tokens are newline-delimited, return
-        if not 'Token.Keyword.Namespace' in [str(x[0]) for x in tokens]:
+        if not 'Token.TextInSemicolonBlock' in [str(x[0]) for x in tokens]:
             return tokens
 
         # Replace newlines in `;`-delimited blocks with spaces
         tokens = [('Space instead of newline', ' ')
-                  if (str(x[0]) == 'Token.Keyword.Namespace') and x[1] == '\n'
+                  if (str(x[0]) == 'Token.TextInSemicolonBlock') and x[1] == '\n'
                   else x for x in tokens[:-1]]
 
         # Change the ; delimiters to \n
         tokens = [('Newline delimiter', '\n') if
-                  (str(x[0]) == 'Token.Keyword.Reserved') and x[1] == ';' else x
+                  (str(x[0]) == 'Token.SemicolonDelimiter') and x[1] == ';' else x
                   for x in tokens]
         return tokens
 
@@ -127,7 +127,7 @@ class CodeManager(object):
             return True
 
         # block constructs
-        if str(self.tokens_final[-1][0]) == 'Token.MatchingBracket.Other':
+        if str(self.tokens_final[-1][0]) == 'Token.TextBlock':
             return False
 
         # last token a line-continuation comment
@@ -139,7 +139,7 @@ class CodeManager(object):
             # Find indices of `;`
             inds = [
                 ind for ind, x in enumerate(self.tokens_fp_no_comments)
-                if (str(x[0]) == 'Token.Keyword.Reserved') and x[1] == ';']
+                if (str(x[0]) == 'Token.SemicolonDelimiter') and x[1] == ';']
 
             if not inds:
                 inds = [0]
@@ -192,7 +192,7 @@ class CodeManager(object):
         sem_chunks = [''.join(x).strip() for x in sem_chunks]
         syn_chunks = []
         for chunk, token in zip(sem_chunks, token_names):
-            if str(token) != 'Token.MatchingBracket.Other':
+            if str(token) != 'Token.TextBlock':
                 syn_chunks.extend([[token, x] for x in chunk.split('\n')])
             else:
                 syn_chunks.append([token, chunk])
