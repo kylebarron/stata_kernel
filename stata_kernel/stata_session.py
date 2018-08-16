@@ -278,19 +278,16 @@ class StataSession(object):
             for line in syn_chunks:
                 syn_chunk_counter += 1
                 new_syn_chunks.append(line)
-                if str(line[0]) == 'Token.MatchingBracket.Other':
-                    rc, timer = self.do_aut_async(line[1])
-                else:
-                    rc, timer = self.do_aut_sync(line[1])
-                    gr = re.search(graph_keywords, line[1]) and (graphs == 1)
-                    if (not rc) and gr:
+                rc, timer = self.do_aut_async(line[1])
+                gr = re.search(graph_keywords, line[1]) and (graphs == 1)
+                if (not rc) and gr:
 
-                        rc, img, sc = self.get_current_graph(
-                            'automation', magics.img_metadata)
+                    rc, img, sc = self.get_current_graph(
+                        'automation', magics.img_metadata)
 
-                        syn_chunk_counter += 1
-                        new_syn_chunks.append(sc)
-                        imgs.append(img)
+                    syn_chunk_counter += 1
+                    new_syn_chunks.append(sc)
+                    imgs.append(img)
 
                 if rc:
                     break
@@ -367,39 +364,6 @@ class StataSession(object):
 
         delta = default_timer() - timer
         return ansi_escape.sub('', self.child.before), delta
-
-    def do_aut_sync(self, line):
-        """Run code in Stata Automation using DoCommand
-
-        In general, DoCommand is desired rather than DoCommandAsync:
-            1. DoCommand will stop on error.
-            2. DoCommand returns the return code, so you don't have to check the log for errors.
-            3. DoCommand is synchronous, so I don't have to keep polling for the command to have finished.
-
-        However, the drawback of DoCommand is that there are a few commands that
-        don't work. Namely `program`, `while`, `forvalues`, `foreach`, `input`,
-        and `exit`. Because these are basically all multiline inputs, I run
-        DoCommand for all non-multiline inputs.
-
-        On Windows, DoCommand only allows one line of code at a time. Since I'm
-        sending one line of code at a time to the console anyways, it's easy
-        enough to just have all do functions run one syntactic line at a time.
-
-        Args:
-            line (str): literal string ready to send to Stata
-        Returns:
-            (int): return code from Stata
-            (int): execution time
-        """
-        timer = default_timer()
-        try:
-            rc = self.automate('DoCommand', line)
-        except KeyboardInterrupt:
-            self.automate('UtilSetStataBreak')
-            rc = 1
-
-        delta = default_timer() - timer
-        return rc, delta
 
     def do_aut_async(self, line):
         """Run code in Stata Automation using DoCommandAsync
