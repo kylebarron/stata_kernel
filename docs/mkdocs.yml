@@ -57,7 +57,7 @@ theme:
         code: 'Fira Code'
 
 extra_javascript:
-    - aux/helpers.js
+    - helpers/helpers.js
     - https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.4/MathJax.js?config=TeX-AMS-MML_HTMLorMML
 
 # These extensions are chosen to be a superset of Pandoc's Markdown.
