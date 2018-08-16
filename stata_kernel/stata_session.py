@@ -14,6 +14,7 @@ from configparser import ConfigParser
 if platform.system() == 'Windows':
     import win32com.client
     from win32api import WinExec
+    from pexpect import fdpexpect
 else:
     import pexpect
 
@@ -34,26 +35,6 @@ ansi_regex = r'\x1b(' \
              r'(\d;\dR))'
 ansi_escape = re.compile(ansi_regex, flags=re.IGNORECASE)
 
-graph_keywords = [
-    r'gr(a|ap|aph)?', r'tw(o|ow|owa|oway)?', r'sc(a|at|att|atte|atter)?',
-    r'line', r'hist(o|og|ogr|ogra|ogram)?', r'kdensity', r'lowess', r'lpoly',
-    r'tsr?line', r'symplot', r'quantile', r'qnorm', r'pnorm', r'qchi', r'pchi',
-    r'qqplot', r'gladder', r'qladder', r'rvfplot', r'avplot', r'avplots',
-    r'cprplot', r'acprplot', r'rvpplot', r'lvr2plot', r'ac', r'pac', r'pergram',
-    r'cumsp', r'xcorr', r'wntestb', r'estat\s+acplot', r'estat\s+aroots',
-    r'estat\s+sbcusum', r'fcast\s+graph', r'varstable', r'vecstable',
-    r'irf\s+graph', r'irf\s+ograph', r'irf\s+cgraph', r'xtline'
-    r'sts\s+graph', r'strate', r'ltable', r'stci', r'stphplot', r'stcoxkm',
-    r'estat phtest', r'stcurve', r'roctab', r'rocplot', r'roccomp',
-    r'rocregplot', r'lroc', r'lsens', r'biplot', r'irtgraph\s+icc',
-    r'irtgraph\s+tcc', r'irtgraph\s+iif', r'irtgraph\s+tif', r'biplot',
-    r'cluster dendrogram', r'screeplot', r'scoreplot', r'loadingplot',
-    r'procoverlay', r'cabiplot', r'caprojection', r'mcaplot', r'mcaprojection',
-    r'mdsconfig', r'mdsshepard', r'cusum', r'cchart', r'pchart', r'rchart',
-    r'xchart', r'shewhart', r'serrbar', r'marginsplot', r'bayesgraph',
-    r'tabodds', r'teffects\s+overlap', r'npgraph', r'grmap', r'pkexamine']
-graph_keywords = r'\b(' + '|'.join(graph_keywords) + r')\b'
-
 
 class StataSession(object):
     def __init__(self):
@@ -65,10 +46,9 @@ class StataSession(object):
         config = ConfigParser()
         config.read(Path('~/.stata_kernel.conf').expanduser())
 
-        cache_dir = config['stata_kernel'].get(
-            'cache_directory', '~/.stata_kernel_cache')
-        cache_dir = Path(cache_dir).expanduser()
-        cache_dir.mkdir(parents=True, exist_ok=True)
+        self.cache_dir = Path(config['stata_kernel'].get(
+            'cache_directory', '~/.stata_kernel_cache')).expanduser()
+        self.cache_dir.mkdir(parents=True, exist_ok=True)
         self.execution_mode = config['stata_kernel'].get('execution_mode')
 
         stata_path = config['stata_kernel'].get('stata_path')
@@ -85,7 +65,6 @@ class StataSession(object):
             'png': ' width({0}) height({1})'}
 
         self.stata_path = stata_path
-        self.cache_dir = cache_dir
         self.graph_format = config['stata_kernel'].get('graph_format', 'svg')
         self.graph_size = graph_export_size[self.graph_format]
         self.graph_cmd = 'qui graph export `"{0}/graph.{1}"\' , as({1}) replace'
@@ -113,6 +92,7 @@ class StataSession(object):
             ('Token.Text', 'set more off'),
             ('Token.Text', 'clear all'),
             ('Token.Text', 'capture log close _all'), ]
+        # TODO: also initialize graph counter global
         self.do(text)
 
     def init_windows(self):
@@ -122,10 +102,12 @@ class StataSession(object):
         sleep(0.25)
         self.stata = win32com.client.Dispatch("stata.StataOLEApp")
         self.automate(cmd_name='UtilShowStata', value=2)
+        self.start_log_aut()
 
     def init_mac_automation(self):
         self.automate(cmd_name='activate')
         self.automate(cmd_name='UtilShowStata', value=1)
+        self.start_log_aut()
 
     def init_console(self):
         """Initiate stata console
@@ -154,294 +136,103 @@ class StataSession(object):
         # Set banner to Stata's shell header
         self.banner = ansi_escape.sub('', '\n'.join(banner))
 
-    def do(self, syn_chunks, magics=None):
-        """Run code in Stata
+    def start_log_aut(self):
+        """Start log and watch file
 
-        This is a wrapper for the platform-dependent functions.
+        This is only on Automation. On console I watch the TTY directly.
+        """
+
+        log_path = self.cache_dir / 'log.log'
+        cmd = 'log using `"{}"\', replace text'.format(log_path)
+        rc = self.automate('DoCommand', cmd)
+        if rc:
+            return rc
+
+        fd = open(log_path)
+        self.log_fd = fdpexpect.fdspawn(fd, encoding='utf-8')
+        return 0
+
+    def do(self, text, magics=None, **kwargs):
+        """Main wrapper for sequence of running user-given code
+
+        Probably don't use this for internal code run by kernel
 
         Args:
-            (List[Tuple[Token, str]]):
-                Each tuple should have two elements. The first is the name of
-                the Token, the second is the string to send to Stata.
+            text (str)
+            magics: Not currently implemented
 
         Kwargs:
-            magics (StataMagics):
-                magics.graphs:
-                    0 does not look for images
-                    1 looks after each line not in Token.TextBlock
-                    2 looks only after _all_ lines have executed
-                magics.timeit:
-                    0 do not time it
-                    1 time execution
-                    2 time execution and profile each line
-                magics.img_metadata (dict):
-                    width: picture width
-                    height: picture height
-
-        NOTE I might end up needing more metadata about the chunks, so this is subject to change format.
-
-        NOTE I might put in here a regex that catches graph commands. I could either automatically add a command for `graph export` after each `graph` command, or I could try to keep a record of the current state of graphs and send one when I think a new one has been created.
-
-            I think the former would actually have less false positives. When
-            using `graph dir` and `graph describe`, it only shows you graph
-            timestamps to the minute.
-
-            Note, though, that there are _many_ graph commands, and it would be
-            a pain to write a regex for them all. See: `help graph_other`
-
-        NOTE: Also don't forget to prevent any empty lines from going to Stata
+            md5 (str): md5 of the text.
+            kernel (ipkernel.kernelbase): Running instance of kernel. Passed to expect.
+            display (bool): Whether to send results to front-end
         """
 
-        # Prevent empty whitespace from being sent to Stata
-        text = ''.join([x[1] for x in syn_chunks]).strip()
-        if not text:
-            return 0, [], ''
-
-        if magics:
-            graphs = magics.graphs
-            timeit = magics.timeit
-        else:
-            graphs = 1
-            timeit = 0
-
-        # NOTE(mauricio): On some systems, the error regex does not
-        # capture the exit code if surrounded by \r\n; I made it catch
-        # either or both.
-
-        time_total = 0
-        time_profile = []
         if self.execution_mode == 'console':
-            log = []
-            rc = 0
-            err_regex = re.compile(r'\r\nr\((\d+)\);($|\r\n)').search
-            new_syn_chunks = []
-            imgs = []
-
-            for line in syn_chunks:
-                new_syn_chunks.append(line)
-                res, timer = self.do_console(line[1])
-
-                log.append(res)
-                err = err_regex(res)
-                if err:
-                    rc = int(err.group(1))
-                    break
-
-                gr = re.search(graph_keywords, line[1]) and (graphs == 1)
-                if (str(line[0]) != 'Token.TextBlock') and gr:
-
-                    rc, img, sc = self.get_current_graph(
-                        'console', magics.img_metadata)
-
-                    new_syn_chunks.append(sc)
-                    imgs.append(img)
-                    if rc:
-                        break
-
-                # Timer was moved to do_console to minimize bias
-                time_total += timer
-                if (timeit == 2):
-                    if len(line[1]) > 72:
-                        time_profile += [(timer, line[1][:68] + ' ...')]
-                    else:
-                        time_profile += [(timer, line[1])]
-
-            # graphs = 2 is set by the %plot magic to check for the last
-            # image after a code chunk
-            if (not rc) and (graphs == 2):
-                gr_rc, img, sc = self.get_current_graph(
-                    'console', magics.img_metadata)
-
-                if not gr_rc:
-                    new_syn_chunks.append(sc)
-                    imgs.append(img)
-
-            # Timer info
-            if (timeit > 0):
-                time_profile += [(time_total, '')]
-                magics.time_profile = time_profile
-
-            return rc, imgs, self.clean_log_console(log, new_syn_chunks)
+            self.child.sendline(text)
+            try:
+                self.expect(child=self.child, **kwargs)
+            except KeyboardInterrupt:
+                self.child.sendcontrol('c')
+                self.child.expect('--Break--')
+                self.child.expect('\r\n\. ')
         else:
-            # Blocks will be sent through DoCommandAsync while everything else
-            # will be sent through docommand
-            log_path = self.cache_dir / '.stata_kernel_log.log'
-            rc = self.automate(
-                'DoCommand', 'log using `"{}"\', replace text'.format(log_path))
-            if rc:
-                return rc, ''
+            self.automate('DoCommandAsync', text)
+            try:
+                self.expect(child=self.automation_log, **kwargs)
+            except KeyboardInterrupt:
+                self.automate('UtilSetStataBreak')
+                self.log_fd.expect('--Break--')
+                self.log_fd.expect('\r?\n\. ')
 
-            # Keep track of how many chunks have been executed
-            new_syn_chunks = []
-            imgs = []
-            syn_chunk_counter = 0
-            for line in syn_chunks:
-                syn_chunk_counter += 1
-                new_syn_chunks.append(line)
-                if str(line[0]) == 'Token.TextBlock':
-                    rc, timer = self.do_aut_async(line[1])
-                else:
-                    rc, timer = self.do_aut_sync(line[1])
-                    gr = re.search(graph_keywords, line[1]) and (graphs == 1)
-                    if (not rc) and gr:
+        return
 
-                        rc, img, sc = self.get_current_graph(
-                            'automation', magics.img_metadata)
-
-                        syn_chunk_counter += 1
-                        new_syn_chunks.append(sc)
-                        imgs.append(img)
-
-                if rc:
-                    break
-
-                # Timer was moved to do_aut_* to minimize bias
-                time_total += timer
-                if (timeit == 2):
-                    if len(line[1]) > 72:
-                        time_profile += [(timer, line[1][:68] + ' ...')]
-                    else:
-                        time_profile += [(timer, line[1])]
-
-            # graphs = 2 is set by the %plot magic to check for the last
-            # image after a code chunk
-            if (not rc) and (graphs == 2):
-                gr_rc, img, sc = self.get_current_graph(
-                    'automation', magics.img_metadata)
-
-                if not gr_rc:
-                    new_syn_chunks.append(sc)
-                    imgs.append(img)
-
-            self.automate('DoCommand', 'cap log close')
-            with open(log_path, 'r') as f:
-                log = f.read()
-
-            # Don't keep chunks that weren't executed
-            syn_chunks = new_syn_chunks[:syn_chunk_counter]
-
-            # Timer info
-            if (timeit > 0):
-                time_profile += [(time_total, '')]
-                magics.time_profile = time_profile
-
-            return rc, imgs, self.clean_log_aut(log, syn_chunks)
-
-    def do_console(self, line):
-        """Run Stata command in console
-
-        In the console, Stata runs one syntactic chunk at a time. Usually this
-        is a line, ending with a newline. For/while loops, blocks, `program`,
-        and `input`, are all multiline syntactic chunks. Stata will not show
-        another dot prompt until the entire chunk has been pasted. Therefore I
-        must only send complete syntactic chunks to Stata.
-
-        The regex that I expect on is `(?<=(\r\n)|(\x1b=))\r\n\. `. The basic
-        `\r\n\.` regex would have too many false-positives. Any results with a
-        dot and a space could have pexpect thinking that a result is actually
-        the next prompt. This would be bad and would cause following results to
-        be out of order.
-
-        Using `\r\n\r\n\. ` is better but I found that the command `shell`
-        returns some ANSI escape codes between lines, and thus I needed to allow
-        for an ANSI escape code.
-
-        NOTE will need to set timeout to None once sure that running is stable.
-        Otherwise running a task longer than 30s would timeout.
+    def expect(child, md5, kernel=None, display=True):
+        """Watch for end of command from file descriptor or TTY
 
         Args:
-            line (str): literal string ready to send to Stata
-        Returns:
-            (str): unmodified output from line
-            (int): execution time
+            child (pexpect.spawn or fdpexpect.spawn): TTY or log file to watch
+            md5 (str): current value of md5 to watch for
+            kernel (ipykernel.kernelbase): Running kernel to allow me to send back messages from inside this function.
         """
 
-        regex = r'\r\n(\x1b\[\?1h\x1b=)?\r\n\. '
-        self.child.sendline(line)
-        timer = default_timer()
-        try:
-            self.child.expect(regex, timeout=20)
-        except KeyboardInterrupt:
-            self.child.sendcontrol('c')
-            self.child.expect(regex, timeout=20)
+        md5 = '`' + md5 + "'"
+        error_re = r'^r\((\d+)\);'
+        graph_notice = '// This is the stata kernel graph notice'
+        more = r'--more--'
+        eol = r'\r?\n'
+        expect_list = [md5, error_re, graph_notice, more, eol]
 
-        delta = default_timer() - timer
-        return ansi_escape.sub('', self.child.before), delta
+        match_index = -1
+        while match_index != 0:
+            match_index = child.expect(expect_list, timeout=5)
+            line = child.before
+            if match_index == 0:
+                break
+            if match_index == 1:
+                print('error:', 'r({});'.format(child.match.group(1)))
+                if display:
+                    kernel.send_response(
+                        self.iopub_socket,
+                        'stream', {'text': line, 'name': 'stderr'})
+                continue
+            if match_index == 2:
+                img, img_format = self.load_graph(child.match.group(1))
+                if display:
+                    kernel.send_image(img, img_format)
+            if match_index == 3:
+                child.sendline('q')
+                break
+            if match_index == 4:
+                print('result:', line)
+                if display:
+                    kernel.send_response(
+                        self.iopub_socket,
+                        'stream', {'text': line, 'name': 'stdout'})
+                continue
 
-    def do_aut_sync(self, line):
-        """Run code in Stata Automation using DoCommand
+        # Then scroll to next newline, but not including period to make it easier to remove code lines later
+        child.expect('\r?\n')
 
-        In general, DoCommand is desired rather than DoCommandAsync:
-            1. DoCommand will stop on error.
-            2. DoCommand returns the return code, so you don't have to check the log for errors.
-            3. DoCommand is synchronous, so I don't have to keep polling for the command to have finished.
-
-        However, the drawback of DoCommand is that there are a few commands that
-        don't work. Namely `program`, `while`, `forvalues`, `foreach`, `input`,
-        and `exit`. Because these are basically all multiline inputs, I run
-        DoCommand for all non-multiline inputs.
-
-        On Windows, DoCommand only allows one line of code at a time. Since I'm
-        sending one line of code at a time to the console anyways, it's easy
-        enough to just have all do functions run one syntactic line at a time.
-
-        Args:
-            line (str): literal string ready to send to Stata
-        Returns:
-            (int): return code from Stata
-            (int): execution time
-        """
-        timer = default_timer()
-        try:
-            rc = self.automate('DoCommand', line)
-        except KeyboardInterrupt:
-            self.automate('UtilSetStataBreak')
-            rc = 1
-
-        delta = default_timer() - timer
-        return rc, delta
-
-    def do_aut_async(self, line):
-        """Run code in Stata Automation using DoCommandAsync
-
-        When running a command with DoCommandAsync, the return code is always 0
-        because the command is just put onto the queue. Stata Automation has the
-        command `UtilStataErrorCode`, but that gives the value of _rc and _rc
-        won't be defined unless you use `cap`. `cap` by default silences output,
-        so I need to use `cap noi`.
-
-        In Stata 15, there is no issue with using multiple of the same prefix,
-        and the last prefix between `qui` and `noi` is the one that determines
-        output showing. So if the user wanted to have it be quiet, it would
-        still be quiet with an extra `cap noi` prefixed.
-
-        Args:
-            line (str): literal string ready to send to Stata
-        Returns:
-            (int): return code from Stata
-            (int): execution time
-        """
-
-        line = 'cap noi ' + line
-        timer = default_timer()
-
-        try:
-            self.automate('DoCommandAsync', line)
-            finished = 0
-            while not finished:
-                # NOTE What should the optimal sleep time be?
-                # Should it be in the settings?
-                sleep(0.25)
-                timer += 0.25
-                finished = self.automate('UtilIsStataFree')
-
-            rc = self.automate('UtilStataErrorCode')
-        except KeyboardInterrupt:
-            self.automate('UtilSetStataBreak')
-            rc = 1
-
-        delta = default_timer() - timer
-        return rc, delta
 
     def automate(self, cmd_name, value=None, **kwargs):
         """Execute `cmd_name` through Automation in a cross-platform manner
@@ -666,43 +457,28 @@ class StataSession(object):
 
         return '\n'.join(all_log_chunks)
 
-    def get_current_graph(self, execution_mode, img_metadata):
+    def load_graph(self, graph_counter):
+        """Load graph
+
+        Args:
+            graph_counter (str): graph counter of current graph
+
+        Returns:
+            image (str if svg; else bytes (or base64 string?))
         """
-        NOTE: img_metadata contains width and height set via %plot. Pass
 
-            ' width({0}) height({1})'.format(*img_metadata.values())
-
-        to the stata graph formats that support it.
-        """
-        # Export graph to file
-        rc = 0
-        cmd = self.graph_cmd.format(self.cache_dir, self.graph_format)
-        if self.graph_size:
-            cmd += ' ' + self.graph_size.format(*img_metadata.values())
-
-        if execution_mode == 'automation':
-            rc = self.automate('DoCommand', cmd)
-        else:
-            res, timer = self.do_console(cmd)
-            err = re.search(r'\r\nr\((\d+)\);\r\n', res)
-            if err:
-                rc = int(err.group(1))
-        if rc:
-            return rc, None, ('Token.Text', cmd)
-
-        # Read image
         if self.graph_format == 'svg':
             read_format = 'r'
         else:
             read_format = 'rb'
-        with open('{}/graph.{}'.format(self.cache_dir, self.graph_format),
+        with open('{}/graph{}.{}'.format(self.cache_dir, graph_counter, self.graph_format),
                   read_format) as f:
             img = f.read()
 
         if read_format == 'rb':
             img = base64.b64encode(img).decode('utf-8')
 
-        return rc, (img, self.graph_format), ('Token.Text', cmd)
+        return img
 
     def get_mac_stata_path_variant(self, stata_path, execution_mode):
         if stata_path == '':

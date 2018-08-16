@@ -1,8 +1,30 @@
 import re
+from hashlib import md5
 from pygments import lex
 
 from .stata_lexer import StataLexer
 from .stata_lexer import CommentAndDelimitLexer
+
+
+graph_keywords = [
+    r'gr(a|ap|aph)?', r'tw(o|ow|owa|oway)?', r'sc(a|at|att|atte|atter)?',
+    r'line', r'hist(o|og|ogr|ogra|ogram)?', r'kdensity', r'lowess', r'lpoly',
+    r'tsr?line', r'symplot', r'quantile', r'qnorm', r'pnorm', r'qchi', r'pchi',
+    r'qqplot', r'gladder', r'qladder', r'rvfplot', r'avplot', r'avplots',
+    r'cprplot', r'acprplot', r'rvpplot', r'lvr2plot', r'ac', r'pac', r'pergram',
+    r'cumsp', r'xcorr', r'wntestb', r'estat\s+acplot', r'estat\s+aroots',
+    r'estat\s+sbcusum', r'fcast\s+graph', r'varstable', r'vecstable',
+    r'irf\s+graph', r'irf\s+ograph', r'irf\s+cgraph', r'xtline'
+    r'sts\s+graph', r'strate', r'ltable', r'stci', r'stphplot', r'stcoxkm',
+    r'estat phtest', r'stcurve', r'roctab', r'rocplot', r'roccomp',
+    r'rocregplot', r'lroc', r'lsens', r'biplot', r'irtgraph\s+icc',
+    r'irtgraph\s+tcc', r'irtgraph\s+iif', r'irtgraph\s+tif', r'biplot',
+    r'cluster dendrogram', r'screeplot', r'scoreplot', r'loadingplot',
+    r'procoverlay', r'cabiplot', r'caprojection', r'mcaplot', r'mcaprojection',
+    r'mdsconfig', r'mdsshepard', r'cusum', r'cchart', r'pchart', r'rchart',
+    r'xchart', r'shewhart', r'serrbar', r'marginsplot', r'bayesgraph',
+    r'tabodds', r'teffects\s+overlap', r'npgraph', r'grmap', r'pkexamine']
+graph_keywords = r'\b(' + '|'.join(graph_keywords) + r')\b'
 
 
 class CodeManager(object):
@@ -154,8 +176,8 @@ class CodeManager(object):
 
         return True
 
-    def get_chunks(self):
-        """Get valid, executable chunks
+    def get_text(self, cache_dir, graph_format):
+        """Get valid, executable text
 
         First split non-comment tokens into semantic chunks. So a (possibly
         multiline) chunk of regular text, then a chunk for a block, and so on.
@@ -170,33 +192,42 @@ class CodeManager(object):
         returned between dot prompts, so the pexpect regex fails.
 
         Returns:
-            List[Tuple[Token, str]]
+            (str, str): Text to run, md5.
+
+        TODO: Add graph size formats to export
+        TODO: On automation I might decide to route _everything_ through include
         """
 
         tokens = self.tokens_final
 
-        sem_chunks = []
-        token_names = []
-        last_token = ''
-        counter = -1
-        for i in range(len(tokens)):
-            if tokens[i][0] != last_token:
-                sem_chunks.append([tokens[i][1]])
-                token_names.append(tokens[i][0])
-                last_token = tokens[i][0]
-                counter += 1
-                continue
+        text = ''.join([x[1] for x in tokens]).strip()
+        lines = text.split('\n')
+        has_block = bool([x for x in tokens if str(x[0]) == 'Token.TextBlock'])
 
-            sem_chunks[counter].append(tokens[i][1])
+        use_include = has_block
+        # TODO: Change this to actual cap/noi/qui regex
+        if any(re.search(r'\b(cap|noi|qui)', x[1]) for x in text):
+            use_include = True
 
-        sem_chunks = [''.join(x).strip() for x in sem_chunks]
-        syn_chunks = []
-        for chunk, token in zip(sem_chunks, token_names):
-            if str(token) != 'Token.TextBlock':
-                syn_chunks.extend([[token, x] for x in chunk.split('\n')])
-            else:
-                syn_chunks.append([token, chunk])
+        if len(lines) > 3:
+            use_include = True
 
-        return [(token, text.strip())
-                for token, text in syn_chunks
-                if text.strip() != '']
+        # Insert `graph export`
+        gph_cnt = 'stata_kernel_graph_counter'
+        g_exp = '\nnoi graph export {}'.format(cache_dir)
+        g_exp += '/graph${' + gph_cnt + '}'
+        g_exp += '.{}'.format(graph_format)
+        g_exp += '\nglobal {0} = ${0} + 1'.format(gph_cnt)
+
+        lines = [x + g_exp if re.search(graph_keywords, x) else x for x in lines]
+
+        text = '\n'.join(lines)
+        hash_text = md5(text.encode('utf-8')).hexdigest()
+
+        if not use_include:
+            return text, hash_text
+
+        with open(cache_dir / 'include.do', 'w') as f:
+            f.write(text)
+
+        return "include {}/include.do\n`{}'".format(cache_dir, hash_text), hash_text

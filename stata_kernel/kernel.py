@@ -58,8 +58,7 @@ class StataKernel(Kernel):
 
         # Tokenize code and return code chunks
         cm = CodeManager(code, self.sc_delimit_mode)
-        rc, imgs, res = self.stata.do(cm.get_chunks(), self.magics)
-        stream_content = {'text': res}
+        rc = self.stata.do(cm.get_text(), self.magics)
 
         # Post magic results, if applicable
         self.magics.post(self)
@@ -68,24 +67,15 @@ class StataKernel(Kernel):
         return_obj = {'execution_count': self.execution_count}
         if rc:
             return_obj['status'] = 'error'
-            stream_content['name'] = 'stderr'
         else:
             return_obj['status'] = 'ok'
             return_obj['payload'] = []
             return_obj['user_expressions'] = {}
-            stream_content['name'] = 'stdout'
 
         if silent:
             # Refresh completions
             self.completions.refresh(self)
             return return_obj
-
-        if res.strip():
-            self.send_response(self.iopub_socket, 'stream', stream_content)
-
-        if imgs or (self.magics.graphs == 2):
-            for (img, graph_format) in imgs:
-                self.send_image(img, graph_format)
 
         # Send message if delimiter changed. NOTE: This uses the delimiter at
         # the _end_ of the code block. It prints only if the delimiter at the
