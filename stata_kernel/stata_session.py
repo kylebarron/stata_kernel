@@ -136,7 +136,10 @@ class StataSession():
             return rc
 
         self.fd = open(log_path)
-        self.log_fd = pexpect.fdpexpect.fdspawn(self.fd, encoding='utf-8', maxread=1)
+        if platform.system() == 'Windows':
+            self.log_fd = pexpect.fdpexpect.fdspawn(self.fd, encoding='utf-8')
+        else:
+            self.log_fd = pexpect.fdpexpect.fdspawn(self.fd, encoding='utf-8', maxread=1)
         return 0
 
     def do(self, text, md5, magics=None, **kwargs):
