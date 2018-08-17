@@ -130,7 +130,7 @@ class StataSession():
         This is only on Automation. On console I watch the TTY directly.
         """
 
-        log_path = self.cache_dir / 'log.log'
+        log_path = self.config.get('cache_dir') / 'log.log'
         cmd = 'log using `"{}"\', replace text'.format(log_path)
         rc = self.automate('DoCommand', cmd)
         if rc:
@@ -184,10 +184,13 @@ class StataSession():
 
         md5 = '`' + md5 + "'"
         error_re = r'^r\((\d+)\);'
-        graph_notice = '// This is the stata kernel graph notice'
+        g_exp = r'\(file {}'.format(self.config.get('cache_dir'))
+        g_exp += r'/graph(\d+)\.(svg|pdf|tif|png) written in '
+        g_exp += r'(?i:(svg|pdf|tif|png)) format\)'
+
         more = r'^--more--'
         eol = r'\r?\n'
-        expect_list = [md5, error_re, graph_notice, more, eol]
+        expect_list = [md5, error_re, g_exp, more, eol]
 
         match_index = -1
         while match_index != 0:
@@ -203,9 +206,9 @@ class StataSession():
                         'stream', {'text': line, 'name': 'stderr'})
                 continue
             if match_index == 2:
-                img, img_format = self.kernel.load_graph(child.match.group(1))
+                img = self.load_graph(child.match.group(1))
                 if display:
-                    self.kernel.send_image(img, img_format)
+                    self.kernel.send_image(img)
             if match_index == 3:
                 child.sendline('q')
                 break
@@ -454,11 +457,11 @@ class StataSession():
             image (str if svg; else bytes (or base64 string?))
         """
 
-        if self.graph_format == 'svg':
+        if self.config.get('graph_format') == 'svg':
             read_format = 'r'
         else:
             read_format = 'rb'
-        with open('{}/graph{}.{}'.format(self.cache_dir, graph_counter, self.graph_format),
+        with open('{}/graph{}.{}'.format(self.config.get('cache_dir'), graph_counter, self.config.get('graph_format')),
                   read_format) as f:
             img = f.read()
 

@@ -216,7 +216,7 @@ class CodeManager(object):
         gph_cnt = 'stata_kernel_graph_counter'
         g_exp = '\nnoi graph export {}'.format(cache_dir)
         g_exp += '/graph${' + gph_cnt + '}'
-        g_exp += '.{}'.format(graph_format)
+        g_exp += '.{}, replace'.format(graph_format)
         g_exp += '\nglobal {0} = ${0} + 1'.format(gph_cnt)
 
         lines = [x + g_exp if re.search(graph_keywords, x) else x for x in lines]

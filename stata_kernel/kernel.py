@@ -96,25 +96,25 @@ class StataKernel(Kernel):
         # self.completions.refresh(self)
         return return_obj
 
-    def send_image(self, img, img_format):
+    def send_image(self, img):
         """Helper function to send an image back to the client
 
         Args:
             img: Image data
-            img_format (str): Image format. Can be pdf, svg, tif, png
         """
         mimetypes = {
             'pdf': 'application/pdf',
             'svg': 'image/svg+xml',
             'tif': 'image/tiff',
             'png': 'image/png'}
+        mimetype = mimetypes[self.conf.get('graph_format')]
 
         no_display_msg = 'This front-end cannot display the desired image type.'
         content = {
             # dict with different MIME representations of the output.
             'data': {
                 'text/plain': no_display_msg,
-                mimetypes[img_format]: img},
+                mimetype: img},
             'metadata': self.magics.img_metadata}
 
         self.send_response(self.iopub_socket, 'display_data', content)
