@@ -1,8 +1,10 @@
 import os
 import re
+import base64
+import pexpect
+import pexpect.fdpexpect
 import platform
 import subprocess
-import base64
 from pkg_resources import resource_filename
 
 from time import sleep
@@ -13,9 +15,6 @@ from textwrap import dedent
 if platform.system() == 'Windows':
     import win32com.client
     from win32api import WinExec
-    from pexpect import fdpexpect
-else:
-    import pexpect
 
 # Regex from: https://stackoverflow.com/a/45448194
 ansi_regex = r'\x1b(' \
@@ -77,13 +76,10 @@ class StataSession():
             set more on
             set pagesize 10
             clear all
-            cap log close _all
             global stata_kernel_graph_counter = 0
             `finished_init_cmd'
             """.format(adodir, os.getcwd())
         self.do(dedent(init_cmd), md5='finished_init_cmd', display=False)
-        if self.config.get('execution_mode') == 'automation':
-            self.start_log_aut()
 
     def init_windows(self):
         # The WinExec step is necessary for some reason to make graphs
@@ -92,10 +88,12 @@ class StataSession():
         sleep(0.25)
         self.stata = win32com.client.Dispatch("stata.StataOLEApp")
         self.automate(cmd_name='UtilShowStata', value=2)
+        self.start_log_aut()
 
     def init_mac_automation(self):
         self.automate(cmd_name='activate')
         self.automate(cmd_name='UtilShowStata', value=1)
+        self.start_log_aut()
 
     def init_console(self):
         """Initiate stata console
@@ -130,14 +128,15 @@ class StataSession():
         This is only on Automation. On console I watch the TTY directly.
         """
 
+        self.automate('DoCommand', 'cap log close _all')
         log_path = self.config.get('cache_dir') / 'log.log'
         cmd = 'log using `"{}"\', replace text'.format(log_path)
         rc = self.automate('DoCommand', cmd)
         if rc:
             return rc
 
-        fd = open(log_path)
-        self.log_fd = fdpexpect.fdspawn(fd, encoding='utf-8')
+        self.fd = open(log_path)
+        self.log_fd = pexpect.fdpexpect.fdspawn(self.fd, encoding='utf-8', maxread=1)
         return 0
 
     def do(self, text, md5, magics=None, **kwargs):
@@ -166,7 +165,7 @@ class StataSession():
         else:
             self.automate('DoCommandAsync', text)
             try:
-                self.expect(child=self.automation_log, md5=md5, **kwargs)
+                self.expect(child=self.log_fd, md5=md5, **kwargs)
             except KeyboardInterrupt:
                 self.automate('UtilSetStataBreak')
                 self.log_fd.expect('--Break--')
@@ -190,7 +189,7 @@ class StataSession():
 
         more = r'^--more--'
         eol = r'\r?\n'
-        expect_list = [md5, error_re, g_exp, more, eol]
+        expect_list = [md5, error_re, g_exp, more, eol, pexpect.EOF]
 
         match_index = -1
         while match_index != 0:
@@ -219,6 +218,8 @@ class StataSession():
                         self.kernel.iopub_socket,
                         'stream', {'text': line + '\n', 'name': 'stdout'})
                 continue
+            if match_index == 5:
+                sleep(0.05)
 
         # Then scroll to next newline, but not including period to make it easier to remove code lines later
         child.expect('\r?\n')
