@@ -1,5 +1,6 @@
 from ipykernel.kernelbase import Kernel
 
+from .config import Config
 from .completions import CompletionsManager
 from .code_manager import CodeManager
 from .stata_session import StataSession
@@ -19,12 +20,14 @@ class StataKernel(Kernel):
     def __init__(self, *args, **kwargs):
         super(StataKernel, self).__init__(*args, **kwargs)
 
+        # Can't name this `self.config`. Conflicts with a Jupyter attribute
+        self.conf = Config()
+
         self.graphs = {}
         self.magics = StataMagics()
-
         self.sc_delimit_mode = False
-        self.stata = StataSession()
-        self.completions = CompletionsManager(self)
+        self.stata = StataSession(self.conf)
+        self.completions = CompletionsManager(self, self.conf)
         self.banner = self.stata.banner
 
     def do_execute(

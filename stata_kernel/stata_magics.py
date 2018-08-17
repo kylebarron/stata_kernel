@@ -1,11 +1,11 @@
-import argparse
 import sys
 import re
+from argparse import ArgumentParser
 from .code_manager import CodeManager
 
 
 # NOTE(mauricio): Figure  out if passing the kernel around is a problem...
-class StataParser(argparse.ArgumentParser):
+class StataParser(ArgumentParser):
     def __init__(self, *args, kernel=None, **kwargs):
         super(StataParser, self).__init__(*args, **kwargs)
         self.kernel = kernel
