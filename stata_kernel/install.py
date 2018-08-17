@@ -31,8 +31,10 @@ def install_my_kernel_spec(user=True, prefix=None):
 
 def install_conf():
     if platform.system() == 'Windows':
+        execution_mode = 'automation'
         stata_path = win_find_path()
     else:
+        execution_mode = 'console'
         for i in ['stata-mp', 'StataMP', 'stata-se', 'StataSE', 'stata',
                   'Stata']:
             stata_path = which('StataMP')
@@ -64,14 +66,14 @@ def install_conf():
     # The manner in which the kernel connects to Stata. Either 'console' or
     # 'automation'. 'console' is the default because it allows multiple
     # independent sessions of Stata at the same time.
-    execution_mode = console
+    execution_mode = {}
 
     # Directory to hold temporary images and log files
     cache_directory = ~/.stata_kernel_cache
 
     # Extension and format for images
     graph_format = svg
-    """.format(stata_path))
+    """.format(stata_path, execution_mode))
 
     with open(Path('~/.stata_kernel.conf').expanduser(), 'w') as f:
         f.write(conf_default)
