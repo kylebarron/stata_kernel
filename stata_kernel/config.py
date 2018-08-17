@@ -18,7 +18,7 @@ class Config(object):
 
         if platform.system() == 'Darwin':
             self.set('stata_path', self.get_mac_stata_path_variant())
-            if not self.config.get('execution_mode'):
+            if not self.get('execution_mode') in ['console', 'automation']:
                 self.raise_config_error('execution_mode')
 
         if not self.get('stata_path'):
@@ -59,7 +59,7 @@ class Config(object):
 
     def raise_config_error(self, option):
         msg = """\
-        {} option in configuration file is missing
+        {} option in configuration file is missing or invalid
         Refer to the documentation to see how to set it manually:
 
         https://kylebarron.github.io/stata_kernel/user_guide/configuration/
