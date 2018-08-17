@@ -192,7 +192,7 @@ class CodeManager(object):
         returned between dot prompts, so the pexpect regex fails.
 
         Returns:
-            (str, str): Text to run, md5.
+            (str, str): Text to run, md5 to expect for.
 
         TODO: Add graph size formats to export
         TODO: On automation I might decide to route _everything_ through include
@@ -206,7 +206,7 @@ class CodeManager(object):
 
         use_include = has_block
         # TODO: Change this to actual cap/noi/qui regex
-        if any(re.search(r'\b(cap|noi|qui)', x[1]) for x in text):
+        if re.search(r'\b(cap|noi|qui)', text):
             use_include = True
 
         if len(lines) > 3:
@@ -223,11 +223,10 @@ class CodeManager(object):
 
         text = '\n'.join(lines)
         hash_text = md5(text.encode('utf-8')).hexdigest()
+        if use_include:
+            with open(cache_dir / 'include.do', 'w') as f:
+                f.write(text)
+            text = "include {}/include.do".format(cache_dir)
 
-        if not use_include:
-            return text, hash_text
-
-        with open(cache_dir / 'include.do', 'w') as f:
-            f.write(text)
-
-        return "include {}/include.do\n`{}'".format(cache_dir, hash_text), hash_text
+        text += "\n`{}'".format(hash_text)
+        return text, hash_text

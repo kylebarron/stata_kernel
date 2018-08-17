@@ -8,6 +8,7 @@ from pkg_resources import resource_filename
 from time import sleep
 from timeit import default_timer
 from pathlib import Path
+from textwrap import dedent
 
 if platform.system() == 'Windows':
     import win32com.client
@@ -34,18 +35,16 @@ ansi_regex = r'\x1b(' \
 ansi_escape = re.compile(ansi_regex, flags=re.IGNORECASE)
 
 
-class StataSession(object):
-    def __init__(self, config):
+class StataSession():
+    def __init__(self, kernel, config):
         """
         Args:
             config (ConfigParser): config class
         """
 
-        adofile = resource_filename(
-            'stata_kernel', 'ado/_StataKernelCompletions.ado')
-        adodir = Path(adofile).resolve().parent
 
         self.config = config
+        self.kernel = kernel
 
         graph_export_size = {
             'pdf': None,
@@ -69,14 +68,22 @@ class StataSession(object):
             self.init_console()
 
         # Change to this directory and set more off
-        text = [
-            ('Token.Text', 'adopath + `"{}"\''.format(adodir)),
-            ('Token.Text', 'cd `"{}"\''.format(os.getcwd())),
-            ('Token.Text', 'set more off'),
-            ('Token.Text', 'clear all'),
-            ('Token.Text', 'capture log close _all'), ]
-        # TODO: also initialize graph counter global
-        self.do(text)
+        adofile = resource_filename(
+            'stata_kernel', 'ado/_StataKernelCompletions.ado')
+        adodir = Path(adofile).resolve().parent
+        init_cmd = """\
+            adopath + `"{0}"\'
+            cd `"{1}"\'
+            set more on
+            set pagesize 10
+            clear all
+            cap log close _all
+            global stata_kernel_graph_counter = 0
+            `finished_init_cmd'
+            """.format(adodir, os.getcwd())
+        self.do(dedent(init_cmd), md5='finished_init_cmd', display=False)
+        if self.config.get('execution_mode') == 'automation':
+            self.start_log_aut()
 
     def init_windows(self):
         # The WinExec step is necessary for some reason to make graphs
@@ -85,12 +92,10 @@ class StataSession(object):
         sleep(0.25)
         self.stata = win32com.client.Dispatch("stata.StataOLEApp")
         self.automate(cmd_name='UtilShowStata', value=2)
-        self.start_log_aut()
 
     def init_mac_automation(self):
         self.automate(cmd_name='activate')
         self.automate(cmd_name='UtilShowStata', value=1)
-        self.start_log_aut()
 
     def init_console(self):
         """Initiate stata console
@@ -135,7 +140,7 @@ class StataSession(object):
         self.log_fd = fdpexpect.fdspawn(fd, encoding='utf-8')
         return 0
 
-    def do(self, text, magics=None, **kwargs):
+    def do(self, text, md5, magics=None, **kwargs):
         """Main wrapper for sequence of running user-given code
 
         Probably don't use this for internal code run by kernel
@@ -150,10 +155,10 @@ class StataSession(object):
             display (bool): Whether to send results to front-end
         """
 
-        if self.execution_mode == 'console':
+        if self.config.get('execution_mode') == 'console':
             self.child.sendline(text)
             try:
-                self.expect(child=self.child, **kwargs)
+                self.expect(child=self.child, md5=md5, **kwargs)
             except KeyboardInterrupt:
                 self.child.sendcontrol('c')
                 self.child.expect('--Break--')
@@ -161,7 +166,7 @@ class StataSession(object):
         else:
             self.automate('DoCommandAsync', text)
             try:
-                self.expect(child=self.automation_log, **kwargs)
+                self.expect(child=self.automation_log, md5=md5, **kwargs)
             except KeyboardInterrupt:
                 self.automate('UtilSetStataBreak')
                 self.log_fd.expect('--Break--')
@@ -169,19 +174,18 @@ class StataSession(object):
 
         return
 
-    def expect(child, md5, kernel=None, display=True):
+    def expect(self, child, md5, display=True):
         """Watch for end of command from file descriptor or TTY
 
         Args:
             child (pexpect.spawn or fdpexpect.spawn): TTY or log file to watch
             md5 (str): current value of md5 to watch for
-            kernel (ipykernel.kernelbase): Running kernel to allow me to send back messages from inside this function.
         """
 
         md5 = '`' + md5 + "'"
         error_re = r'^r\((\d+)\);'
         graph_notice = '// This is the stata kernel graph notice'
-        more = r'--more--'
+        more = r'^--more--'
         eol = r'\r?\n'
         expect_list = [md5, error_re, graph_notice, more, eol]
 
@@ -192,24 +196,24 @@ class StataSession(object):
             if match_index == 0:
                 break
             if match_index == 1:
-                print('error:', 'r({});'.format(child.match.group(1)))
+                # print('error:', 'r({});'.format(child.match.group(1)))
                 if display:
-                    kernel.send_response(
-                        self.iopub_socket,
+                    self.kernel.send_response(
+                        self.kernel.iopub_socket,
                         'stream', {'text': line, 'name': 'stderr'})
                 continue
             if match_index == 2:
-                img, img_format = self.load_graph(child.match.group(1))
+                img, img_format = self.kernel.load_graph(child.match.group(1))
                 if display:
-                    kernel.send_image(img, img_format)
+                    self.kernel.send_image(img, img_format)
             if match_index == 3:
                 child.sendline('q')
                 break
             if match_index == 4:
-                print('result:', line)
+                # print('result:', line)
                 if display:
-                    kernel.send_response(
-                        self.iopub_socket,
+                    self.kernel.send_response(
+                        self.kernel.iopub_socket,
                         'stream', {'text': line, 'name': 'stdout'})
                 continue
 
