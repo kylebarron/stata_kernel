@@ -1,4 +1,5 @@
 import re
+import platform
 from hashlib import md5
 from pygments import lex
 
@@ -213,8 +214,11 @@ class CodeManager(object):
             use_include = True
 
         # Insert `graph export`
+        cache_dir_str = str(cache_dir)
+        if platform.system() == 'Windows':
+            cache_dir_str = re.sub(r'\\', '/', cache_dir_str)
         gph_cnt = 'stata_kernel_graph_counter'
-        g_exp = '\nnoi graph export {}'.format(cache_dir)
+        g_exp = '\nnoi graph export {}'.format(cache_dir_str)
         g_exp += '/graph${' + gph_cnt + '}'
         g_exp += '.{}, replace'.format(graph_format)
         g_exp += '\nglobal {0} = ${0} + 1'.format(gph_cnt)
@@ -226,7 +230,7 @@ class CodeManager(object):
         if use_include:
             with open(cache_dir / 'include.do', 'w') as f:
                 f.write(text + '\n')
-            text = "include {}/include.do".format(cache_dir)
+            text = "include {}/include.do".format(cache_dir_str)
 
         text += "\n`{}'".format(hash_text)
         return text, hash_text

@@ -183,7 +183,11 @@ class StataSession():
 
         md5 = '`' + md5 + "'"
         error_re = r'^r\((\d+)\);'
-        g_exp = r'\(file {}'.format(self.config.get('cache_dir'))
+        cache_dir_str = str(self.config.get('cache_dir'))
+        if platform.system() == 'Windows':
+            cache_dir_str = re.sub(r'\\', '/', cache_dir_str)
+
+        g_exp = r'\(file {}'.format(cache_dir_str)
         g_exp += r'/graph(\d+)\.(svg|pdf|tif|png) written in '
         g_exp += r'(?i:(svg|pdf|tif|png)) format\)'
 
@@ -462,7 +466,7 @@ class StataSession():
             read_format = 'r'
         else:
             read_format = 'rb'
-        with open('{}/graph{}.{}'.format(self.config.get('cache_dir'), graph_counter, self.config.get('graph_format')),
+        with open(self.config.get('cache_dir') / 'graph{}.{}'.format( graph_counter, self.config.get('graph_format')),
                   read_format) as f:
             img = f.read()
 
