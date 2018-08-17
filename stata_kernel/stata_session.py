@@ -42,7 +42,6 @@ class StataSession():
             config (ConfigParser): config class
         """
 
-
         self.config = config
         self.kernel = kernel
 
@@ -108,8 +107,10 @@ class StataSession():
         there's a `more` stopping it, and presses `q` until the more has
         gone away.
         """
-        self.child = pexpect.spawn(self.config.get('stata_path'), encoding='utf-8')
-        self.child.logfile = open(self.config.get('cache_dir') / 'console_debug.log', 'w')
+        self.child = pexpect.spawn(
+            self.config.get('stata_path'), encoding='utf-8')
+        self.child.logfile = open(
+            self.config.get('cache_dir') / 'console_debug.log', 'w')
         banner = []
         try:
             self.child.expect('\r\n\. ', timeout=0.2)
@@ -144,7 +145,8 @@ class StataSession():
         if platform.system() == 'Windows':
             self.log_fd = pexpect.fdpexpect.fdspawn(self.fd, encoding='utf-8')
         else:
-            self.log_fd = pexpect.fdpexpect.fdspawn(self.fd, encoding='utf-8', maxread=1)
+            self.log_fd = pexpect.fdpexpect.fdspawn(
+                self.fd, encoding='utf-8', maxread=1)
         return 0
 
     def do(self, text, md5, magics=None, **kwargs):
@@ -213,8 +215,9 @@ class StataSession():
                 # print('error:', 'r({});'.format(child.match.group(1)))
                 if display:
                     self.kernel.send_response(
-                        self.kernel.iopub_socket,
-                        'stream', {'text': line, 'name': 'stderr'})
+                        self.kernel.iopub_socket, 'stream', {
+                            'text': line,
+                            'name': 'stderr'})
                 continue
             if match_index == 2:
                 img = self.load_graph(child.match.group(1))
@@ -227,15 +230,15 @@ class StataSession():
                 # print('result:', line)
                 if display:
                     self.kernel.send_response(
-                        self.kernel.iopub_socket,
-                        'stream', {'text': line + '\n', 'name': 'stdout'})
+                        self.kernel.iopub_socket, 'stream', {
+                            'text': line + '\n',
+                            'name': 'stdout'})
                 continue
             if match_index == 5:
                 sleep(0.05)
 
         # Then scroll to next newline, but not including period to make it easier to remove code lines later
         child.expect('\r?\n')
-
 
     def automate(self, cmd_name, value=None, **kwargs):
         """Execute `cmd_name` through Automation in a cross-platform manner
@@ -265,7 +268,8 @@ class StataSession():
                 elif isinstance(val, int):
                     cmd += ' {} {}'.format(key, val)
 
-        res = subprocess.run(['osascript', '-e', cmd], stdout=subprocess.PIPE,
+        res = subprocess.run(['osascript', '-e', cmd],
+                             stdout=subprocess.PIPE,
                              stderr=subprocess.PIPE)
         if res.stderr:
             raise OSError(res.stderr.decode('utf-8') + '\nInput: ' + cmd)
@@ -474,7 +478,8 @@ class StataSession():
             read_format = 'r'
         else:
             read_format = 'rb'
-        with open(self.config.get('cache_dir') / 'graph{}.{}'.format( graph_counter, self.config.get('graph_format')),
+        with open(self.config.get('cache_dir') / 'graph{}.{}'.format(
+                graph_counter, self.config.get('graph_format')),
                   read_format) as f:
             img = f.read()
 
