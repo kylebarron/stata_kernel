@@ -214,7 +214,7 @@ class StataSession():
                 if display:
                     self.kernel.send_response(
                         self.kernel.iopub_socket,
-                        'stream', {'text': line, 'name': 'stdout'})
+                        'stream', {'text': line + '\n', 'name': 'stdout'})
                 continue
 
         # Then scroll to next newline, but not including period to make it easier to remove code lines later

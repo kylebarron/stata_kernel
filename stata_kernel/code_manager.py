@@ -225,7 +225,7 @@ class CodeManager(object):
         hash_text = md5(text.encode('utf-8')).hexdigest()
         if use_include:
             with open(cache_dir / 'include.do', 'w') as f:
-                f.write(text)
+                f.write(text + '\n')
             text = "include {}/include.do".format(cache_dir)
 
         text += "\n`{}'".format(hash_text)
