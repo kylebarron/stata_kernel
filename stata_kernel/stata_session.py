@@ -13,7 +13,6 @@ from pathlib import Path
 from textwrap import dedent
 
 if platform.system() == 'Windows':
-    import win32gui
     import win32com.client
     from win32api import WinExec
 
@@ -75,6 +74,7 @@ class StataSession():
             cd `"{1}"\'
             set more on
             set pagesize 10
+            set linesize 80
             clear all
             global stata_kernel_graph_counter = 0
             `finished_init_cmd'
@@ -87,15 +87,11 @@ class StataSession():
         WinExec(self.config.get('stata_path'))
         sleep(0.25)
         self.stata = win32com.client.Dispatch("stata.StataOLEApp")
-        window = win32gui.GetForegroundWindow()
-        win32gui.MoveWindow(window, 0, 0, 1920, 1080, True)
         self.automate(cmd_name='UtilShowStata', value=2)
         self.start_log_aut()
 
     def init_mac_automation(self):
         self.automate(cmd_name='activate')
-        cmd = 'set bounds of front window to {1, 1, 1280, 900}'
-        self.automate(cmd_name=cmd)
         self.automate(cmd_name='UtilShowStata', value=1)
         self.start_log_aut()
 
