@@ -78,7 +78,7 @@ class StataSession():
             clear all
             global stata_kernel_graph_counter = 0
             `finished_init_cmd'
-            """.format(adodir, os.getcwd())
+            """.format(adodir, os.getcwd()).rstrip()
         self.do(dedent(init_cmd), md5='finished_init_cmd', display=False)
 
     def init_windows(self):
