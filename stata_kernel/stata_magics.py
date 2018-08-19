@@ -158,7 +158,7 @@ class StataMagics():
             return code
 
         cm = CodeManager("macro dir")
-        text_to_run, md5, text_to_exclude = cm.get_text(kernel.conf.get('cache_dir'), kernel.conf.get('graph_format'))
+        text_to_run, md5, text_to_exclude = cm.get_text(kernel.conf)
         rc, res = kernel.stata.do(text_to_run, md5, text_to_exclude=text_to_exclude, display=False)
         if rc:
             self.status = -1

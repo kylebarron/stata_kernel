@@ -177,7 +177,7 @@ class CodeManager(object):
 
         return True
 
-    def get_text(self, cache_dir, graph_format):
+    def get_text(self, config):
         """Get valid, executable text
 
         First split non-comment tokens into semantic chunks. So a (possibly
@@ -194,8 +194,6 @@ class CodeManager(object):
 
         Returns:
             (str, str): Text to run, md5 to expect for.
-
-        TODO: Add graph size formats to export
         """
 
         tokens = self.tokens_final
@@ -215,13 +213,22 @@ class CodeManager(object):
             use_include = True
 
         # Insert `graph export`
+        graph_fmt = config.get('graph_format')
+        graph_scale = config.get('graph_scale')
+        cache_dir = config.get('cache_dir')
+        if graph_scale is None:
+            graph_scale = 1
+            config.set('graph_scale', '1', permanent=True)
+        else:
+            graph_scale = float(graph_scale)
+
         cache_dir_str = str(cache_dir)
         if platform.system() == 'Windows':
             cache_dir_str = re.sub(r'\\', '/', cache_dir_str)
         gph_cnt = 'stata_kernel_graph_counter'
         g_exp = '\nnoi graph export {}'.format(cache_dir_str)
         g_exp += '/graph${' + gph_cnt + '}'
-        g_exp += '.{}, replace'.format(graph_format)
+        g_exp += '.{}, width({}) replace'.format(graph_fmt, 600 * graph_scale)
         g_exp += '\nglobal {0} = ${0} + 1'.format(gph_cnt)
 
         lines = [x + g_exp if re.search(graph_keywords, x) else x for x in lines]

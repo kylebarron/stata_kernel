@@ -1,6 +1,5 @@
 import os
 import re
-import base64
 import pexpect
 import pexpect.fdpexpect
 import platform
@@ -8,7 +7,7 @@ import subprocess
 from pkg_resources import resource_filename
 
 from time import sleep
-from timeit import default_timer
+# from timeit import default_timer
 from pathlib import Path
 from textwrap import dedent
 
@@ -43,18 +42,7 @@ class StataSession():
 
         self.config = config
         self.kernel = kernel
-
-        graph_export_size = {
-            'pdf': None,
-            'svg': ' width({0}px) height({1}px)',
-            'tif': ' width({0}) height({1})',
-            'png': ' width({0}) height({1})'}
-
-        self.graph_size = graph_export_size[self.config.get('graph_format')]
-        self.graph_cmd = 'qui graph export `"{0}/graph.{1}"\' , as({1}) replace'
-        self.img_metadata = {'width': 600, 'height': 400}
         self.banner = 'stata_kernel: A Jupyter kernel for Stata.'
-
         if platform.system() == 'Windows':
             self.init_windows()
         elif platform.system() == 'Darwin':
@@ -66,7 +54,6 @@ class StataSession():
             self.init_console()
             self.config.set('execution_mode', 'console', permanent=True)
 
-        # Change to this directory and set more off
         adofile = resource_filename(
             'stata_kernel', 'ado/_StataKernelCompletions.ado')
         adodir = Path(adofile).resolve().parent
@@ -159,7 +146,7 @@ class StataSession():
         Kwargs:
             md5 (str): md5 of the text.
             text_to_exclude (str): string of text to exclude from output
-            kernel (ipkernel.kernelbase): Running instance of kernel. Passed to expect.
+            kernel (ipykernel.kernelbase): Running instance of kernel. Passed to expect.
             display (bool): Whether to send results to front-end
         """
 
@@ -198,8 +185,8 @@ class StataSession():
         if platform.system() == 'Windows':
             cache_dir_str = re.sub(r'\\', '/', cache_dir_str)
 
-        g_exp = r'\(file {}'.format(cache_dir_str)
-        g_exp += r'/graph(\d+)\.(svg|pdf|tif|png) written in '
+        g_exp = r'\(file ({}'.format(cache_dir_str)
+        g_exp += r'/graph\d+\.(svg|pdf|tif|png)) written in '
         g_exp += r'(?i:(svg|pdf|tif|png)) format\)'
 
         more = r'^--more--'
@@ -223,9 +210,8 @@ class StataSession():
                             'name': 'stderr'})
                 continue
             if match_index == 2:
-                img = self.load_graph(child.match.group(1))
                 if display:
-                    self.kernel.send_image(img)
+                    self.kernel.send_image(child.match.group(1))
             if match_index == 3:
                 self.send_break(child=child)
                 break
@@ -367,30 +353,6 @@ class StataSession():
             pass
 
         return stdout
-
-    def load_graph(self, graph_counter):
-        """Load graph
-
-        Args:
-            graph_counter (str): graph counter of current graph
-
-        Returns:
-            image (str if svg; else bytes (or base64 string?))
-        """
-
-        if self.config.get('graph_format') == 'svg':
-            read_format = 'r'
-        else:
-            read_format = 'rb'
-        with open(self.config.get('cache_dir') / 'graph{}.{}'.format(
-                graph_counter, self.config.get('graph_format')),
-                  read_format) as f:
-            img = f.read()
-
-        if read_format == 'rb':
-            img = base64.b64encode(img).decode('utf-8')
-
-        return img
 
     def shutdown(self):
         if self.config.get('execution_mode') == 'automation':

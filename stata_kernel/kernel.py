@@ -1,3 +1,7 @@
+import base64
+
+from PIL import Image
+from xml.etree import ElementTree
 from ipykernel.kernelbase import Kernel
 
 from .config import Config
@@ -46,22 +50,13 @@ class StataKernel(Kernel):
         # Search for magics in the code
         code = self.magics.magic(code, self)
 
-        # If requested, permanently set inline image display size
-        if self.magics.img_set:
-            self.stata.img_metadata = self.magics.img_metadata
-
-        # The image width and height is always from magics.img_metadata;
-        # set it to the default if not using %plot magic.
-        if (self.magics.graphs != 2):
-            self.magics.img_metadata = self.stata.img_metadata
-
         # If the magic executed, bail out early
         if self.magics.quit_early:
             return self.magics.quit_early
 
         # Tokenize code and return code chunks
         cm = CodeManager(code, self.sc_delimit_mode)
-        text_to_run, md5, text_to_exclude = cm.get_text(self.conf.get('cache_dir'), self.conf.get('graph_format'))
+        text_to_run, md5, text_to_exclude = cm.get_text(self.conf)
         rc, res = self.stata.do(text_to_run, md5, self.magics, text_to_exclude=text_to_exclude)
 
         # Post magic results, if applicable
@@ -96,28 +91,55 @@ class StataKernel(Kernel):
         self.completions.refresh(self)
         return return_obj
 
-    def send_image(self, img):
-        """Helper function to send an image back to the client
+    def send_image(self, graph_path):
+        """Load graph
 
         Args:
-            img: Image data
+            graph_path (str): path to exported graph
+
+        Returns:
+            None. Sends output to frontend
         """
-        mimetypes = {
-            'pdf': 'application/pdf',
-            'svg': 'image/svg+xml',
-            'tif': 'image/tiff',
-            'png': 'image/png'}
-        mimetype = mimetypes[self.conf.get('graph_format')]
 
+        # graph_path = '/Users/Kyle/.stata_kernel_cache/Graph1.png'
         no_display_msg = 'This front-end cannot display the desired image type.'
-        content = {
-            # dict with different MIME representations of the output.
-            'data': {
-                'text/plain': no_display_msg,
-                mimetype: img},
-            'metadata': self.magics.img_metadata}
+        if graph_path.endswith('.svg'):
+            e = ElementTree.parse(graph_path)
+            root = e.getroot()
 
-        self.send_response(self.iopub_socket, 'display_data', content)
+            content = {
+                'data': {
+                    'text/plain': no_display_msg,
+                    'image/svg+xml': ElementTree.tostring(root).decode('utf-8')
+                },
+                'metadata': {
+                    'image/svg+xml': {
+                        'width': int(root.attrib['width'][:-2]),
+                        'height': int(root.attrib['height'][:-2])
+                    }
+                }
+            }
+            self.send_response(self.iopub_socket, 'display_data', content)
+        elif graph_path.endswith('.png'):
+            im = Image.open(graph_path)
+            with open(graph_path, 'rb') as f:
+                img = base64.b64encode(f.read()).decode('utf-8')
+
+            # TODO: On my Mac, the width is double what I told Stata to export
+            # Check whether this is consistent on other platforms.
+            content = {
+                'data': {
+                    'text/plain': no_display_msg,
+                    'image/png': img
+                },
+                'metadata': {
+                    'image/png': {
+                        'width': im.size[0] / 2,
+                        'height': im.size[1] / 2
+                    }
+                }
+            }
+            self.send_response(self.iopub_socket, 'display_data', content)
 
     def do_shutdown(self, restart):
         """Shutdown the Stata session
