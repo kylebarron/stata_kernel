@@ -64,6 +64,7 @@ class StataSession():
                 self.init_console()
         else:
             self.init_console()
+            self.config.set('execution_mode', 'console', permanent=True)
 
         # Change to this directory and set more off
         adofile = resource_filename(
@@ -89,6 +90,7 @@ class StataSession():
         sleep(0.25)
         self.stata = win32com.client.Dispatch("stata.StataOLEApp")
         self.automate(cmd_name='UtilShowStata', value=2)
+        self.config.set('execution_mode', 'automation', permanent=True)
         self.start_log_aut()
 
     def init_mac_automation(self):
