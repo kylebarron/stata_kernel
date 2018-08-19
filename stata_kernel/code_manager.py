@@ -196,7 +196,6 @@ class CodeManager(object):
             (str, str): Text to run, md5 to expect for.
 
         TODO: Add graph size formats to export
-        TODO: On automation I might decide to route _everything_ through include
         """
 
         tokens = self.tokens_final
@@ -212,7 +211,7 @@ class CodeManager(object):
         if cap_re(text) or qui_re(text) or noi_re(text):
             use_include = True
 
-        if len(lines) > 3:
+        if len(lines) > 1:
             use_include = True
 
         # Insert `graph export`
