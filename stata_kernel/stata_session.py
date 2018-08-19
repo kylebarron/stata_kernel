@@ -165,7 +165,7 @@ class StataSession():
         if self.config.get('execution_mode') == 'console':
             self.child.sendline(text)
             try:
-                self.expect(text=text, child=self.child, md5=md5, **kwargs)
+                rc, res = self.expect(text=text, child=self.child, md5=md5, **kwargs)
             except KeyboardInterrupt:
                 self.child.sendcontrol('c')
                 self.child.expect('--Break--')
@@ -173,13 +173,13 @@ class StataSession():
         else:
             self.automate('DoCommandAsync', text)
             try:
-                self.expect(text=text, child=self.log_fd, md5=md5, **kwargs)
+                rc, res = self.expect(text=text, child=self.log_fd, md5=md5, **kwargs)
             except KeyboardInterrupt:
                 self.automate('UtilSetStataBreak')
                 self.log_fd.expect('--Break--')
                 self.log_fd.expect('\r?\n\. ')
 
-        return
+        return rc, res
 
     def expect(self, text, child, md5, text_to_exclude=None, display=True):
         """Watch for end of command from file descriptor or TTY
@@ -210,12 +210,15 @@ class StataSession():
         expect_list = [md5, error_re, g_exp, more, eol, pexpect.EOF]
 
         match_index = -1
+        res_list = []
+        rc = 0
         while match_index != 0:
             match_index = child.expect(expect_list, timeout=5)
             res = child.before
             if match_index == 0:
                 break
             if match_index == 1:
+                rc = int(child.match.group(1))
                 if display:
                     self.kernel.send_response(
                         self.kernel.iopub_socket, 'stream', {
@@ -230,6 +233,7 @@ class StataSession():
                 child.sendline('q')
                 break
             if match_index == 4:
+                res_list.append(res)
                 if display:
                     code_lines, res = self.clean_log_eol(child, code_lines, res)
                     if res:
@@ -244,6 +248,8 @@ class StataSession():
         # Then scroll to next newline, but not including period to make it
         # easier to remove code lines later
         child.expect('\r?\n')
+
+        return rc, '\n'.join(res_list)
 
     def clean_log_eol(self, child, code_lines, res):
         """Clean output when expect hit a newline
