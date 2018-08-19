@@ -71,11 +71,11 @@ class StataSession():
             'stata_kernel', 'ado/_StataKernelCompletions.ado')
         adodir = Path(adofile).resolve().parent
         self.linesize = 80
-        # set more on
-        # set pagesize 10
         init_cmd = """\
             adopath + `"{0}"\'
             cd `"{1}"\'
+            set more on
+            set pagesize 100
             set linesize {2}
             clear all
             global stata_kernel_graph_counter = 0
@@ -164,20 +164,16 @@ class StataSession():
 
         if self.config.get('execution_mode') == 'console':
             self.child.sendline(text)
-            try:
-                rc, res = self.expect(text=text, child=self.child, md5=md5, **kwargs)
-            except KeyboardInterrupt:
-                self.child.sendcontrol('c')
-                self.child.expect('--Break--')
-                self.child.expect('\r\n\. ')
+            child = self.child
         else:
             self.automate('DoCommandAsync', text)
-            try:
-                rc, res = self.expect(text=text, child=self.log_fd, md5=md5, **kwargs)
-            except KeyboardInterrupt:
-                self.automate('UtilSetStataBreak')
-                self.log_fd.expect('--Break--')
-                self.log_fd.expect('\r?\n\. ')
+            child = self.log_fd
+
+        try:
+            rc, res = self.expect(text=text, child=child, md5=md5, **kwargs)
+        except KeyboardInterrupt:
+            self.send_break(child=child)
+            rc, res = 1, ''
 
         return rc, res
 
@@ -230,7 +226,7 @@ class StataSession():
                 if display:
                     self.kernel.send_image(img)
             if match_index == 3:
-                child.sendline('q')
+                self.send_break(child=child)
                 break
             if match_index == 4:
                 res_list.append(res)
@@ -297,6 +293,26 @@ class StataSession():
             code_lines[0] = code_lines[0][len(res):]
 
         return code_lines[1:], None
+
+    def send_break(self, child):
+        if self.config.get('execution_mode') == 'console':
+            child.sendcontrol('c')
+            child.sendcontrol('d')
+        else:
+            self.automate('UtilSetStataBreak')
+
+        child.expect('--Break--')
+        child.expect(r'r\(1\);')
+        # When sent inside `include`, two sets of --Break-- are shown
+        try:
+            child.expect('--Break--', timeout=0.3)
+            child.expect(r'r\(1\);', timeout=0.3)
+        except pexpect.TIMEOUT:
+            pass
+
+        # There are two newlines before the next period. Remove one of
+        # them
+        child.expect('\r?\n')
 
     def automate(self, cmd_name, value=None, **kwargs):
         """Execute `cmd_name` through Automation in a cross-platform manner
