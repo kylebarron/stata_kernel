@@ -177,7 +177,7 @@ class CodeManager(object):
 
         return True
 
-    def get_text(self, config):
+    def get_text(self, config, force_plot=False):
         """Get valid, executable text
 
         First split non-comment tokens into semantic chunks. So a (possibly
@@ -232,6 +232,9 @@ class CodeManager(object):
         g_exp += '\nglobal {0} = ${0} + 1'.format(gph_cnt)
 
         lines = [x + g_exp if re.match(graph_keywords, x) else x for x in lines]
+        if force_plot:
+            if lines[-1] != g_exp:
+                lines.append(g_exp)
 
         text = '\n'.join(lines)
         hash_text = hashlib.md5(text.encode('utf-8')).hexdigest()

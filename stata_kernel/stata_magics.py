@@ -22,6 +22,10 @@ class StataParser(ArgumentParser):
 
 class MagicParsers():
     def __init__(self, kernel):
+        self.plot = StataParser(prog='%plot', kernel=kernel)
+        self.plot.add_argument(
+            'code', nargs='*', type=str, metavar='CODE', help="Code to run")
+
         self.globals = StataParser(prog='%globals', kernel=kernel)
         self.globals.add_argument(
             'code', nargs='*', type=str, metavar='CODE', help="Code to run")
@@ -63,6 +67,8 @@ class StataMagics():
         r'\A%(?P<magic>.+?)(?P<code>\s+.*)?\Z', flags=re.DOTALL + re.MULTILINE)
 
     available_magics = [
+        'plot',
+        'graph',
         # 'exit',
         # 'restart',
         'locals',
@@ -72,6 +78,7 @@ class StataMagics():
         'timeit']
 
     def __init__(self):
+        self.force_plot = False
         self.quit_early = None
         self.status = 0
         self.any = False
@@ -128,6 +135,20 @@ class StataMagics():
                 fmt = "\t{{0:{0}}} {{1}}".format(lens)
                 for t, l in tprint:
                     print_kernel(fmt.format(t, l), kernel)
+
+    def magic_graph(self, code, kernel):
+        return self.magic_plot(code, kernel)
+
+    def magic_plot(self, code, kernel):
+        try:
+            args = vars(self.parse.plot.parse_args(code.split(' ')))
+            _code = ' '.join(args['code'])
+            args.pop('code', None)
+            self.force_plot = True
+            return _code
+        except:
+            self.status = -1
+            return code
 
     def magic_globals(self, code, kernel, local=False):
         gregex = {}

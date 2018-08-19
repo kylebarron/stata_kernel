@@ -56,7 +56,7 @@ class StataKernel(Kernel):
 
         # Tokenize code and return code chunks
         cm = CodeManager(code, self.sc_delimit_mode)
-        text_to_run, md5, text_to_exclude = cm.get_text(self.conf)
+        text_to_run, md5, text_to_exclude = cm.get_text(self.conf, self.magics.force_plot)
         rc, res = self.stata.do(text_to_run, md5, self.magics, text_to_exclude=text_to_exclude)
 
         # Post magic results, if applicable
