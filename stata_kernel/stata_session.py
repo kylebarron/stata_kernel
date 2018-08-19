@@ -189,6 +189,12 @@ class StataSession():
             md5 (str): current value of md5 to watch for
         """
 
+        # split text into lines
+        if text_to_exclude is not None:
+            code_lines = text_to_exclude.split('\n')
+        else:
+            code_lines = text.split('\n')
+
         md5 = '`' + md5 + "'"
         error_re = r'^r\((\d+)\);'
         cache_dir_str = str(self.config.get('cache_dir'))
@@ -206,15 +212,14 @@ class StataSession():
         match_index = -1
         while match_index != 0:
             match_index = child.expect(expect_list, timeout=5)
-            line = child.before
+            res = child.before
             if match_index == 0:
                 break
             if match_index == 1:
-                # print('error:', 'r({});'.format(child.match.group(1)))
                 if display:
                     self.kernel.send_response(
                         self.kernel.iopub_socket, 'stream', {
-                            'text': line,
+                            'text': 'r({});\n'.format(child.match.group(1)),
                             'name': 'stderr'})
                 continue
             if match_index == 2:
@@ -225,18 +230,64 @@ class StataSession():
                 child.sendline('q')
                 break
             if match_index == 4:
-                # print('result:', line)
                 if display:
-                    self.kernel.send_response(
-                        self.kernel.iopub_socket, 'stream', {
-                            'text': line + '\n',
-                            'name': 'stdout'})
+                    code_lines, res = self.clean_log_eol(child, code_lines, res)
+                    if res:
+                        self.kernel.send_response(
+                            self.kernel.iopub_socket, 'stream', {
+                                'text': res + '\n',
+                                'name': 'stdout'})
                 continue
             if match_index == 5:
                 sleep(0.05)
 
-        # Then scroll to next newline, but not including period to make it easier to remove code lines later
+        # Then scroll to next newline, but not including period to make it
+        # easier to remove code lines later
         child.expect('\r?\n')
+
+    def clean_log_eol(self, child, code_lines, res):
+        """Clean output when expect hit a newline
+
+        For the first line, try to match `. {lines[0][:75]}`, i.e. the first
+        75 characters of the first line. (75, or linesize - 5) is chosen so
+        that it catches lines that are `  1. ` inside a program or for loop
+
+        If it's a match, look at child.before to see how many characters were
+        matched. If the line had more characters than were matched, take off
+        the first 75 characters, prepend `> ` and try to match again.
+        When the full line is matched, remove the first indexed object and
+        repeat.
+
+        Args:
+            code_lines (List[str]): List of code lines sent to console that have not yet been matched in output
+            res (str): Current line of result/output
+            l_cont (bool): Whether current line is a line continuation
+
+        Returns:
+            (List[str], str, bool)
+            - List of code lines not yet matched in output after this
+            - Result to be displayed
+        """
+        if code_lines == []:
+            return code_lines, res
+
+        # If the beginning of the first code line is not in res, return
+        if not ('. ' + code_lines[0][:self.linesize - 5]) in res:
+            return code_lines, res
+
+        res = re.search(r'^(  \d+)?\. (.+)$', res).group(2)
+
+        # Remove the characters that were matched. If there's still text left,
+        # it's on the next line.
+        code_lines[0] = code_lines[0][len(res):]
+        while code_lines[0]:
+            child.expect(r'\r?\n', timeout=5)
+            res = child.before
+            assert child.before.startswith('> ')
+            res = res[2:]
+            code_lines[0] = code_lines[0][len(res):]
+
+        return code_lines[1:], None
 
     def automate(self, cmd_name, value=None, **kwargs):
         """Execute `cmd_name` through Automation in a cross-platform manner

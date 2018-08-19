@@ -232,7 +232,7 @@ class CodeManager(object):
             with open(cache_dir / 'include.do', 'w') as f:
                 f.write(text + '\n')
             text = "include {}/include.do".format(cache_dir_str)
-            text_to_exclude = text + text_to_exclude
+            text_to_exclude = text + '\n' + text_to_exclude
 
         text += "\n`{}'".format(hash_text)
         return text, hash_text, text_to_exclude
