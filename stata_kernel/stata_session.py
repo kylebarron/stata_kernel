@@ -220,6 +220,7 @@ class StataSession():
                 if display:
                     code_lines, res = self.clean_log_eol(child, code_lines, res)
                     if res:
+                        res = ansi_escape.sub('', res)
                         self.kernel.send_response(
                             self.kernel.iopub_socket, 'stream', {
                                 'text': res + '\n',
