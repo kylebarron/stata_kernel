@@ -108,6 +108,7 @@ class StataSession():
         """
         self.child = pexpect.spawn(
             self.config.get('stata_path'), encoding='utf-8')
+        self.child.delaybeforesend = None
         self.child.logfile = open(
             self.config.get('cache_dir') / 'console_debug.log', 'w')
         banner = []
