@@ -69,16 +69,17 @@ class StataSession():
         adofile = resource_filename(
             'stata_kernel', 'ado/_StataKernelCompletions.ado')
         adodir = Path(adofile).resolve().parent
+        self.linesize = 80
         init_cmd = """\
             adopath + `"{0}"\'
             cd `"{1}"\'
             set more on
             set pagesize 10
-            set linesize 80
+            set linesize {2}
             clear all
             global stata_kernel_graph_counter = 0
             `finished_init_cmd'
-            """.format(adodir, os.getcwd()).rstrip()
+            """.format(adodir, os.getcwd(), self.linesize).rstrip()
         self.do(dedent(init_cmd), md5='finished_init_cmd', display=False)
 
     def init_windows(self):
