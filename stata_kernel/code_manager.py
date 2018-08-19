@@ -1,8 +1,31 @@
 import re
+import platform
+import hashlib
 from pygments import lex
 
 from .stata_lexer import StataLexer
 from .stata_lexer import CommentAndDelimitLexer
+
+
+graph_keywords = [
+    r'gr(a|ap|aph)?', r'tw(o|ow|owa|oway)?', r'sc(a|at|att|atte|atter)?',
+    r'line', r'hist(o|og|ogr|ogra|ogram)?', r'kdensity', r'lowess', r'lpoly',
+    r'tsr?line', r'symplot', r'quantile', r'qnorm', r'pnorm', r'qchi', r'pchi',
+    r'qqplot', r'gladder', r'qladder', r'rvfplot', r'avplot', r'avplots',
+    r'cprplot', r'acprplot', r'rvpplot', r'lvr2plot', r'ac', r'pac', r'pergram',
+    r'cumsp', r'xcorr', r'wntestb', r'estat\s+acplot', r'estat\s+aroots',
+    r'estat\s+sbcusum', r'fcast\s+graph', r'varstable', r'vecstable',
+    r'irf\s+graph', r'irf\s+ograph', r'irf\s+cgraph', r'xtline'
+    r'sts\s+graph', r'strate', r'ltable', r'stci', r'stphplot', r'stcoxkm',
+    r'estat phtest', r'stcurve', r'roctab', r'rocplot', r'roccomp',
+    r'rocregplot', r'lroc', r'lsens', r'biplot', r'irtgraph\s+icc',
+    r'irtgraph\s+tcc', r'irtgraph\s+iif', r'irtgraph\s+tif', r'biplot',
+    r'cluster dendrogram', r'screeplot', r'scoreplot', r'loadingplot',
+    r'procoverlay', r'cabiplot', r'caprojection', r'mcaplot', r'mcaprojection',
+    r'mdsconfig', r'mdsshepard', r'cusum', r'cchart', r'pchart', r'rchart',
+    r'xchart', r'shewhart', r'serrbar', r'marginsplot', r'bayesgraph',
+    r'tabodds', r'teffects\s+overlap', r'npgraph', r'grmap', r'pkexamine']
+graph_keywords = r'^\s*\b(' + '|'.join(graph_keywords) + r')\b'
 
 
 class CodeManager(object):
@@ -94,7 +117,7 @@ class CodeManager(object):
 
         Return:
             (List[Tuple[Token, str]]):
-                List of token tuples. The only token types currently used in the
+                List of token tuples. Some of the token types:
                 lexer are:
                 - Text (plain text)
                 - Comment.Single (// and *)
@@ -154,49 +177,68 @@ class CodeManager(object):
 
         return True
 
-    def get_chunks(self):
-        """Get valid, executable chunks
+    def get_text(self, config):
+        """Get valid, executable text
 
-        First split non-comment tokens into semantic chunks. So a (possibly
-        multiline) chunk of regular text, then a chunk for a block, and so on.
+        For any text longer than one line, I save the text to a do file and send
+        `include path_to_do_file` to Stata. I insert `graph export` after
+        _every_ graph keyword. This way, even if the graph is created within a
+        loop or program, I can still see that it was created and I can grab it.
 
-        Then split each semantic chunk into syntactic chunks. So each of these
-        is a string that can be sent to Stata and will return a dot prompt.
-
-        I strip leading and trailing whitespace from each syntactic chunk. This
-        shouldn't matter because Stata doesn't give a semantic meaning to extra
-        whitespace. I also make sure there are no empty syntactic chunks (i.e.
-        no empty lines). If I send an empty line to Stata, no blank line is
-        returned between dot prompts, so the pexpect regex fails.
+        I create an md5 of the lines of text that I run, and then add that as
+        `md5' so that I can definitively know when Stata has finished with the
+        code I sent it.
 
         Returns:
-            List[Tuple[Token, str]]
+            (str, str, str):
+            (Text to run in kernel, md5 to expect for, code lines to remove from output)
         """
 
         tokens = self.tokens_final
 
-        sem_chunks = []
-        token_names = []
-        last_token = ''
-        counter = -1
-        for i in range(len(tokens)):
-            if tokens[i][0] != last_token:
-                sem_chunks.append([tokens[i][1]])
-                token_names.append(tokens[i][0])
-                last_token = tokens[i][0]
-                counter += 1
-                continue
+        text = ''.join([x[1] for x in tokens]).strip()
+        lines = text.split('\n')
+        has_block = bool([x for x in tokens if str(x[0]) == 'Token.TextBlock'])
 
-            sem_chunks[counter].append(tokens[i][1])
+        use_include = has_block
+        cap_re = re.compile(r'\bcap(t|tu|tur|ture)?\b').search
+        qui_re = re.compile(r'\bqui(e|et|etl|etly)?\b').search
+        noi_re = re.compile(r'\bn(o|oi|ois|oisi|oisil|oisily)?\b').search
+        if cap_re(text) or qui_re(text) or noi_re(text):
+            use_include = True
 
-        sem_chunks = [''.join(x).strip() for x in sem_chunks]
-        syn_chunks = []
-        for chunk, token in zip(sem_chunks, token_names):
-            if str(token) != 'Token.TextBlock':
-                syn_chunks.extend([[token, x] for x in chunk.split('\n')])
-            else:
-                syn_chunks.append([token, chunk])
+        if len(lines) > 1:
+            use_include = True
 
-        return [(token, text.strip())
-                for token, text in syn_chunks
-                if text.strip() != '']
+        # Insert `graph export`
+        graph_fmt = config.get('graph_format')
+        graph_scale = config.get('graph_scale')
+        cache_dir = config.get('cache_dir')
+        if graph_scale is None:
+            graph_scale = 1
+            config.set('graph_scale', '1', permanent=True)
+        else:
+            graph_scale = float(graph_scale)
+
+        cache_dir_str = str(cache_dir)
+        if platform.system() == 'Windows':
+            cache_dir_str = re.sub(r'\\', '/', cache_dir_str)
+        gph_cnt = 'stata_kernel_graph_counter'
+        g_exp = '\nnoi graph export {}'.format(cache_dir_str)
+        g_exp += '/graph${' + gph_cnt + '}'
+        g_exp += '.{}, width({}) replace'.format(graph_fmt, 600 * graph_scale)
+        g_exp += '\nglobal {0} = ${0} + 1'.format(gph_cnt)
+
+        lines = [x + g_exp if re.match(graph_keywords, x) else x for x in lines]
+
+        text = '\n'.join(lines)
+        hash_text = hashlib.md5(text.encode('utf-8')).hexdigest()
+        text_to_exclude = text
+        if use_include:
+            with open(cache_dir / 'include.do', 'w') as f:
+                f.write(text + '\n')
+            text = "include {}/include.do".format(cache_dir_str)
+            text_to_exclude = text + '\n' + text_to_exclude
+
+        text += "\n`{}'".format(hash_text)
+        return text, hash_text, text_to_exclude

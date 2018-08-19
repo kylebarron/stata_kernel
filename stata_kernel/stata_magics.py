@@ -20,29 +20,8 @@ class StataParser(ArgumentParser):
         sys.exit(2)
 
 
-# ---------------------------------------------------------------------
-# Magic argument parsers
-
-
 class MagicParsers():
     def __init__(self, kernel):
-        self.plot = StataParser(prog='%plot', kernel=kernel)
-        self.plot.add_argument(
-            'code', nargs='*', type=str, metavar='CODE', help="Code to run")
-        self.plot.add_argument(
-            '--scale', dest='scale', type=float, metavar='SCALE', default=1,
-            help="Scale default height and width. Default: 1", required=False)
-        self.plot.add_argument(
-            '--width', dest='width', type=int, metavar='WIDTH', default=600,
-            help="Plot width in pixels. Default: 600", required=False)
-        self.plot.add_argument(
-            '--height', dest='height', type=int, metavar='HEIGHT', default=400,
-            help="Plot height in pixels. Default: 400", required=False)
-        self.plot.add_argument(
-            '--set', dest='set', action='store_true',
-            help="Set plot width and height for the rest of the session.",
-            required=False)
-
         self.globals = StataParser(prog='%globals', kernel=kernel)
         self.globals.add_argument(
             'code', nargs='*', type=str, metavar='CODE', help="Code to run")
@@ -77,10 +56,6 @@ class MagicParsers():
             help="Execute statement N times per loop.", required=False)
 
 
-# ---------------------------------------------------------------------
-# Hack-ish magic parser
-
-
 class StataMagics():
     img_metadata = {'width': 600, 'height': 400}
 
@@ -88,8 +63,6 @@ class StataMagics():
         r'\A%(?P<magic>.+?)(?P<code>\s+.*)?\Z', flags=re.DOTALL + re.MULTILINE)
 
     available_magics = [
-        'plot',
-        'graph',
         # 'exit',
         # 'restart',
         'locals',
@@ -156,26 +129,6 @@ class StataMagics():
                 for t, l in tprint:
                     print_kernel(fmt.format(t, l), kernel)
 
-    def magic_graph(self, code, kernel):
-        return self.magic_plot(code, kernel)
-
-    def magic_plot(self, code, kernel):
-        try:
-            args = vars(self.parse.plot.parse_args(code.split(' ')))
-            _code = ' '.join(args['code'])
-            args.pop('code', None)
-            args['width'] = args['scale'] * args['width']
-            args['height'] = args['scale'] * args['height']
-            args.pop('scale', None)
-            self.img_set = args['set']
-            args.pop('set', None)
-            self.img_metadata = args
-            self.graphs = 2
-            return _code
-        except:
-            self.status = -1
-            return code
-
     def magic_globals(self, code, kernel, local=False):
         gregex = {}
         gregex['blank'] = re.compile(r"^ {16,16}", flags=re.MULTILINE)
@@ -205,7 +158,8 @@ class StataMagics():
             return code
 
         cm = CodeManager("macro dir")
-        rc, imgs, res = kernel.stata.do(cm.get_chunks(), self)
+        text_to_run, md5, text_to_exclude = cm.get_text(kernel.conf)
+        rc, res = kernel.stata.do(text_to_run, md5, text_to_exclude=text_to_exclude, display=False)
         if rc:
             self.status = -1
             return code
@@ -299,14 +253,8 @@ class StataMagics():
         print_kernel("Magic restart has not been implemented.", kernel)
         return code
 
-
-# ---------------------------------------------------------------------
-# Print messages to the kernel
-
-
 def print_kernel(msg, kernel):
     msg = re.sub(r'$', r'\r\n', msg, flags=re.MULTILINE)
     msg = re.sub(r'[\r\n]{1,2}[\r\n]{1,2}', r'\r\n', msg, flags=re.MULTILINE)
-    stream_content = {'text': msg}
-    stream_content['name'] = 'stdout'
+    stream_content = {'text': msg, 'name': 'stdout'}
     kernel.send_response(kernel.iopub_socket, 'stream', stream_content)

@@ -3,6 +3,7 @@ import regex
 
 # NOTE: Using regex for (?r) flag
 
+from .code_manager import CodeManager
 
 class CompletionsManager(object):
     def __init__(self, kernel, config):
@@ -34,7 +35,7 @@ class CompletionsManager(object):
         #
         #     (`=)?scalar(
 
-        pre = r"(cap(t(u(re?)?)?)?|n(o(i(s(i(ly?)?)?)?)?)?|qui(e(t(ly?)?)?)?)?"
+        pre = (r'\b(cap(t|tu|tur|ture)?' r'|qui(e|et|etl|etly)?' r'|n(o|oi|ois|oisi|oisil|oisily)?)\b')
         kwargs = {'flags': regex.MULTILINE}
         self.context = {
             'function':
@@ -241,18 +242,8 @@ class CompletionsManager(object):
         return suggestions
 
     def quickdo(self, code, kernel):
-        if self.config.get('execution_mode') == 'console':
-            res, timer = kernel.stata.do_console(code)
-        else:
-            log_path = kernel.stata.cache_dir / '.stata_kernel_completions.log'
-            log_cmd = 'log using `"{}"\', replace text'.format(log_path)
-            rc = kernel.stata.automate('DoCommand', log_cmd)
-            if not rc:
-                fh = open(log_path, 'r')
-                fh.read()
-                rc, timer = kernel.stata.do_aut_sync(code)
-                res = fh.read()
-                kernel.stata.automate('DoCommand', 'cap log close')
-                fh.close()
 
+        cm = CodeManager(code)
+        text_to_run, md5, text_to_exclude = cm.get_text(kernel.conf)
+        rc, res = kernel.stata.do(text_to_run, md5, text_to_exclude=text_to_exclude, display=False)
         return res
