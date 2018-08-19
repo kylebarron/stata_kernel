@@ -42,7 +42,6 @@ class StataKernel(Kernel):
         This is the function that Jupyter calls to run code. Must return a
         dictionary as described here:
         https://jupyter-client.readthedocs.io/en/stable/messaging.html#execution-results
-
         """
         if not self.is_complete(code):
             return {'status': 'error', 'execution_count': self.execution_count}
@@ -57,7 +56,7 @@ class StataKernel(Kernel):
         # Tokenize code and return code chunks
         cm = CodeManager(code, self.sc_delimit_mode)
         text_to_run, md5, text_to_exclude = cm.get_text(self.conf)
-        rc, res = self.stata.do(text_to_run, md5, self.magics, text_to_exclude=text_to_exclude)
+        rc, res = self.stata.do(text_to_run, md5, text_to_exclude=text_to_exclude)
 
         # Post magic results, if applicable
         self.magics.post(self)
@@ -76,9 +75,10 @@ class StataKernel(Kernel):
             self.completions.refresh(self)
             return return_obj
 
-        # Send message if delimiter changed. NOTE: This uses the delimiter at
-        # the _end_ of the code block. It prints only if the delimiter at the
-        # end is different than the one before the chunk.
+        # Send message if delimiter changed.
+        # NOTE: This uses the delimiter at the _end_ of the code block. It
+        # prints only if the delimiter at the end is different than the one
+        # before the chunk.
         if cm.ends_sc != self.sc_delimit_mode:
             delim = ';' if cm.ends_sc else 'cr'
             self.send_response(
@@ -92,16 +92,23 @@ class StataKernel(Kernel):
         return return_obj
 
     def send_image(self, graph_path):
-        """Load graph
+        """Load graph and send to frontend
+
+        In `code_manager.get_text`, I send to Stata only the `width` argument.
+        This way, the graphs are always scaled in accordance with their aspect
+        ratio. However this means that I don't know their aspect ratio. For this
+        reason, I load the SVG or PNG image into memory so that I can get the
+        image dimensions to relay to the frontend.
+
+        As of now, this only supports SVG and PNG formats. I see no real need to
+        change this. PDF isn't supported in Atom or in Jupyter. TIFF is 1-2
+        orders of magnitude larger than SVG and PNG images without a real
+        benefit over SVG.
 
         Args:
             graph_path (str): path to exported graph
-
-        Returns:
-            None. Sends output to frontend
         """
 
-        # graph_path = '/Users/Kyle/.stata_kernel_cache/Graph1.png'
         no_display_msg = 'This front-end cannot display the desired image type.'
         if graph_path.endswith('.svg'):
             e = ElementTree.parse(graph_path)
@@ -152,22 +159,15 @@ class StataKernel(Kernel):
         return {'restart': restart}
 
     def do_is_complete(self, code):
-        """Decide if command has completed
-
-        I permit users to use /// line continuations. Otherwise, the only
-        incomplete text should be unmatched braces. I use the fact that braces
-        cannot be followed by text when opened or preceded or followed by text
-        when closed.
-
-        """
+        """Decide if command has completed"""
         if self.is_complete(code):
             return {'status': 'complete'}
 
         return {'status': 'incomplete', 'indent': '    '}
 
     def do_complete(self, code, cursor_pos):
-        # Environment-aware suggestion for the current space-delimited
-        # variable, local, etc.
+        """Provide context-aware suggestions
+        """
         env, pos, chunk, rcomp = self.completions.get_env(
             code[:cursor_pos], code[cursor_pos:(cursor_pos + 2)],
             self.sc_delimit_mode)

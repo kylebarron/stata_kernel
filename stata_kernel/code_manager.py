@@ -117,7 +117,7 @@ class CodeManager(object):
 
         Return:
             (List[Tuple[Token, str]]):
-                List of token tuples. The only token types currently used in the
+                List of token tuples. Some of the token types:
                 lexer are:
                 - Text (plain text)
                 - Comment.Single (// and *)
@@ -180,20 +180,18 @@ class CodeManager(object):
     def get_text(self, config):
         """Get valid, executable text
 
-        First split non-comment tokens into semantic chunks. So a (possibly
-        multiline) chunk of regular text, then a chunk for a block, and so on.
+        For any text longer than one line, I save the text to a do file and send
+        `include path_to_do_file` to Stata. I insert `graph export` after
+        _every_ graph keyword. This way, even if the graph is created within a
+        loop or program, I can still see that it was created and I can grab it.
 
-        Then split each semantic chunk into syntactic chunks. So each of these
-        is a string that can be sent to Stata and will return a dot prompt.
-
-        I strip leading and trailing whitespace from each syntactic chunk. This
-        shouldn't matter because Stata doesn't give a semantic meaning to extra
-        whitespace. I also make sure there are no empty syntactic chunks (i.e.
-        no empty lines). If I send an empty line to Stata, no blank line is
-        returned between dot prompts, so the pexpect regex fails.
+        I create an md5 of the lines of text that I run, and then add that as
+        `md5' so that I can definitively know when Stata has finished with the
+        code I sent it.
 
         Returns:
-            (str, str): Text to run, md5 to expect for.
+            (str, str, str):
+            (Text to run in kernel, md5 to expect for, code lines to remove from output)
         """
 
         tokens = self.tokens_final

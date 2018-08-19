@@ -35,8 +35,9 @@ ansi_escape = re.compile(ansi_regex, flags=re.IGNORECASE)
 
 class StataSession():
     def __init__(self, kernel, config):
-        """
+        """Initialize Session
         Args:
+            kernel (ipykernel.kernelbase): Running instance of kernel
             config (ConfigParser): config class
         """
 
@@ -71,8 +72,11 @@ class StataSession():
         self.do(dedent(init_cmd), md5='finished_init_cmd', display=False)
 
     def init_windows(self):
-        # The WinExec step is necessary for some reason to make graphs
-        # work. Stata can't be launched directly with Dispatch()
+        """Start Stata on Windows
+
+        The WinExec step is necessary for some reason to make graphs work. Stata
+        can't be launched directly with `win32com.client.Dispatch()`.
+        """
         WinExec(self.config.get('stata_path'))
         sleep(0.25)
         self.stata = win32com.client.Dispatch("stata.StataOLEApp")
@@ -81,12 +85,13 @@ class StataSession():
         self.start_log_aut()
 
     def init_mac_automation(self):
+        """Start Stata on macOS"""
         self.automate(cmd_name='activate')
         self.automate(cmd_name='UtilShowStata', value=1)
         self.start_log_aut()
 
     def init_console(self):
-        """Initiate stata console
+        """Start Stata in console mode
 
         Spawn stata console and then wait/scroll to initial dot prompt.
         It tries to find the dot prompt immediately; otherwise it assumes
@@ -118,7 +123,8 @@ class StataSession():
     def start_log_aut(self):
         """Start log and watch file
 
-        This is only on Automation. On console I watch the TTY directly.
+        This is used only when execution_mode is set to Automation. In the
+        console mode I watch the pty directly.
         """
 
         self.automate('DoCommand', 'cap log close _all')
@@ -136,17 +142,18 @@ class StataSession():
                 self.fd, encoding='utf-8', maxread=1)
         return 0
 
-    def do(self, text, md5, magics=None, **kwargs):
+    def do(self, text, md5, **kwargs):
         """Main wrapper for sequence of running user-given code
 
         Args:
             text (str)
-            magics: Not currently implemented
+            md5 (str): md5 of the text. This is passed to `expect` and is the
+                string that declares the end of the text sent to Stata.
 
         Kwargs:
-            md5 (str): md5 of the text.
-            text_to_exclude (str): string of text to exclude from output
-            kernel (ipykernel.kernelbase): Running instance of kernel. Passed to expect.
+            text_to_exclude (str): string of text to exclude from output. It is
+                expected that this string include many lines. It will be split
+                on \\n in `expect`.
             display (bool): Whether to send results to front-end
         """
 
@@ -166,11 +173,18 @@ class StataSession():
         return rc, res
 
     def expect(self, text, child, md5, text_to_exclude=None, display=True):
-        """Watch for end of command from file descriptor or TTY
+        """Watch for end of command from file descriptor or pty
 
         Args:
-            child (pexpect.spawn or fdpexpect.spawn): TTY or log file to watch
+            text (str): string of text to exclude from output. It is expected
+                that this string include many lines. It will be split on \\n in
+                `expect`. This is sent in case text_to_exclude is None. (Will
+                probably be consolidated in the future.)
+            child (pexpect.spawn or fdpexpect.spawn): pty or log file to watch
             md5 (str): current value of md5 to watch for
+            text_to_exclude (str): string of text to exclude from output. It is
+                expected that this string include many lines. It will be split
+                on \\n in `expect`.
         """
 
         # split text into lines
@@ -283,6 +297,16 @@ class StataSession():
         return code_lines[1:], None
 
     def send_break(self, child):
+        """Send break to Stata
+
+        Tell Stata to stop current execution. This is used when `expect` hits
+        more and for a KeyboardInterrupt. I've found that ctrl-C, ctrl-D is the
+        most consistent way for the console version to stop execution.
+
+        Args:
+            child (pexpect.spawn): pexpect instance to watch for successful
+                break.
+        """
         if self.config.get('execution_mode') == 'console':
             child.sendcontrol('c')
             child.sendcontrol('d')
@@ -298,8 +322,7 @@ class StataSession():
         except pexpect.TIMEOUT:
             pass
 
-        # There are two newlines before the next period. Remove one of
-        # them
+        # There are two newlines before the next period. Remove one of them
         child.expect('\r?\n')
 
     def automate(self, cmd_name, value=None, **kwargs):
