@@ -127,9 +127,9 @@ class StataSession():
         console mode I watch the pty directly.
         """
 
-        self.automate('DoCommand', 'cap log close _all')
+        self.automate('DoCommand', 'cap log close stata_kernel_log')
         log_path = self.config.get('cache_dir') / 'log.log'
-        cmd = 'log using `"{}"\', replace text'.format(log_path)
+        cmd = 'log using `"{}"\', replace text name(stata_kernel_log)'.format(log_path)
         rc = self.automate('DoCommand', cmd)
         if rc:
             return rc
