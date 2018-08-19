@@ -72,6 +72,9 @@ def install_conf():
 
     # Extension and format for images
     graph_format = svg
+
+    # Scaling factor for graphs
+    graph_scale = 1
     """.format(stata_path, execution_mode))
 
     with open(Path('~/.stata_kernel.conf').expanduser(), 'w') as f:
