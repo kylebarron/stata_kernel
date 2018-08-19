@@ -281,7 +281,10 @@ class StataSession():
         if not ('. ' + code_lines[0][:self.linesize - 5]) in res:
             return code_lines, res
 
-        res = re.search(r'^(  \d+)?\. (.+)$', res).group(2)
+        res_match = re.search(r'^(  \d+)?\. (.+)$', res)
+        if not res_match:
+            return code_lines, ''
+        res = res_match.group(2)
 
         # Remove the characters that were matched. If there's still text left,
         # it's on the next line.
