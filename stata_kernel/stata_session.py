@@ -70,11 +70,11 @@ class StataSession():
             'stata_kernel', 'ado/_StataKernelCompletions.ado')
         adodir = Path(adofile).resolve().parent
         self.linesize = 80
+        # set more on
+        # set pagesize 10
         init_cmd = """\
             adopath + `"{0}"\'
             cd `"{1}"\'
-            set more on
-            set pagesize 10
             set linesize {2}
             clear all
             global stata_kernel_graph_counter = 0

@@ -1,7 +1,7 @@
 from ipykernel.kernelbase import Kernel
 
 from .config import Config
-# from .completions import CompletionsManager
+from .completions import CompletionsManager
 from .code_manager import CodeManager
 from .stata_session import StataSession
 from .stata_magics import StataMagics
@@ -27,7 +27,7 @@ class StataKernel(Kernel):
         self.magics = StataMagics()
         self.sc_delimit_mode = False
         self.stata = StataSession(self, self.conf)
-        # self.completions = CompletionsManager(self, self.conf)
+        self.completions = CompletionsManager(self, self.conf)
         self.banner = self.stata.banner
 
     def do_execute(
@@ -78,7 +78,7 @@ class StataKernel(Kernel):
 
         if silent:
             # Refresh completions
-            # self.completions.refresh(self)
+            self.completions.refresh(self)
             return return_obj
 
         # Send message if delimiter changed. NOTE: This uses the delimiter at
@@ -93,7 +93,7 @@ class StataKernel(Kernel):
         self.sc_delimit_mode = cm.ends_sc
 
         # Refresh completions
-        # self.completions.refresh(self)
+        self.completions.refresh(self)
         return return_obj
 
     def send_image(self, img):
@@ -143,18 +143,18 @@ class StataKernel(Kernel):
 
         return {'status': 'incomplete', 'indent': '    '}
 
-    # def do_complete(self, code, cursor_pos):
-    #     # Environment-aware suggestion for the current space-delimited
-    #     # variable, local, etc.
-    #     env, pos, chunk, rcomp = self.completions.get_env(
-    #         code[:cursor_pos], code[cursor_pos:(cursor_pos + 2)],
-    #         self.sc_delimit_mode)
-    #
-    #     return {
-    #         'status': 'ok',
-    #         'cursor_start': pos,
-    #         'cursor_end': cursor_pos,
-    #         'matches': self.completions.get(chunk, env, rcomp)}
+    def do_complete(self, code, cursor_pos):
+        # Environment-aware suggestion for the current space-delimited
+        # variable, local, etc.
+        env, pos, chunk, rcomp = self.completions.get_env(
+            code[:cursor_pos], code[cursor_pos:(cursor_pos + 2)],
+            self.sc_delimit_mode)
+
+        return {
+            'status': 'ok',
+            'cursor_start': pos,
+            'cursor_end': cursor_pos,
+            'matches': self.completions.get(chunk, env, rcomp)}
 
     def is_complete(self, code):
         return CodeManager(code, self.sc_delimit_mode).is_complete
