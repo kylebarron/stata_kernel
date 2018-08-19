@@ -35,7 +35,7 @@ class CompletionsManager(object):
         #
         #     (`=)?scalar(
 
-        pre = r"(cap(t(u(re?)?)?)?|n(o(i(s(i(ly?)?)?)?)?)?|qui(e(t(ly?)?)?)?)?"
+        pre = (r'\b(cap(t|tu|tur|ture)?' r'|qui(e|et|etl|etly)?' r'|n(o|oi|ois|oisi|oisil|oisily)?)\b')
         kwargs = {'flags': regex.MULTILINE}
         self.context = {
             'function':

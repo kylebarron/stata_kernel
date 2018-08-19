@@ -206,8 +206,10 @@ class CodeManager(object):
         has_block = bool([x for x in tokens if str(x[0]) == 'Token.TextBlock'])
 
         use_include = has_block
-        # TODO: Change this to actual cap/noi/qui regex
-        if re.search(r'\b(cap|noi|qui)', text):
+        cap_re = re.compile(r'\bcap(t|tu|tur|ture)?\b').search
+        qui_re = re.compile(r'\bqui(e|et|etl|etly)?\b').search
+        noi_re = re.compile(r'\bn(o|oi|ois|oisi|oisil|oisily)?\b').search
+        if cap_re(text) or qui_re(text) or noi_re(text):
             use_include = True
 
         if len(lines) > 3:

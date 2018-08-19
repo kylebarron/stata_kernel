@@ -149,8 +149,6 @@ class StataSession():
     def do(self, text, md5, magics=None, **kwargs):
         """Main wrapper for sequence of running user-given code
 
-        Probably don't use this for internal code run by kernel
-
         Args:
             text (str)
             magics: Not currently implemented
