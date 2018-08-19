@@ -25,7 +25,7 @@ graph_keywords = [
     r'mdsconfig', r'mdsshepard', r'cusum', r'cchart', r'pchart', r'rchart',
     r'xchart', r'shewhart', r'serrbar', r'marginsplot', r'bayesgraph',
     r'tabodds', r'teffects\s+overlap', r'npgraph', r'grmap', r'pkexamine']
-graph_keywords = r'\b(' + '|'.join(graph_keywords) + r')\b'
+graph_keywords = r'^\s*\b(' + '|'.join(graph_keywords) + r')\b'
 
 
 class CodeManager(object):
@@ -231,7 +231,7 @@ class CodeManager(object):
         g_exp += '.{}, width({}) replace'.format(graph_fmt, 600 * graph_scale)
         g_exp += '\nglobal {0} = ${0} + 1'.format(gph_cnt)
 
-        lines = [x + g_exp if re.search(graph_keywords, x) else x for x in lines]
+        lines = [x + g_exp if re.match(graph_keywords, x) else x for x in lines]
 
         text = '\n'.join(lines)
         hash_text = hashlib.md5(text.encode('utf-8')).hexdigest()
