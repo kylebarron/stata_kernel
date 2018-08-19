@@ -156,6 +156,7 @@ class StataSession():
 
         Kwargs:
             md5 (str): md5 of the text.
+            text_to_exclude (str): string of text to exclude from output
             kernel (ipkernel.kernelbase): Running instance of kernel. Passed to expect.
             display (bool): Whether to send results to front-end
         """
@@ -163,7 +164,7 @@ class StataSession():
         if self.config.get('execution_mode') == 'console':
             self.child.sendline(text)
             try:
-                self.expect(child=self.child, md5=md5, **kwargs)
+                self.expect(text=text, child=self.child, md5=md5, **kwargs)
             except KeyboardInterrupt:
                 self.child.sendcontrol('c')
                 self.child.expect('--Break--')
@@ -171,7 +172,7 @@ class StataSession():
         else:
             self.automate('DoCommandAsync', text)
             try:
-                self.expect(child=self.log_fd, md5=md5, **kwargs)
+                self.expect(text=text, child=self.log_fd, md5=md5, **kwargs)
             except KeyboardInterrupt:
                 self.automate('UtilSetStataBreak')
                 self.log_fd.expect('--Break--')
@@ -179,7 +180,7 @@ class StataSession():
 
         return
 
-    def expect(self, child, md5, display=True):
+    def expect(self, text, child, md5, text_to_exclude=None, display=True):
         """Watch for end of command from file descriptor or TTY
 
         Args:

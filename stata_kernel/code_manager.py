@@ -1,6 +1,6 @@
 import re
 import platform
-from hashlib import md5
+import hashlib
 from pygments import lex
 
 from .stata_lexer import StataLexer
@@ -226,11 +226,13 @@ class CodeManager(object):
         lines = [x + g_exp if re.search(graph_keywords, x) else x for x in lines]
 
         text = '\n'.join(lines)
-        hash_text = md5(text.encode('utf-8')).hexdigest()
+        hash_text = hashlib.md5(text.encode('utf-8')).hexdigest()
+        text_to_exclude = text
         if use_include:
             with open(cache_dir / 'include.do', 'w') as f:
                 f.write(text + '\n')
             text = "include {}/include.do".format(cache_dir_str)
+            text_to_exclude = text + text_to_exclude
 
         text += "\n`{}'".format(hash_text)
-        return text, hash_text
+        return text, hash_text, text_to_exclude
