@@ -1,11 +1,11 @@
-import argparse
 import sys
 import re
+from argparse import ArgumentParser
 from .code_manager import CodeManager
 
 
 # NOTE(mauricio): Figure  out if passing the kernel around is a problem...
-class StataParser(argparse.ArgumentParser):
+class StataParser(ArgumentParser):
     def __init__(self, *args, kernel=None, **kwargs):
         super(StataParser, self).__init__(*args, **kwargs)
         self.kernel = kernel
@@ -20,29 +20,8 @@ class StataParser(argparse.ArgumentParser):
         sys.exit(2)
 
 
-# ---------------------------------------------------------------------
-# Magic argument parsers
-
-
 class MagicParsers():
     def __init__(self, kernel):
-        self.plot = StataParser(prog='%plot', kernel=kernel)
-        self.plot.add_argument(
-            'code', nargs='*', type=str, metavar='CODE', help="Code to run")
-        self.plot.add_argument(
-            '--scale', dest='scale', type=float, metavar='SCALE', default=1,
-            help="Scale default height and width. Default: 1", required=False)
-        self.plot.add_argument(
-            '--width', dest='width', type=int, metavar='WIDTH', default=600,
-            help="Plot width in pixels. Default: 600", required=False)
-        self.plot.add_argument(
-            '--height', dest='height', type=int, metavar='HEIGHT', default=400,
-            help="Plot height in pixels. Default: 400", required=False)
-        self.plot.add_argument(
-            '--set', dest='set', action='store_true',
-            help="Set plot width and height for the rest of the session.",
-            required=False)
-
         self.globals = StataParser(prog='%globals', kernel=kernel)
         self.globals.add_argument(
             'code', nargs='*', type=str, metavar='REGEX', help="regex to match")
@@ -76,25 +55,53 @@ class MagicParsers():
             '-n', dest='n', type=int, metavar='N', default=None,
             help="Execute statement N times per loop.", required=False)
 
-        self.completions = StataParser(prog='%completions', kernel=kernel)
-        self.completions.add_argument(
+        #######################################################################
+        #                                                                     #
+        #                             %set magic                              #
+        #                                                                     #
+        #######################################################################
+
+        self.set = StataParser(prog='%set', kernel=kernel)
+        self.set.add_argument(
+            '--reset', dest='reset', action='store_true',
+            help="Restore default settings.", required=False)
+        subparsers = self.set.add_subparsers(
+            dest="setting", help=None, title="settings", description=None,
+            parser_class=StataParser)
+        # dest="setting", help="kernel settings", title="settings",
+        # description="valid settings", parser_class=StataParser)
+
+        self.set_completions = subparsers.add_parser(
+            "completions", kernel=kernel, help="Completions")
+        self.set_completions.add_argument(
             'on', nargs=1, type=str, metavar='{on|off}',
             help="Turn completions on or off", choices=["on", "off"])
 
+        self.set_plot = subparsers.add_parser(
+            "plot", kernel=kernel, help="Plot settings")
+        self.set_plot.add_argument(
+            '--scale', dest='scale', type=float, metavar='SCALE', default=None,
+            help="Scale width and height. Default: 1", required=False)
+        self.set_plot.add_argument(
+            '--width', dest='width', type=int, metavar='WIDTH', default=None,
+            help="Plot width (pixels). Default: 600", required=False)
+        self.set_plot.add_argument(
+            '--height', dest='height', type=int, metavar='HEIGHT', default=None,
+            help="Plot height (pixels). Default: Set by Stata.", required=False)
+        self.set_plot.add_argument(
+            '--format', dest='format', type=str, metavar='HEIGHT', default=None,
+            help="Plot export format (internal; default: svg).", required=False)
 
-# ---------------------------------------------------------------------
-# Hack-ish magic parser
+        self.set_settings = list(subparsers.choices.keys())
+        self.set_completions = subparsers.add_parser(
+            "_all", kernel=kernel, help="all settings")
 
 
 class StataMagics():
-    img_metadata = {'width': 600, 'height': 400}
-
     magic_regex = re.compile(
         r'\A%(?P<magic>.+?)(?P<code>\s+.*)?\Z', flags=re.DOTALL + re.MULTILINE)
 
     available_magics = [
-        'plot',
-        'graph',
         # 'exit',
         # 'restart',
         'locals',
@@ -102,7 +109,7 @@ class StataMagics():
         'delimit',
         'time',
         'timeit',
-        'completions']
+        'set']
 
     def __init__(self):
         self.quit_early = None
@@ -162,26 +169,6 @@ class StataMagics():
                 for t, l in tprint:
                     print_kernel(fmt.format(t, l), kernel)
 
-    def magic_graph(self, code, kernel):
-        return self.magic_plot(code, kernel)
-
-    def magic_plot(self, code, kernel):
-        try:
-            args = vars(self.parse.plot.parse_args(code.split(' ')))
-            _code = ' '.join(args['code'])
-            args.pop('code', None)
-            args['width'] = args['scale'] * args['width']
-            args['height'] = args['scale'] * args['height']
-            args.pop('scale', None)
-            self.img_set = args['set']
-            args.pop('set', None)
-            self.img_metadata = args
-            self.graphs = 2
-            return _code
-        except:
-            self.status = -1
-            return code
-
     def magic_globals(self, code, kernel, local=False):
         gregex = {}
         gregex['blank'] = re.compile(r"^ {16,16}", flags=re.MULTILINE)
@@ -211,7 +198,8 @@ class StataMagics():
             return code
 
         cm = CodeManager("macro dir")
-        rc, imgs, res = kernel.stata.do(cm.get_chunks(), self)
+        text_to_run, md5, text_to_exclude = cm.get_text(kernel.conf)
+        rc, res = kernel.stata.do(text_to_run, md5, text_to_exclude=text_to_exclude, display=False)
         if rc:
             self.status = -1
             return code
@@ -282,19 +270,40 @@ class StataMagics():
         print_kernel('The delimiter is currently: {}'.format(delim), kernel)
         return ''
 
-    def magic_completions(self, code, kernel):
+    def magic_set(self, code, kernel):
         try:
-            status = code.strip().split(' ')
-            on = vars(self.parse.completions.parse_args(status))['on'][0]
-            kernel.completions.status = on
-            kernel.completions.on = (on == 'on')
-            print_kernel('(code completion is {0})'.format(on), kernel)
-            kernel.completions.refresh(kernel)
-            self.status = -1
-            return ''
+            settings = code.strip().split(' ')
+            args = vars(self.parse.set.parse_args(settings))
+            if args['setting'] == 'completions':
+                on = args['on']
+                kernel.completions.status = on
+                kernel.completions.on = (on == 'on')
+                print_kernel('(code completion is {0})'.format(on), kernel)
+                kernel.completions.refresh(kernel)
+            elif args['setting'] == 'plot':
+                args.pop('setting', None)
+                if args['reset']:
+                    for k, v in args.items():
+                        if (k != 'reset') and (v is not None):
+                            msg = 'Cannot set values with --reset.'
+                            self.parse.set.error(msg)
+
+                args.pop('reset', None)
+                kernel.conf.overrides['plot'].update(args)
+            elif args['setting'] == '_all':
+                kernel.completions.status = 'on'
+                kernel.completions.on = True
+                print_kernel('(code completion is {0})'.format(on), kernel)
+                kernel.completions.refresh(kernel)
+                for k in kernel.conf.overrides['plot'].keys():
+                    kernel.conf.overrides['plot'][k] = None
+            else:
+                self.parse.set.error('malformed %set call')
         except:
-            self.status = -1
-            return ''
+            pass
+
+        self.status = -1
+        return ''
 
     def magic_time(self, code, kernel):
         try:
@@ -335,13 +344,8 @@ class StataMagics():
         return code
 
 
-# ---------------------------------------------------------------------
-# Print messages to the kernel
-
-
 def print_kernel(msg, kernel):
     msg = re.sub(r'$', r'\r\n', msg, flags=re.MULTILINE)
     msg = re.sub(r'[\r\n]{1,2}[\r\n]{1,2}', r'\r\n', msg, flags=re.MULTILINE)
-    stream_content = {'text': msg}
-    stream_content['name'] = 'stdout'
+    stream_content = {'text': msg, 'name': 'stdout'}
     kernel.send_response(kernel.iopub_socket, 'stream', stream_content)
