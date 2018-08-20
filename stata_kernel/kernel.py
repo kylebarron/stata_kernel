@@ -180,3 +180,45 @@ class StataKernel(Kernel):
 
     def is_complete(self, code):
         return CodeManager(code, self.sc_delimit_mode).is_complete
+
+    def do_inspect(self, code, cursor_pos, detail_level=0):
+
+        help_word = ''
+        if ' ' not in code:
+            help_word = code
+        else:
+            code = 'a sysuse auto'
+            cursor_pos = 5
+            left_space = code.rfind(' ', 0, cursor_pos)
+            right_paren = code.find('(', cursor_pos)
+            right_space = code.find(' ', cursor_pos)
+
+            begin = left_space + 1 if left_space != -1 else 0
+            end = min(i for i in [right_paren, right_space] if i != -1)
+            help_word = code[begin:end]
+
+        cm = CodeManager('man ' + help_word)
+        text_to_run, md5, text_to_exclude = cm.get_text(self.conf)
+        rc, res = self.stata.do(text_to_run, md5, text_to_exclude=text_to_exclude, display=False)
+
+        # import requests
+        # import bleach
+        # r = requests.get('https://www.stata.com/help.cgi?' + help_word)
+        # # content = {'data': {'text/html': r.text}, 'metadata': {}}
+        # # self.send_response(self.iopub_socket, 'display_data', content)
+        #
+        # msg = 'this is the inspection code:' + code
+        # msg += 'this is the inspection cursor_pos:' + str(cursor_pos)
+        content = {
+            # 'ok' if the request succeeded or 'error', with error information as in all other replies.
+            'status' : 'ok',
+
+            # found should be true if an object was found, false otherwise
+            'found' : True,
+
+            # data can be empty if nothing is found
+            'data': {'text/plain': res},
+            'metadata': {},
+        }
+        return content
+        # self.send_response(self.iopub_socket, 'display_data', content)
