@@ -113,11 +113,13 @@ class StataKernel(Kernel):
         if graph_path.endswith('.svg'):
             e = ElementTree.parse(graph_path)
             root = e.getroot()
+            with open(graph_path, 'r') as f:
+                img = f.read()
 
             content = {
                 'data': {
                     'text/plain': no_display_msg,
-                    'image/svg+xml': ElementTree.tostring(root).decode('utf-8')
+                    'image/svg+xml': img
                 },
                 'metadata': {
                     'image/svg+xml': {
