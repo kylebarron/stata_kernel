@@ -202,7 +202,7 @@ class StataSession():
         else:
             code_lines = text.split('\n')
 
-        md5 = '`' + md5 + "'"
+        md5 = '. `' + md5 + "'"
         error_re = r'^r\((\d+)\);'
         cache_dir_str = str(self.config.get('cache_dir'))
         if platform.system() == 'Windows':
