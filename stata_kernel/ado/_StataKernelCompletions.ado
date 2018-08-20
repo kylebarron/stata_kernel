@@ -1,5 +1,7 @@
 capture program drop _StataKernelCompletions
 program _StataKernelCompletions
+    local userlinesize `c(linesize)'
+    set linesize 255
     local userTrace `c(trace)'
     set trace off
     syntax [varlist]
@@ -15,4 +17,5 @@ program _StataKernelCompletions
     disp "%matrices%"
     disp `"`:all matrices'"'
     set trace `userTrace'
+    set linesize `userlinesize'
 end
