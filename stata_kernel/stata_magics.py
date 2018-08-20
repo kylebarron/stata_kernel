@@ -5,7 +5,6 @@ from argparse import ArgumentParser
 from .code_manager import CodeManager
 
 
-# NOTE(mauricio): Figure  out if passing the kernel around is a problem...
 class StataParser(ArgumentParser):
     def __init__(self, *args, kernel=None, **kwargs):
         super(StataParser, self).__init__(*args, **kwargs)
@@ -65,19 +64,20 @@ class MagicParsers():
         #######################################################################
 
         self.set = StataParser(prog='%set', kernel=kernel)
+        # self.set.add_argument(
+        #     '--permanently', dest='perm', action='store_true',
+        #     help="Store settings permanently", required=False)
         self.set.add_argument(
             '--reset', dest='reset', action='store_true',
             help="Restore default settings.", required=False)
         subparsers = self.set.add_subparsers(
             dest="setting", help=None, title="settings", description=None,
             parser_class=StataParser)
-        # dest="setting", help="kernel settings", title="settings",
-        # description="valid settings", parser_class=StataParser)
 
         self.set_completions = subparsers.add_parser(
             "completions", kernel=kernel, help="Completions")
         self.set_completions.add_argument(
-            'on', nargs=1, type=str, metavar='{on|off}',
+            'on', nargs='?', type=str, metavar='{on|off}', default=None,
             help="Turn completions on or off", choices=["on", "off"])
 
         self.set_plot = subparsers.add_parser(
@@ -92,11 +92,12 @@ class MagicParsers():
             '--height', dest='height', type=int, metavar='HEIGHT', default=None,
             help="Plot height (pixels). Default: Set by Stata.", required=False)
         self.set_plot.add_argument(
-            '--format', dest='format', type=str, metavar='HEIGHT', default=None,
-            help="Plot export format (internal; default: svg).", required=False)
+            '--format', dest='format', type=str, metavar='{svg|png|pdf|tif}',
+            default=None, choices=kernel.graph_formats, required=False,
+            help="Plot export format (internal; default: svg).")
 
         self.set_settings = list(subparsers.choices.keys())
-        self.set_completions = subparsers.add_parser(
+        self.set__all = subparsers.add_parser(
             "_all", kernel=kernel, help="all settings")
 
 
@@ -115,7 +116,7 @@ class StataMagics():
         'timeit',
         'set']
 
-    def __init__(self):
+    def __init__(self, kernel):
         self.quit_early = None
         self.status = 0
         self.any = False
@@ -124,10 +125,10 @@ class StataMagics():
         self.timeit = 0
         self.time_profile = None
         self.img_set = False
+        self.parse = MagicParsers(kernel)
 
     def magic(self, code, kernel):
-        self.__init__()
-        self.parse = MagicParsers(kernel)
+        self.__init__(kernel)
 
         if code.strip().startswith("%"):
             match = self.magic_regex.match(code.strip())
@@ -301,6 +302,16 @@ class StataMagics():
             args = vars(self.parse.set.parse_args(settings))
             if args['setting'] == 'completions':
                 on = args['on']
+                if on is None:
+                    if args['reset']:
+                        on = 'on'
+                    else:
+                        msg = 'the following arguments are required: {on|off}'
+                        self.parse.set_completions.error(msg)
+                elif args['reset']:
+                    msg = 'Cannot set values with --reset.'
+                    self.parse.set.error(msg)
+
                 kernel.completions.status = on
                 kernel.completions.on = (on == 'on')
                 print_kernel('(code completion is {0})'.format(on), kernel)
@@ -316,12 +327,13 @@ class StataMagics():
                 args.pop('reset', None)
                 kernel.conf.overrides['plot'].update(args)
             elif args['setting'] == '_all':
-                kernel.completions.status = 'on'
-                kernel.completions.on = True
-                print_kernel('(code completion is {0})'.format(on), kernel)
-                kernel.completions.refresh(kernel)
-                for k in kernel.conf.overrides['plot'].keys():
-                    kernel.conf.overrides['plot'][k] = None
+                if args['reset']:
+                    kernel.completions.status = 'on'
+                    kernel.completions.on = True
+                    print_kernel('(code completion is on)', kernel)
+                    kernel.completions.refresh(kernel)
+                    for k in kernel.conf.overrides['plot'].keys():
+                        kernel.conf.overrides['plot'][k] = None
             else:
                 self.parse.set.error('malformed %set call')
         except:

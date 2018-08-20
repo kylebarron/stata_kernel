@@ -6,6 +6,8 @@ import regex
 from .code_manager import CodeManager
 
 
+# NOTE: Add extended_fcn completions, `:<tab>
+# NOTE: Add sub-command completions for scalars and matrices?
 class CompletionsManager(object):
     def __init__(self, kernel, config):
 
@@ -16,6 +18,9 @@ class CompletionsManager(object):
         # Magic completion
         self.magic_completion = re.compile(
             r'\A%(?P<magic>\S*)\Z', flags=re.DOTALL + re.MULTILINE).match
+
+        self.set_magic_completion = re.compile(
+            r'\A%set (?P<setting>\S*)\Z', flags=re.DOTALL + re.MULTILINE).match
 
         # NOTE(mauricio): Locals have to be listed sepparately because
         # inside a Stata program they would only list the locals for
@@ -35,7 +40,7 @@ class CompletionsManager(object):
 
         # Clean line-breaks.
         self.varclean = re.compile(
-            r"(?=\s*)[\s\S]{1,2}?^>\s", flags=re.MULTILINE).sub
+            r"(?=\s*)[\r\n]{1,2}?^>\s", flags=re.MULTILINE).sub
 
         # Macth context; this is used to determine if the line starts
         # with matrix or scalar. It also matches constructs like
@@ -66,11 +71,13 @@ class CompletionsManager(object):
 
         self.suggestions = self.get_suggestions(kernel)
         self.suggestions['magics'] = kernel.magics.available_magics
+        self.suggestions['magics_set'] = kernel.magics.parse.set_settings
 
     def refresh(self, kernel):
         if kernel.completions.on:
             self.suggestions = self.get_suggestions(kernel)
             self.suggestions['magics'] = kernel.magics.available_magics
+            self.suggestions['magics_set'] = kernel.magics.parse.set_settings
 
     def get_env(self, code, rdelimit, sc_delimit_mode):
         """Returns completions environment
@@ -83,6 +90,7 @@ class CompletionsManager(object):
 
         Returns:
             env (int):
+                -2: %set magic, %set x*
                 -1: magics, %x*
                 0: varlist
                 1: locals, `x* completed with `x*'
@@ -106,9 +114,15 @@ class CompletionsManager(object):
                     scalars (if start with `): )'
         """
 
-        if self.magic_completion(code.lstrip()):
+        lcode = code.lstrip()
+        if self.magic_completion(lcode):
             pos = code.rfind("%") + 1
             env = -1
+            rcomp = ""
+            return env, pos, code[pos:], rcomp
+        elif self.set_magic_completion(lcode):
+            pos = code.rfind(" ") + 1
+            env = -2
             rcomp = ""
             return env, pos, code[pos:], rcomp
 
@@ -195,7 +209,11 @@ class CompletionsManager(object):
     def get(self, starts, env, rcomp):
         """Return environment-aware completions list.
         """
-        if env == -1:
+        if env == -2:
+            return [
+                var for var in self.suggestions['magics_set']
+                if var.startswith(starts)]
+        elif env == -1:
             return [
                 var for var in self.suggestions['magics']
                 if var.startswith(starts)]
@@ -252,7 +270,7 @@ class CompletionsManager(object):
 
             all_locals = """mata : invtokens(st_dir("local", "macro", "*")')"""
             res = '\r\n'.join(
-                self.quickdo(all_locals, kernel).split('\r\n')[1:])
+                re.split(r'[\r\n]{1,2}', self.quickdo(all_locals, kernel))[1:])
             if res.strip():
                 suggestions['locals'] = self.varlist.findall(
                     self.varclean('', res))
