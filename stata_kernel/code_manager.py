@@ -233,7 +233,7 @@ class CodeManager(object):
         gph_cnt = 'stata_kernel_graph_counter'
         g_exp = '\nnoi graph export {}'.format(cache_dir_str)
         g_exp += '/graph${' + gph_cnt + '}'
-        g_exp += '.{}, width({}) replace'.format(graph_fmt, 600 * graph_scale)
+        g_exp += '.{}, width({}) replace'.format(graph_fmt, int(600 * graph_scale))
         g_exp += '\nglobal {0} = ${0} + 1'.format(gph_cnt)
 
         lines = [x + g_exp if re.match(graph_keywords, x) else x for x in lines]
