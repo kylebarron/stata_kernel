@@ -6,10 +6,11 @@ from pygments import lex
 from .stata_lexer import StataLexer
 from .stata_lexer import CommentAndDelimitLexer
 
-
 graph_keywords = [
-    r'gr(a|ap|aph)?', r'tw(o|ow|owa|oway)?', r'sc(a|at|att|atte|atter)?',
-    r'line', r'hist(o|og|ogr|ogra|ogram)?', r'kdensity', r'lowess', r'lpoly',
+    r'gr(a|ap|aph)?' + r'(?!\s+' + r'(save|replay|print|export|dir|set|' +
+    r'des(c|cr|cri|crib|cribe)?|rename|copy|drop|close|q(u|ue|uer|uery)?))',
+    r'tw(o|ow|owa|oway)?', r'sc(a|at|att|atte|atter)?', r'line',
+    r'hist(o|og|ogr|ogra|ogram)?', r'kdensity', r'lowess', r'lpoly',
     r'tsr?line', r'symplot', r'quantile', r'qnorm', r'pnorm', r'qchi', r'pchi',
     r'qqplot', r'gladder', r'qladder', r'rvfplot', r'avplot', r'avplots',
     r'cprplot', r'acprplot', r'rvpplot', r'lvr2plot', r'ac', r'pac', r'pergram',
