@@ -1,7 +1,7 @@
 import base64
 
 from PIL import Image
-from xml.etree import ElementTree
+from xml.etree import ElementTree as ET
 from ipykernel.kernelbase import Kernel
 
 from .config import Config
@@ -111,13 +111,15 @@ class StataKernel(Kernel):
 
         no_display_msg = 'This front-end cannot display the desired image type.'
         if graph_path.endswith('.svg'):
-            e = ElementTree.parse(graph_path)
+            with open(graph_path, 'r') as f:
+                img = f.read()
+            e = ET.ElementTree(ET.fromstring(img))
             root = e.getroot()
 
             content = {
                 'data': {
                     'text/plain': no_display_msg,
-                    'image/svg+xml': ElementTree.tostring(root).decode('utf-8')
+                    'image/svg+xml': img
                 },
                 'metadata': {
                     'image/svg+xml': {
