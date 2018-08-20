@@ -147,6 +147,7 @@ class StataMagics():
         text_to_run, md5, text_to_exclude = cm.get_text(kernel.conf)
         rc, res = kernel.stata.do(text_to_run, md5, text_to_exclude=text_to_exclude, display=False)
         df = pd.read_csv(kernel.conf.get('cache_dir') / 'data.csv')
+        df.index += 1
         html = df.to_html(na_rep = '.', notebook=True)
         content = {'data': {'text/html': html}, 'metadata': {},}
         kernel.send_response(kernel.iopub_socket, 'display_data', content)
