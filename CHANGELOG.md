@@ -1,5 +1,19 @@
 # Changelog
 
+## [1.3.1] - 2018-08-13
+
+- Fix pip installation by adding CHANGELOG and requirements files to `MANIFEST.in`.
+
+## [1.3.0] - 2018-08-13
+
+- Context-aware autocompletions
+- Support for #delimit; blocks interactively
+- Better parsing for when a user-provided block is complete or not. Typing `2 + ///` will prompt for the next line.
+- Split lexer into two lexers. This is helpful to first remove comments and convert #delimit; blocks to cr-delimited blocks.
+- Fix svg aspect ratio
+- Magics for plotting, retrieving locals and globals, timing commands, seeing current delimiter.
+- Add documentation website
+
 ## [1.2.0] - 2018-08-11
 
 - Support for `if`, `else`, `else if`, `cap`, `qui`, `noi`, `program`, `input` blocks #28, #27, #30

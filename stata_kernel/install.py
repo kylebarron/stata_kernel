@@ -22,7 +22,6 @@ def install_my_kernel_spec(user=True, prefix=None):
         os.chmod(td, 0o755)  # Starts off as 700, not user readable
         with open(os.path.join(td, 'kernel.json'), 'w') as f:
             json.dump(kernel_json, f, sort_keys=True)
-        # TODO: Copy any resources
 
         print('Installing Jupyter kernel spec')
         KernelSpecManager().install_kernel_spec(
@@ -31,9 +30,12 @@ def install_my_kernel_spec(user=True, prefix=None):
 
 def install_conf():
     if platform.system() == 'Windows':
+        execution_mode = 'automation'
         stata_path = win_find_path()
     else:
-        for i in ['stata-mp', 'StataMP', 'stata-se', 'StataSE', 'stata', 'Stata']:
+        execution_mode = 'console'
+        for i in ['stata-mp', 'StataMP', 'stata-se', 'StataSE', 'stata',
+                  'Stata']:
             stata_path = which('StataMP')
             if stata_path:
                 break
@@ -63,14 +65,17 @@ def install_conf():
     # The manner in which the kernel connects to Stata. Either 'console' or
     # 'automation'. 'console' is the default because it allows multiple
     # independent sessions of Stata at the same time.
-    execution_mode = console
+    execution_mode = {}
 
     # Directory to hold temporary images and log files
     cache_directory = ~/.stata_kernel_cache
 
     # Extension and format for images
     graph_format = svg
-    """.format(stata_path))
+
+    # Scaling factor for graphs
+    graph_scale = 1
+    """.format(stata_path, execution_mode))
 
     with open(Path('~/.stata_kernel.conf').expanduser(), 'w') as f:
         f.write(conf_default)
@@ -95,6 +100,7 @@ def win_find_path():
 
     return fpath
 
+
 def mac_find_path():
     """Attempt to find Stata path on macOS when not on user's PATH
 
@@ -105,8 +111,8 @@ def mac_find_path():
     if not path.exists():
         return ''
 
-    dirs = [x for x in path.iterdir()
-            if re.search(r'Stata(SE|MP)?\.app', x.name)]
+    dirs = [
+        x for x in path.iterdir() if re.search(r'Stata(SE|MP)?\.app', x.name)]
     if not dirs:
         return ''
 
@@ -117,7 +123,7 @@ def mac_find_path():
                 dirs = name
                 break
 
-    path = dirs[0] / 'Contents'/ 'MacOS'
+    path = dirs[0] / 'Contents' / 'MacOS'
     if not path.exists():
         return ''
 
@@ -130,6 +136,7 @@ def mac_find_path():
 
     return str(binaries[0])
 
+
 def _is_root():
     try:
         return os.geteuid() == 0
@@ -140,16 +147,13 @@ def _is_root():
 def main(argv=None):
     ap = argparse.ArgumentParser()
     ap.add_argument(
-        '--user',
-        action='store_true',
+        '--user', action='store_true',
         help="Install to the per-user kernels registry. Default if not root.")
     ap.add_argument(
-        '--sys-prefix',
-        action='store_true',
+        '--sys-prefix', action='store_true',
         help="Install to sys.prefix (e.g. a virtualenv or conda env)")
     ap.add_argument(
-        '--prefix',
-        help="Install to the given prefix. "
+        '--prefix', help="Install to the given prefix. "
         "Kernelspec will be installed in {PREFIX}/share/jupyter/kernels/")
     args = ap.parse_args(argv)
 

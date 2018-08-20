@@ -23,16 +23,22 @@ extra:
 # Layout
 nav:
     - Home: 'index.md'
-    - User Guide:
-        - Installing: 'user_guide/install.md'
-        - Configuration: 'user_guide/configuration.md'
-        - Using the kernel:
-            - Jupyter Notebook: 'user_guide/usage/notebook.md'
-            - Atom: 'user_guide/usage/atom.md'
-            - Jupyter Console: 'user_guide/usage/console.md'
-        - Limitations: 'user_guide/limitations.md'
-        - Troubleshooting: 'user_guide/troubleshooting.md'
+    - Getting Started: 'getting_started.md'
+    - Using Jupyter:
+        - Introduction: 'using_jupyter/intro.md'
+        - Jupyter Notebook: 'using_jupyter/notebook.md'
+        - JupyterLab: 'using_jupyter/lab.md'
+        - Atom: 'using_jupyter/atom.md'
+        - Jupyter Console: 'using_jupyter/console.md'
+        - Jupyter QtConsole: 'using_jupyter/qtconsole.md'
+        - Using Jupyter on Remote Servers: 'using_jupyter/remote.md'
+    - Using the Stata Kernel:
+        - Introduction: 'using_stata_kernel/intro.md'
+        - Magics: 'using_stata_kernel/magics.md'
+    - Troubleshooting: 'troubleshooting.md'
     - Comparison with ipystata: 'comparison_with_ipystata.md'
+    - Addendum: 'addendum.md'
+    - License: 'license.md'
 
 
 # Theme
@@ -51,7 +57,7 @@ theme:
         code: 'Fira Code'
 
 extra_javascript:
-    - aux/helpers.js
+    - helpers/helpers.js
     - https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.4/MathJax.js?config=TeX-AMS-MML_HTMLorMML
 
 # These extensions are chosen to be a superset of Pandoc's Markdown.
