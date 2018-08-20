@@ -199,6 +199,12 @@ class CodeManager(object):
 
         text = ''.join([x[1] for x in tokens]).strip()
         lines = text.split('\n')
+
+        # Remove empty lines. This is important because there are often extra
+        # newlines from removed comments. And they can confuse the code that
+        # removes code lines from the log output.
+        lines = [x for x in lines if x.strip() != '']
+
         has_block = bool([x for x in tokens if str(x[0]) == 'Token.TextBlock'])
 
         use_include = has_block
