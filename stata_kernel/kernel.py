@@ -26,8 +26,6 @@ class StataKernel(Kernel):
 
         # Can't name this `self.config`. Conflicts with a Jupyter attribute
         self.conf = Config()
-
-        self.graphs = {}
         self.magics = StataMagics()
         self.sc_delimit_mode = False
         self.stata = StataSession(self, self.conf)

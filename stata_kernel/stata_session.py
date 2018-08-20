@@ -256,7 +256,11 @@ class StataSession():
         # easier to remove code lines later
         child.expect('\r?\n')
 
-        return rc, '\n'.join(res_list)
+        # Remove line continuation markers in output returned internally
+        res = '\n'.join(res_list)
+        res = res.replace('\n> ', '')
+
+        return rc, res
 
     def clean_log_eol(self, child, code_lines, res):
         """Clean output when expect hit a newline
