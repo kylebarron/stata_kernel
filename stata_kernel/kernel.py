@@ -26,7 +26,6 @@ class StataKernel(Kernel):
 
         # Can't name this `self.config`. Conflicts with a Jupyter attribute
         self.conf = Config()
-
         self.graphs = {}
         self.graph_formats = ["svg", "png", "pdf", "tif"]
         self.sc_delimit_mode = False

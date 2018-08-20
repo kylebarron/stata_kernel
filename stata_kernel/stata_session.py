@@ -202,7 +202,7 @@ class StataSession():
         else:
             code_lines = text.split('\n')
 
-        md5 = '`' + md5 + "'"
+        md5 = '. `' + md5 + "'"
         error_re = r'^r\((\d+)\);'
         cache_dir_str = str(self.config.get('cache_dir'))
         if platform.system() == 'Windows':
@@ -239,15 +239,15 @@ class StataSession():
                 self.send_break(child=child)
                 break
             if match_index == 4:
-                res_list.append(res)
-                if display:
-                    code_lines, res = self.clean_log_eol(child, code_lines, res)
-                    if res:
-                        res = ansi_escape.sub('', res)
-                        self.kernel.send_response(
-                            self.kernel.iopub_socket, 'stream', {
-                                'text': res + '\n',
-                                'name': 'stdout'})
+                code_lines, res = self.clean_log_eol(child, code_lines, res)
+                if res:
+                    res_list.append(res)
+                if display and res:
+                    res = ansi_escape.sub('', res)
+                    self.kernel.send_response(
+                        self.kernel.iopub_socket, 'stream', {
+                            'text': res + '\n',
+                            'name': 'stdout'})
                 continue
             if match_index == 5:
                 sleep(0.05)
@@ -256,7 +256,11 @@ class StataSession():
         # easier to remove code lines later
         child.expect('\r?\n')
 
-        return rc, '\n'.join(res_list)
+        # Remove line continuation markers in output returned internally
+        res = '\n'.join(res_list)
+        res = res.replace('\n> ', '')
+
+        return rc, res
 
     def clean_log_eol(self, child, code_lines, res):
         """Clean output when expect hit a newline
