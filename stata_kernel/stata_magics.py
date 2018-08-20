@@ -1,5 +1,6 @@
 import sys
 import re
+import pandas as pd
 from argparse import ArgumentParser
 from .code_manager import CodeManager
 
@@ -38,6 +39,8 @@ class MagicParsers():
             help="Truncate macro values to first line printed by Stata",
             required=False)
 
+        self.browse = StataParser(prog='%browse', kernel=kernel)
+
         self.time = StataParser(prog='%time', kernel=kernel)
         self.time.add_argument(
             'code', nargs='*', type=str, metavar='CODE', help="Code to run")
@@ -63,6 +66,7 @@ class StataMagics():
         r'\A%(?P<magic>.+?)(?P<code>\s+.*)?\Z', flags=re.DOTALL + re.MULTILINE)
 
     available_magics = [
+        'browse',
         # 'exit',
         # 'restart',
         'locals',
@@ -128,6 +132,26 @@ class StataMagics():
                 fmt = "\t{{0:{0}}} {{1}}".format(lens)
                 for t, l in tprint:
                     print_kernel(fmt.format(t, l), kernel)
+
+    def magic_browse(self, code, kernel):
+        cmd = """\
+            if _N <= 200 {{
+                export delim `"{0}/data.csv"', replace datafmt
+            }}
+            else {{
+                export delim `"{0}/data.csv"' in 1/200, replace datafmt
+
+            }}
+            """.format(kernel.conf.get('cache_dir'))
+        cm = CodeManager(cmd)
+        text_to_run, md5, text_to_exclude = cm.get_text(kernel.conf)
+        rc, res = kernel.stata.do(text_to_run, md5, text_to_exclude=text_to_exclude, display=False)
+        df = pd.read_csv(kernel.conf.get('cache_dir') / 'data.csv')
+        html = df.to_html(na_rep = '.', notebook=True)
+        content = {'data': {'text/html': html}, 'metadata': {},}
+        kernel.send_response(kernel.iopub_socket, 'display_data', content)
+        self.status = -1
+        return ''
 
     def magic_globals(self, code, kernel, local=False):
         gregex = {}
