@@ -3,7 +3,6 @@ import re
 import urllib
 import pandas as pd
 
-from pathlib import Path
 from argparse import ArgumentParser
 from bs4 import BeautifulSoup as bs
 from .code_manager import CodeManager
@@ -160,7 +159,7 @@ class StataMagics():
         df = pd.read_csv(kernel.conf.get('cache_dir') / 'data.csv')
         df.index += 1
         html = df.to_html(na_rep = '.', notebook=True)
-        content = {'data': {'text/html': html}, 'metadata': {},}
+        content = {'data': {'text/html': html}, 'metadata': {}}
         kernel.send_response(kernel.iopub_socket, 'display_data', content)
         self.status = -1
         return ''
@@ -311,7 +310,7 @@ class StataMagics():
             with open(self.csshelp_default, 'r') as default:
                 css.string = default.read()
 
-            resp = {'data': {'text/html': str(soup)}, 'metadata': {},}
+            resp = {'data': {'text/html': str(soup)}, 'metadata': {}}
             kernel.send_response(kernel.iopub_socket, 'display_data', resp)
         except urllib.error.HTTPError as e:
             print_kernel("Failed to fetch HTML help.\r\n" + e.code, kernel)
@@ -334,6 +333,7 @@ class StataMagics():
         self.status = -1
         print_kernel("Magic restart has not been implemented.", kernel)
         return code
+
 
 def print_kernel(msg, kernel):
     msg = re.sub(r'$', r'\r\n', msg, flags=re.MULTILINE)
