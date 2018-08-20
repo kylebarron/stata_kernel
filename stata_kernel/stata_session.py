@@ -133,7 +133,7 @@ class StataSession():
         # overwrite an existing log file, since it's still open.
         log_counter = 0
         rc = 1
-        while (rc) & (log_counter < 15):
+        while (rc) and (log_counter < 15):
             log_path = self.config.get('cache_dir') / 'log{}.log'.format(log_counter)
             cmd = 'log using `"{}"\', replace text name(stata_kernel_log)'.format(log_path)
             rc = self.automate('DoCommand', cmd)
