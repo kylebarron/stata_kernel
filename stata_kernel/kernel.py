@@ -15,7 +15,6 @@ class StataKernel(Kernel):
     implementation = 'stata_kernel'
     implementation_version = '1.3.1'
     language = 'stata'
-    language_version = '15.1'
     language_info = {
         'name': 'stata',
         'mimetype': 'text/x-stata',
@@ -31,6 +30,7 @@ class StataKernel(Kernel):
         self.stata = StataSession(self, self.conf)
         self.completions = CompletionsManager(self, self.conf)
         self.banner = self.stata.banner
+        self.language_version = self.stata.stata_version
 
     def do_execute(
             self, code, silent, store_history=True, user_expressions=None,

@@ -70,6 +70,9 @@ class StataSession():
             `finished_init_cmd'
             """.format(adodir, os.getcwd(), self.linesize).rstrip()
         self.do(dedent(init_cmd), md5='finished_init_cmd', display=False)
+        rc, res = self.do(
+            'di "`c(stata_version)\'"\n`done\'', md5='done', display=False)
+        self.stata_version = res
 
     def init_windows(self):
         """Start Stata on Windows
