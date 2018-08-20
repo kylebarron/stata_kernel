@@ -19,4 +19,4 @@ after_success:
   - git remote add gh-token "https://${GITHUB_TOKEN}@github.com/kylebarron/stata_kernel.git";
   - git fetch gh-token && git fetch gh-token gh-pages:gh-pages;
   - pip install -IU -r requirements_dev.txt;
-  - mkdocs gh-deploy -v --clean --remote-name gh-token;
+  - cd docs && mkdocs gh-deploy -v --clean --remote-name gh-token;
