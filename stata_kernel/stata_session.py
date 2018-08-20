@@ -239,15 +239,15 @@ class StataSession():
                 self.send_break(child=child)
                 break
             if match_index == 4:
-                res_list.append(res)
-                if display:
-                    code_lines, res = self.clean_log_eol(child, code_lines, res)
-                    if res:
-                        res = ansi_escape.sub('', res)
-                        self.kernel.send_response(
-                            self.kernel.iopub_socket, 'stream', {
-                                'text': res + '\n',
-                                'name': 'stdout'})
+                code_lines, res = self.clean_log_eol(child, code_lines, res)
+                if res:
+                    res_list.append(res)
+                if display and res:
+                    res = ansi_escape.sub('', res)
+                    self.kernel.send_response(
+                        self.kernel.iopub_socket, 'stream', {
+                            'text': res + '\n',
+                            'name': 'stdout'})
                 continue
             if match_index == 5:
                 sleep(0.05)
