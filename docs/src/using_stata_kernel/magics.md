@@ -2,7 +2,20 @@
 
 **Magics** are programs provided by `stata_kernel` that enhance the experience of working with Stata in Jupyter.
 
-## `%plot`
+All magics are special commands that start with `%`. They must be the first word of the cell or selection, otherwise they won't be intercepted and will be sent to Stata.
+
+## `%browse`
+
+**Interactively view your dataset**
+
+For now, this displays the first 200 rows of your data. This will be expanded in the future to allow for a `varlist`, `if`, and `in` options.
+
+| | |
+|:-------------------------:|:-------------------------:|
+| **Atom** | ![Atom](../img/browse_atom.png) |
+| **Jupyter Notebook** |  ![Jupyter Notebook](../img/browse_notebook.png) |
+
+<!-- ## `%plot`
 
 **Force Plot to Show**
 
@@ -29,7 +42,7 @@ usage: %plot [-h] [--scale SCALE] [--width WIDTH] [--height HEIGHT] [--set]
 - `--scale`: Scale default height and width. Defaults to 1.
 - `--width`: Plot width in pixels. Defaults to 600px.
 - `--height`: Plot height in pixels. Defaults to 400px.
-- `--set`: Set plot width and height for the rest of the session.
+- `--set`: Set plot width and height for the rest of the session. -->
 
 ## `%locals`
 
@@ -39,7 +52,7 @@ usage: %plot [-h] [--scale SCALE] [--width WIDTH] [--height HEIGHT] [--set]
 
 **List Global Macros**
 
-## `%time`
+<!-- ## `%time`
 
 **Time Execution of a Command**
 
@@ -47,4 +60,4 @@ This timing is currently most exact on macOS and Linux using the console method 
 
 ```stata
 %time sleep 100
-```
+``` -->

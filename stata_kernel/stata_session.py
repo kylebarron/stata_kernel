@@ -128,9 +128,18 @@ class StataSession():
         """
 
         self.automate('DoCommand', 'cap log close stata_kernel_log')
-        log_path = self.config.get('cache_dir') / 'log.log'
-        cmd = 'log using `"{}"\', replace text name(stata_kernel_log)'.format(log_path)
-        rc = self.automate('DoCommand', cmd)
+
+        # There can be several different Stata GUIs open at once, and you can't
+        # overwrite an existing log file, since it's still open.
+        log_counter = 0
+        rc = 1
+        while (rc) and (log_counter < 15):
+            log_path = self.config.get('cache_dir') / 'log{}.log'.format(log_counter)
+            cmd = 'log using `"{}"\', replace text name(stata_kernel_log)'.format(log_path)
+            rc = self.automate('DoCommand', cmd)
+            log_counter += 1
+            sleep(0.1)
+
         if rc:
             return rc
 
