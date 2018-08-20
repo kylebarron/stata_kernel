@@ -6,3 +6,17 @@ install:
     - pip install -r requirements.txt -r requirements_dev.txt
 script:
     - python -m pytest tests/
+# deploy:
+#     provider: pages
+#     skip-cleanup: true
+#     github-token: $GITHUB_TOKEN
+#     keep-history: true
+#     target-branch: gh-pages
+#     committer-from-gh: true
+after_success:
+  - git config user.name "Kyle Barron";
+  - git config user.email "barronk@mit.edu";
+  - git remote add gh-token "https://${GITHUB_TOKEN}@github.com/kylebarron/stata_kernel.git";
+  - git fetch gh-token && git fetch gh-token gh-pages:gh-pages;
+  - pip install -IU -r requirements_dev.txt;
+  - cd docs && mkdocs gh-deploy -v --clean --remote-name gh-token -b gh-pages --force;
