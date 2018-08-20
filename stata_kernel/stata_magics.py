@@ -40,6 +40,14 @@ class MagicParsers():
             required=False)
 
         self.browse = StataParser(prog='%browse', kernel=kernel)
+        self.browse.add_argument(
+            'varlist', nargs='*', type=str, metavar='VARLIST', help='Varlist to browse')
+        self.browse.add_argument(
+            '--if', dest='if', type=str,
+            help="if clause passed to browse", required=False)
+        self.browse.add_argument(
+            '--in', dest='in', type=str,
+            help="if clause passed to browse", required=False)
 
         self.time = StataParser(prog='%time', kernel=kernel)
         self.time.add_argument(
@@ -134,15 +142,13 @@ class StataMagics():
                     print_kernel(fmt.format(t, l), kernel)
 
     def magic_browse(self, code, kernel):
-        cmd = """\
-            if _N <= 200 {{
-                export delim `"{0}/data.csv"', replace datafmt
-            }}
-            else {{
-                export delim `"{0}/data.csv"' in 1/200, replace datafmt
+        args = vars(self.parse.browse.parse_args(code.split(' ')))
+        if not args['in']:
+            args['in'] = '1/200'
 
-            }}
-            """.format(kernel.conf.get('cache_dir'))
+        cmd = """\
+        _StataKernelExportDelim {} {} {} using `"{}/data.csv"', replace datafmt
+        """.format(args['varlist'], args['if'], args['in'], kernel.conf.get('cache_dir'))
         cm = CodeManager(cmd)
         text_to_run, md5, text_to_exclude = cm.get_text(kernel.conf)
         rc, res = kernel.stata.do(text_to_run, md5, text_to_exclude=text_to_exclude, display=False)
