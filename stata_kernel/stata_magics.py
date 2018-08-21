@@ -113,7 +113,7 @@ class MagicParsers():
             '--format', dest='format', type=str, default=None,
             choices=kernel.graph_formats, required=False,
             metavar='{{{0}}}'.format('|'.join(kernel.graph_formats)),
-            help="Graph export format (internal; default: svg).")
+            help="Internal graph display format (default: svg).")
 
         self.set_settings = list(subparsers.choices.keys())
         self.set__all = subparsers.add_parser(
