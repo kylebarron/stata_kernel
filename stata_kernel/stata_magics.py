@@ -1,8 +1,12 @@
 import sys
 import re
+import urllib
 import pandas as pd
+
 from argparse import ArgumentParser
+from bs4 import BeautifulSoup as bs
 from .code_manager import CodeManager
+from pkg_resources import resource_filename
 
 
 class StataParser(ArgumentParser):
@@ -102,11 +106,15 @@ class MagicParsers():
 
 
 class StataMagics():
+    html_base = "https://www.stata.com"
+    html_help = urllib.parse.urljoin(html_base, "help.cgi?{}")
+
     magic_regex = re.compile(
         r'\A%(?P<magic>.+?)(?P<code>\s+.*)?\Z', flags=re.DOTALL + re.MULTILINE)
 
     available_magics = [
         'browse',
+        'help',
         # 'exit',
         # 'restart',
         'locals',
@@ -115,6 +123,9 @@ class StataMagics():
         'time',
         'timeit',
         'set']
+
+    csshelp_default = resource_filename(
+        'stata_kernel', 'css/_StataKernelHelpDefault.css')
 
     def __init__(self, kernel):
         self.quit_early = None
@@ -190,7 +201,7 @@ class StataMagics():
         df = pd.read_csv(kernel.conf.get('cache_dir') / 'data.csv')
         df.index += 1
         html = df.to_html(na_rep = '.', notebook=True)
-        content = {'data': {'text/html': html}, 'metadata': {},}
+        content = {'data': {'text/html': html}, 'metadata': {}}
         kernel.send_response(kernel.iopub_socket, 'display_data', content)
         self.status = -1
         return ''
@@ -362,6 +373,56 @@ class StataMagics():
         self.graphs = 0
         print_kernel("Magic timeit has not been implemented.", kernel)
         return code
+
+    def magic_help(self, code, kernel):
+        self.status = -1
+        self.graphs = 0
+        cmd = code.strip().replace(" ", "_")
+        try:
+            reply = urllib.request.urlopen(self.html_help.format(cmd))
+            html = reply.read().decode("utf-8")
+            soup = bs(html, 'html.parser')
+
+            # Set root for links to https://ww.stata.com
+            for a in soup.find_all('a', href = True):
+                href = a.get('href')
+                relative = href.find(cmd + '#')
+                if relative >= 0:
+                    hrelative = href.find('#')
+                    a['href'] = href[hrelative:]
+                elif not href.startswith('http'):
+                    a['href'] = urllib.parse.urljoin(self.html_base, href)
+
+            # Remove header 'Stata 15 help for ...'
+            soup.find('h2').decompose()
+
+            # Remove Stata help menu
+            soup.find('div', id = 'menu').decompose()
+
+            # Remove Copyright notice
+            soup.find('a', text = 'Copyright').find_parent("table").decompose()
+
+            # Remove last hrule
+            soup.find_all('hr')[-1].decompose()
+
+            # Set all the backgrounds to transparent
+            for color in ['#ffffff', '#FFFFFF']:
+                for bg in ['bgcolor', 'background', 'background-color']:
+                    for tag in soup.find_all(attrs = {bg: color}):
+                        if tag.get(bg):
+                            tag[bg] = 'transparent'
+
+            # Set html
+            css = soup.find('style', {'type': 'text/css'})
+            with open(self.csshelp_default, 'r') as default:
+                css.string = default.read()
+
+            resp = {'data': {'text/html': str(soup)}, 'metadata': {}}
+            kernel.send_response(kernel.iopub_socket, 'display_data', resp)
+        except urllib.error.HTTPError as e:
+            print_kernel("Failed to fetch HTML help.\r\n" + e.code, kernel)
+
+        return ''
 
     def magic_exit(self, code, kernel):
         self.status = -1

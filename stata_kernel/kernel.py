@@ -1,4 +1,5 @@
 import base64
+import platform
 
 from PIL import Image
 from xml.etree import ElementTree as ET
@@ -15,7 +16,6 @@ class StataKernel(Kernel):
     implementation = 'stata_kernel'
     implementation_version = '1.3.1'
     language = 'stata'
-    language_version = '15.1'
     language_info = {
         'name': 'stata',
         'mimetype': 'text/x-stata',
@@ -33,6 +33,7 @@ class StataKernel(Kernel):
         self.stata = StataSession(self, self.conf)
         self.completions = CompletionsManager(self, self.conf)
         self.banner = self.stata.banner
+        self.language_version = self.stata.stata_version
 
     def do_execute(
             self, code, silent, store_history=True, user_expressions=None,
@@ -131,11 +132,17 @@ class StataKernel(Kernel):
             self.send_response(self.iopub_socket, 'display_data', content)
         elif graph_path.endswith('.png'):
             im = Image.open(graph_path)
+            width = im.size[0]
+            height = im.size[1]
+
+            # On my Mac, the width is double what I told Stata to export. This
+            # is not true on my Windows test VM
+            if platform.system() == 'Darwin':
+                width /= 2
+                height /= 2
             with open(graph_path, 'rb') as f:
                 img = base64.b64encode(f.read()).decode('utf-8')
 
-            # TODO: On my Mac, the width is double what I told Stata to export
-            # Check whether this is consistent on other platforms.
             content = {
                 'data': {
                     'text/plain': no_display_msg,
@@ -143,8 +150,8 @@ class StataKernel(Kernel):
                 },
                 'metadata': {
                     'image/png': {
-                        'width': im.size[0] / 2,
-                        'height': im.size[1] / 2
+                        'width': width,
+                        'height': height
                     }
                 }
             }
