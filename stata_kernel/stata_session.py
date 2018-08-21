@@ -215,8 +215,7 @@ class StataSession():
             cache_dir_str = re.sub(r'\\', '/', cache_dir_str)
 
         g_exp = r'\(file ({}'.format(cache_dir_str)
-        g_exp += r'/graph\d+\.(svg|pdf|tif|png)) written in '
-        g_exp += r'(?i:(svg|pdf|tif|png)) format\)'
+        g_exp += r'/graph\d+\.(svg|png)) written in (?i:(svg|png)) format\)'
 
         more = r'^--more--'
         eol = r'\r?\n'
