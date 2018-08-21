@@ -218,15 +218,15 @@ class CodeManager(object):
             use_include = True
 
         # Insert `graph export`
-        over_fmt = config.overrides['plot']['format']
-        over_scale = config.overrides['plot']['scale']
-        over_width = config.overrides['plot']['width']
+        graph_fmt = config.get('graph_format')
+        graph_scale = config.get('graph_scale')
+        graph_width = config.get('graph_width')
+        if graph_width is None:
+            graph_width = 600
+        else:
+            graph_width = int(graph_width)
 
-        graph_fmt = over_fmt if over_fmt else config.get('graph_format')
-        graph_scale = over_scale if over_scale else config.get('graph_scale')
-        graph_width = over_width if over_width else 600
-        graph_height = config.overrides['plot']['height']
-
+        graph_height = config.get('graph_height')
         cache_dir = config.get('cache_dir')
         if graph_scale is None:
             graph_scale = 1
@@ -236,6 +236,7 @@ class CodeManager(object):
 
         dim_str = " width({})".format(int(graph_width * graph_scale))
         if graph_height:
+            graph_height = int(graph_height)
             dim_str += " height({})".format(int(graph_height * graph_scale))
 
         cache_dir_str = str(cache_dir)

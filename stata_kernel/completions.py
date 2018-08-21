@@ -10,10 +10,7 @@ from .code_manager import CodeManager
 # NOTE: Add sub-command completions for scalars and matrices?
 class CompletionsManager(object):
     def __init__(self, kernel, config):
-
         self.config = config
-        self.status = 'on'
-        self.on = True
 
         # Magic completion
         self.magic_completion = re.compile(
@@ -74,10 +71,9 @@ class CompletionsManager(object):
         self.suggestions['magics_set'] = kernel.magics.parse.set_settings
 
     def refresh(self, kernel):
-        if kernel.completions.on:
-            self.suggestions = self.get_suggestions(kernel)
-            self.suggestions['magics'] = kernel.magics.available_magics
-            self.suggestions['magics_set'] = kernel.magics.parse.set_settings
+        self.suggestions = self.get_suggestions(kernel)
+        self.suggestions['magics'] = kernel.magics.available_magics
+        self.suggestions['magics_set'] = kernel.magics.parse.set_settings
 
     def get_env(self, code, rdelimit, sc_delimit_mode):
         """Returns completions environment
@@ -270,7 +266,7 @@ class CompletionsManager(object):
 
             all_locals = """mata : invtokens(st_dir("local", "macro", "*")')"""
             res = '\r\n'.join(
-                re.split(r'[\r\n]{1,2}', self.quickdo(all_locals, kernel))[1:])
+                re.split(r'[\r\n]{1,2}', self.quickdo(all_locals, kernel)))
             if res.strip():
                 suggestions['locals'] = self.varlist.findall(
                     self.varclean('', res))

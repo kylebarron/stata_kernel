@@ -68,21 +68,15 @@ class MagicParsers():
         #######################################################################
 
         self.set = StataParser(prog='%set', kernel=kernel)
-        # self.set.add_argument(
-        #     '--permanently', dest='perm', action='store_true',
-        #     help="Store settings permanently", required=False)
+        self.set.add_argument(
+            '--permanently', dest='perm', action='store_true',
+            help="Store settings permanently", required=False)
         self.set.add_argument(
             '--reset', dest='reset', action='store_true',
             help="Restore default settings.", required=False)
         subparsers = self.set.add_subparsers(
             dest="setting", help=None, title="settings", description=None,
             parser_class=StataParser)
-
-        self.set_completions = subparsers.add_parser(
-            "completions", kernel=kernel, help="Completions")
-        self.set_completions.add_argument(
-            'on', nargs='?', type=str, metavar='{on|off}', default=None,
-            help="Turn completions on or off", choices=["on", "off"])
 
         self.set_plot = subparsers.add_parser(
             "plot", kernel=kernel, help="Plot settings")
@@ -96,8 +90,9 @@ class MagicParsers():
             '--height', dest='height', type=int, metavar='HEIGHT', default=None,
             help="Plot height (pixels). Default: Set by Stata.", required=False)
         self.set_plot.add_argument(
-            '--format', dest='format', type=str, metavar='{svg|png|pdf|tif}',
-            default=None, choices=kernel.graph_formats, required=False,
+            '--format', dest='format', type=str, default=None,
+            choices=kernel.graph_formats, required=False,
+            metavar='{{{0}}}'.format('|'.join(kernel.graph_formats)),
             help="Plot export format (internal; default: svg).")
 
         self.set_settings = list(subparsers.choices.keys())
@@ -311,40 +306,40 @@ class StataMagics():
         try:
             settings = code.strip().split(' ')
             args = vars(self.parse.set.parse_args(settings))
-            if args['setting'] == 'completions':
-                on = args['on']
-                if on is None:
-                    if args['reset']:
-                        on = 'on'
-                    else:
-                        msg = 'the following arguments are required: {on|off}'
-                        self.parse.set_completions.error(msg)
-                elif args['reset']:
-                    msg = 'Cannot set values with --reset.'
-                    self.parse.set.error(msg)
+            perm = args['perm']
+            reset = args['reset']
+            setting = args['setting']
+            args.pop('reset', None)
+            args.pop('perm', None)
+            args.pop('setting', None)
 
-                kernel.completions.status = on
-                kernel.completions.on = (on == 'on')
-                print_kernel('(code completion is {0})'.format(on), kernel)
-                kernel.completions.refresh(kernel)
-            elif args['setting'] == 'plot':
-                args.pop('setting', None)
-                if args['reset']:
+            if setting == 'plot':
+                if reset:
                     for k, v in args.items():
-                        if (k != 'reset') and (v is not None):
+                        if v is not None:
                             msg = 'Cannot set values with --reset.'
                             self.parse.set.error(msg)
 
-                args.pop('reset', None)
-                kernel.conf.overrides['plot'].update(args)
-            elif args['setting'] == '_all':
-                if args['reset']:
-                    kernel.completions.status = 'on'
-                    kernel.completions.on = True
-                    print_kernel('(code completion is on)', kernel)
-                    kernel.completions.refresh(kernel)
-                    for k in kernel.conf.overrides['plot'].keys():
-                        kernel.conf.overrides['plot'][k] = None
+                    # reset graph settings
+                    kernel.conf.set('graph_format', 'svg', permanent=perm)
+                    kernel.conf.set('graph_scale', '1', permanent=perm)
+                    kernel.conf._remove_unsafe('graph_width', permanent=perm)
+                    kernel.conf._remove_unsafe('graph_height', permanent=perm)
+                else:
+                    for k, v in args.items():
+                        if v is not None:
+                            if k in ['width', 'height', 'scale'] and v <= 0:
+                                msg = '{0} should be positive; value: {1}'
+                                self.parse.set_plot.error(msg.format(k, v))
+
+                            kernel.conf.set('graph_' + k, v, permanent=perm)
+            elif setting == '_all':
+                if reset:
+                    # reset graph settings
+                    kernel.conf.set('graph_format', 'svg', permanent=perm)
+                    kernel.conf.set('graph_scale', '1', permanent=perm)
+                    kernel.conf._remove_unsafe('graph_width', permanent=perm)
+                    kernel.conf._remove_unsafe('graph_height', permanent=perm)
             else:
                 self.parse.set.error('malformed %set call')
         except:

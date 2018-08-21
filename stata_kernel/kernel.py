@@ -26,8 +26,7 @@ class StataKernel(Kernel):
 
         # Can't name this `self.config`. Conflicts with a Jupyter attribute
         self.conf = Config()
-        self.graphs = {}
-        self.graph_formats = ["svg", "png", "pdf", "tif"]
+        self.graph_formats = ["svg", "png"]
         self.sc_delimit_mode = False
         self.magics = StataMagics(self)
         self.stata = StataSession(self, self.conf)
@@ -177,22 +176,15 @@ class StataKernel(Kernel):
     def do_complete(self, code, cursor_pos):
         """Provide context-aware suggestions
         """
-        if self.completions.on:
-            env, pos, chunk, rcomp = self.completions.get_env(
-                code[:cursor_pos], code[cursor_pos:(cursor_pos + 2)],
-                self.sc_delimit_mode)
+        env, pos, chunk, rcomp = self.completions.get_env(
+            code[:cursor_pos], code[cursor_pos:(cursor_pos + 2)],
+            self.sc_delimit_mode)
 
-            return {
-                'status': 'ok',
-                'cursor_start': pos,
-                'cursor_end': cursor_pos,
-                'matches': self.completions.get(chunk, env, rcomp)}
-        else:
-            return {
-                'status': 'ok',
-                'cursor_start': cursor_pos,
-                'cursor_end': cursor_pos,
-                'matches': []}
+        return {
+            'status': 'ok',
+            'cursor_start': pos,
+            'cursor_end': cursor_pos,
+            'matches': self.completions.get(chunk, env, rcomp)}
 
     def is_complete(self, code):
         return CodeManager(code, self.sc_delimit_mode).is_complete

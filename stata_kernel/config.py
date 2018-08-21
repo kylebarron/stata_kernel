@@ -25,17 +25,6 @@ class Config(object):
         if not self.get('stata_path'):
             self.raise_config_error('stata_path')
 
-        # Local settings via %set will override ~/.stata_kernel.conf
-        # where applicable.
-        self.overrides = {
-            'plot': {
-                'format': None,
-                'scale': None,
-                'width': None,
-                'height': None
-            }
-        }
-
     def get(self, key, backup=None):
         return self.env.get(key, backup)
 
@@ -49,6 +38,9 @@ class Config(object):
         if permanent:
             if key.startswith('cache_dir'):
                 key = 'cache_directory'
+                val = str(val)
+
+            if key.startswith('graph_'):
                 val = str(val)
 
             self.config.set('stata_kernel', key, val)
@@ -77,3 +69,10 @@ class Config(object):
         https://kylebarron.github.io/stata_kernel/user_guide/configuration/
         """.format(option)
         raise ValueError(dedent(msg))
+
+    def _remove_unsafe(self, key, permanent=False):
+        self.env.pop(key, None)
+        if permanent:
+            self.config.remove_option(option=key, section='stata_kernel')
+            with self.config_path.open('w') as f:
+                self.config.write(f)
