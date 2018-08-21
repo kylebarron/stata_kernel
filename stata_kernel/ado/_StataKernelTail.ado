@@ -46,6 +46,6 @@ program _StataKernelTail
     }
 
     qui export delimited `index' `varlist' `using' `ifin', replace `options'
-    list `varlist' `ifin', `options'
+    list `varlist' `ifin'
     if ( "`if'" == "" ) disp _N
 end

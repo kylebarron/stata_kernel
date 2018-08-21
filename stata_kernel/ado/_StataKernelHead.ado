@@ -45,5 +45,5 @@ program _StataKernelHead
     }
 
     qui export delimited `index' `varlist' `using' `ifin', replace `options'
-    list `varlist' `ifin', `options'
+    list `varlist' `ifin'
 end
