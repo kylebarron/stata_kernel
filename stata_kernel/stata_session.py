@@ -291,8 +291,11 @@ class StataSession():
             - List of code lines not yet matched in output after this
             - Result to be displayed
         """
+        cache_dir_str = str(self.config.get('cache_dir'))
+        if platform.system() == 'Windows':
+            cache_dir_str = re.sub(r'\\', '/', cache_dir_str)
         regex = r'^\(note: file {}/graph\d+\.(svg|png) not found\)'.format(
-            self.config.get('cache_dir'))
+            cache_dir_str)
         if re.search(regex, res):
             return code_lines, None
 
