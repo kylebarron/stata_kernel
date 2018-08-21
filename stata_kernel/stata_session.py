@@ -73,9 +73,9 @@ class StataSession():
         rc, res = self.do(
             'di "`c(stata_version)\'"\n`done\'', md5='done', display=False)
         self.stata_version = res
-        if (platform.system() == 'Windows') and (int(self.stata_version[:2]) <
-                                                 15):
-            self.config.set('graph_format', 'png', permanent=True)
+        # if (platform.system() == 'Windows') and (int(self.stata_version[:2]) <
+        #                                          15):
+        #     self.config.set('graph_format', 'png', permanent=True)
 
     def init_windows(self):
         """Start Stata on Windows
