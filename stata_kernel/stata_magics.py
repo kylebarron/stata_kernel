@@ -274,6 +274,8 @@ class StataMagics():
     def magic_help(self, code, kernel):
         self.status = -1
         self.graphs = 0
+        if not code.strip():
+            return ''
         cmd = code.strip().replace(" ", "_")
         try:
             reply = urllib.request.urlopen(self.html_help.format(cmd))
