@@ -18,24 +18,28 @@ is the bridge that interactively connects Stata to all the elements in the ecosy
 - **Hydrogen** is a package for the Atom text editor that connects with Jupyter kernels to display results interactively in your text editor.
 - Enhanced remote work. You can set up Jupyter to run computations remotely but to show results locally, vastly enhancing productivity compared to working with the Stata console through a command line.
 
-
-Atom             |  Jupyter Notebook
-:-------------------------:|:-------------------------:
-![Atom](img/atom.png)    |  ![Jupyter Notebook](img/jupyter_notebook.png)
-
-## Features
-
-`stata_kernel` is undergoing active development, and not all of the features have been completed. You may find bugs in the program still. If you do, please [submit a bug report](https://github.com/kylebarron/stata_kernel/issues/new?template=bug_report.md).
+## `stata_kernel` Features
 
 - [x] Supports Windows, macOS, and Linux.
-- [x] Works with Jupyter Notebook and Atom's Hydrogen package
 - [x] Use any type of comments in your code, not just `*`.
-- [x] Display graphs
-- [x] Work with a remote session of Stata
-- [x] Receive results as they appear, not after the entire command finishes.
-- [x] Special shorthand "magics" to aid with browsing data and timing code.
 - [x] Autocompletions as you type based on the variables, macros, and return objects currently in memory.
+- [x] Display graphs.
+- [x] Receive results as they appear, not after the entire command finishes.
+- [x] [Pull up interactive help files within the kernel.](using_stata_kernel/magics.md#help)
+- [x] [Browse data interactively](using_stata_kernel/magics.md#browse)
+- [x] [`#delimit ;` interactive support.](using_stata_kernel/magics.md#delimit)
+- [x] Work with a remote session of Stata
 - [ ] Mata interactive support
-- [x] `#delimit ;` interactive support.
 - [ ] Cross-session history file
-- [ ] Pull up help files within the kernel.
+
+If you find bugs, please [submit a bug report here](https://github.com/kylebarron/stata_kernel/issues/new?template=bug_report.md).
+
+## Screenshots
+
+**Jupyter Notebook**
+
+![Jupyter Notebook](img/jupyter_notebook.png)
+
+**Atom**
+
+![Atom](img/atom.png)
