@@ -2,8 +2,8 @@ import sys
 import re
 import urllib
 import pandas as pd
+from argparse import ArgumentParser, SUPPRESS
 
-from argparse import ArgumentParser
 from bs4 import BeautifulSoup as bs
 from .code_manager import CodeManager
 from pkg_resources import resource_filename
@@ -61,6 +61,26 @@ class MagicParsers():
             '-n', dest='n', type=int, metavar='N', default=None,
             help="Execute statement N times per loop.", required=False)
 
+        self.help = StataParser(
+            prog='%help', kernel=kernel, description="Display HTML help.",
+            usage='%(prog)s [-h] command_or_topic_name')
+        self.help.add_argument(
+            'command_or_topic_name', nargs='+', type=str, help=SUPPRESS)
+
+        self.head = StataParser(
+            prog='%head', kernel=kernel,
+            usage='%(prog)s [-h] [N] [varlist] [if]',
+            description="Display the first N rows of the dataset in memory.")
+        self.head.add_argument(
+            'code', nargs='*', type=str, help=SUPPRESS)
+
+        self.tail = StataParser(
+            prog='%tail', kernel=kernel,
+            usage='%(prog)s [-h] [N] [varlist] [if]',
+            description="Display the last N rows of the dataset in memory.")
+        self.tail.add_argument(
+            'code', nargs='*', type=str, help=SUPPRESS)
+
         #######################################################################
         #                                                                     #
         #                             %set magic                              #
@@ -78,22 +98,22 @@ class MagicParsers():
             dest="setting", help=None, title="settings", description=None,
             parser_class=StataParser)
 
-        self.set_plot = subparsers.add_parser(
-            "plot", kernel=kernel, help="Plot settings")
-        self.set_plot.add_argument(
+        self.set_graph = subparsers.add_parser(
+            "graph", kernel=kernel, help="Graph settings")
+        self.set_graph.add_argument(
             '--scale', dest='scale', type=float, metavar='SCALE', default=None,
             help="Scale width and height. Default: 1", required=False)
-        self.set_plot.add_argument(
+        self.set_graph.add_argument(
             '--width', dest='width', type=int, metavar='WIDTH', default=None,
-            help="Plot width (pixels). Default: 600", required=False)
-        self.set_plot.add_argument(
+            help="Graph width (pixels). Default: 600", required=False)
+        self.set_graph.add_argument(
             '--height', dest='height', type=int, metavar='HEIGHT', default=None,
-            help="Plot height (pixels). Default: Set by Stata.", required=False)
-        self.set_plot.add_argument(
+            help="Graph height (pixels). Default: Set by Stata.", required=False)
+        self.set_graph.add_argument(
             '--format', dest='format', type=str, default=None,
             choices=kernel.graph_formats, required=False,
             metavar='{{{0}}}'.format('|'.join(kernel.graph_formats)),
-            help="Plot export format (internal; default: svg).")
+            help="Internal graph display format (default: svg).")
 
         self.set_settings = list(subparsers.choices.keys())
         self.set__all = subparsers.add_parser(
@@ -109,6 +129,8 @@ class StataMagics():
 
     available_magics = [
         'browse',
+        'head',
+        'tail',
         'help',
         # 'exit',
         # 'restart',
@@ -200,6 +222,74 @@ class StataMagics():
         content = {'data': {'text/html': html}, 'metadata': {}}
         kernel.send_response(kernel.iopub_socket, 'display_data', content)
         self.status = -1
+        return ''
+
+    def magic_head(self, code, kernel):
+        self.status = -1
+        try:
+            self.parse.head.parse_args(code.split(' '))
+        except:
+            return ''
+
+        hasif = re.search(r"\bif\b", code) is not None
+        using = kernel.conf.get('cache_dir') / 'data_head.csv'
+        cmd = '_StataKernelHead ' + code.strip() + ' using ' + str(using)
+        cm = CodeManager(cmd)
+        text_to_run, md5, text_to_exclude = cm.get_text(kernel.conf)
+        rc, res = kernel.stata.do(text_to_run, md5, text_to_exclude=text_to_exclude, display=False)
+        if rc:
+            try:
+                self.parse.head.error(res)
+            except:
+                return ''
+        else:
+            if hasif:
+                df = pd.read_csv(using, index_col = 0)
+                df.index.name = None
+            else:
+                df = pd.read_csv(using)
+                df.index += 1
+
+            html = df.to_html(na_rep = '.', notebook=True)
+            content = {'data': {'text/plain': res, 'text/html': html}, 'metadata': {}}
+            kernel.send_response(kernel.iopub_socket, 'display_data', content)
+
+        return ''
+
+    def magic_tail(self, code, kernel):
+        self.status = -1
+        try:
+            self.parse.tail.parse_args(code.split(' '))
+        except:
+            return ''
+
+        hasif = re.search(r"\bif\b", code) is not None
+        using = kernel.conf.get('cache_dir') / 'data_tail.csv'
+        cmd = '_StataKernelTail ' + code.strip() + ' using ' + str(using)
+        cm = CodeManager(cmd)
+        text_to_run, md5, text_to_exclude = cm.get_text(kernel.conf)
+        rc, res = kernel.stata.do(text_to_run, md5, text_to_exclude=text_to_exclude, display=False)
+        if rc:
+            try:
+                self.parse.tail.error(res)
+            except:
+                return ''
+        else:
+            if hasif:
+                df = pd.read_csv(using, index_col = 0)
+                df.index.name = None
+            else:
+                lastn = res.rfind('\n')
+                nobs = int(res[lastn:].strip())
+                res = res[:lastn]
+                df = pd.read_csv(using)
+                nread = df.shape[0]
+                df.index = list(range(nobs - nread + 1, nobs + 1))
+
+            html = df.to_html(na_rep = '.', notebook=True)
+            content = {'data': {'text/plain': res, 'text/html': html}, 'metadata': {}}
+            kernel.send_response(kernel.iopub_socket, 'display_data', content)
+
         return ''
 
     def magic_globals(self, code, kernel, local=False):
@@ -315,7 +405,7 @@ class StataMagics():
             args.pop('perm', None)
             args.pop('setting', None)
 
-            if setting == 'plot':
+            if setting == 'graph':
                 if reset:
                     for k, v in args.items():
                         if v is not None:
@@ -332,7 +422,7 @@ class StataMagics():
                         if v is not None:
                             if k in ['width', 'height', 'scale'] and v <= 0:
                                 msg = '{0} should be positive; value: {1}'
-                                self.parse.set_plot.error(msg.format(k, v))
+                                self.parse.set_graph.error(msg.format(k, v))
 
                             kernel.conf.set('graph_' + k, v, permanent=perm)
             elif setting == '_all':
@@ -374,11 +464,18 @@ class StataMagics():
     def magic_help(self, code, kernel):
         self.status = -1
         self.graphs = 0
+        try:
+            self.parse.help.parse_args(code.split(' '))
+        except:
+            return ''
+
         if not code.strip():
             return ''
+
         cmd = code.strip().replace(" ", "_")
         try:
-            reply = urllib.request.urlopen(self.html_help.format(cmd))
+            reply = urllib.request.urlopen(
+                self.html_help.format(cmd))
             html = reply.read().decode("utf-8")
             soup = bs(html, 'html.parser')
 
@@ -416,10 +513,16 @@ class StataMagics():
             with open(self.csshelp_default, 'r') as default:
                 css.string = default.read()
 
-            resp = {'data': {'text/html': str(soup)}, 'metadata': {}}
+            fallback = 'This front-end cannot display HTML help.'
+            resp = {
+                'data': {
+                    'text/html': str(soup),
+                    'text/plain': fallback},
+                'metadata': {}}
             kernel.send_response(kernel.iopub_socket, 'display_data', resp)
-        except urllib.error.HTTPError as e:
-            print_kernel("Failed to fetch HTML help.\r\n" + e.code, kernel)
+        except (urllib.error.HTTPError, urllib.error.URLError) as e:
+            msg = "Failed to fetch HTML help.\r\n{0}"
+            print_kernel(msg.format(e), kernel)
 
         return ''
 
