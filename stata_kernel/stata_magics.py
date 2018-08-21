@@ -231,6 +231,7 @@ class StataMagics():
         except:
             return ''
 
+        hasif = re.search(r"\bif\b", code) is not None
         using = kernel.conf.get('cache_dir') / 'data_head.csv'
         cmd = '_StataKernelHead ' + code.strip() + ' using ' + str(using)
         cm = CodeManager(cmd)
@@ -242,7 +243,13 @@ class StataMagics():
             except:
                 return ''
         else:
-            df = pd.read_csv(using)
+            if hasif:
+                df = pd.read_csv(using, index_col = 0)
+                df.index.name = None
+            else:
+                df = pd.read_csv(using)
+                df.index += 1
+
             html = df.to_html(na_rep = '.', notebook=True)
             content = {'data': {'text/plain': res, 'text/html': html}, 'metadata': {}}
             kernel.send_response(kernel.iopub_socket, 'display_data', content)
@@ -256,6 +263,7 @@ class StataMagics():
         except:
             return ''
 
+        hasif = re.search(r"\bif\b", code) is not None
         using = kernel.conf.get('cache_dir') / 'data_tail.csv'
         cmd = '_StataKernelTail ' + code.strip() + ' using ' + str(using)
         cm = CodeManager(cmd)
@@ -267,7 +275,17 @@ class StataMagics():
             except:
                 return ''
         else:
-            df = pd.read_csv(using)
+            if hasif:
+                df = pd.read_csv(using, index_col = 0)
+                df.index.name = None
+            else:
+                lastn = res.rfind('\n')
+                nobs = int(res[lastn:].strip())
+                res = res[:lastn]
+                df = pd.read_csv(using)
+                nread = df.shape[0]
+                df.index = list(range(nobs - nread + 1, nobs + 1))
+
             html = df.to_html(na_rep = '.', notebook=True)
             content = {'data': {'text/plain': res, 'text/html': html}, 'metadata': {}}
             kernel.send_response(kernel.iopub_socket, 'display_data', content)
@@ -503,7 +521,8 @@ class StataMagics():
                 'metadata': {}}
             kernel.send_response(kernel.iopub_socket, 'display_data', resp)
         except (urllib.error.HTTPError, urllib.error.URLError) as e:
-            print_kernel("Failed to fetch HTML help.\r\n%s" % e, kernel)
+            msg = "Failed to fetch HTML help.\r\n{0}"
+            print_kernel(msg.format(e), kernel)
 
         return ''
 

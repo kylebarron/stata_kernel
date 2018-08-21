@@ -28,9 +28,10 @@ program _StataKernelTail
     * Apply if condition then get the last n matching condition
     qui if ( "`if'" != "" ) {
         local stype = cond(`=_N' < maxlong(), "long", "double")
-        tempvar touse sumtouse
+        tempvar touse sumtouse index
         gen byte `touse' = `if'
         gen `stype' `sumtouse' = sum(`touse')
+        gen `stype' `index' = _n
         local last = `=`sumtouse'[_N]'
         if ( `n' == 1 ) {
             local ifin if (`sumtouse' == `last') & `touse' == 1
@@ -44,6 +45,7 @@ program _StataKernelTail
         local ifin in -`n'/l
     }
 
-    qui export delimited `varlist' `using' `ifin', replace `options'
+    qui export delimited `index' `varlist' `using' `ifin', replace `options'
     list `varlist' `ifin', `options'
+    if ( "`if'" == "" ) disp _N
 end
