@@ -42,4 +42,4 @@ If you find bugs, please [submit a bug report here](https://github.com/kylebarro
 
 **Atom**
 
-![Atom](../img/stata_kernel_example.gif)
+![Atom](img/stata_kernel_example.gif)
