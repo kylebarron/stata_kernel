@@ -1,5 +1,16 @@
 # Changelog
 
+## [1.4.0] - 2018-08-21
+
+- Return results as Stata returns them, not when command finishes
+- More stable method of knowing when a command finishes by looking for the text's MD5 hash
+- Finds Stata executable during install
+- Automatically show graphs after graph commands
+- Add %help and %browse magics
+- Allow for graph scaling factors
+- Fix Windows locals issue
+- Fix image spacing
+
 ## [1.3.1] - 2018-08-13
 
 - Fix pip installation by adding CHANGELOG and requirements files to `MANIFEST.in`.
