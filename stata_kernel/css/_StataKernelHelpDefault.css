@@ -1,0 +1,31 @@
+h2 {
+    font-family: Arial,Helvetica,Helv,sans-serif;
+    color: #000000;
+}
+
+pre {
+    margin: 10px;
+}
+
+table {
+    background-color: transparent;
+    border-color: transparent;
+    bgcolor: transparent;
+}
+
+tr {
+    background-color: transparent;
+    border-color: transparent;
+    bgcolor: transparent;
+}
+
+body {
+    background-color: transparent;
+    border-color: transparent;
+    margin: 0px;
+}
+
+div {
+    background-color: transparent;
+    border-color: transparent;
+}
