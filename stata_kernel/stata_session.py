@@ -311,7 +311,7 @@ class StataSession():
         if not code_lines[0][:self.linesize - 5] in res[1:].lstrip():
             return code_lines, res
 
-        res_match = re.search(r'^(  \d+)?\.  ??(.+)$', res)
+        res_match = re.search(r'^(\s*\d+)?\.  ??(.+)$', res)
         if not res_match:
             return code_lines, ''
         res = res_match.group(2)
