@@ -291,6 +291,11 @@ class StataSession():
             - List of code lines not yet matched in output after this
             - Result to be displayed
         """
+        regex = r'^\(note: file {}/graph\d+\.(svg|png) not found\)'.format(
+            self.config.get('cache_dir'))
+        if re.search(regex, res):
+            return code_lines, None
+
         if code_lines == []:
             return code_lines, res
 
