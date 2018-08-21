@@ -8,4 +8,4 @@ next to your code. You can use it with Python, R, and Julia, as well as Stata. T
 
 Once those are installed, open a do-file and run <kbd>Ctrl</kbd>-<kbd>Enter</kbd> (<kbd>Cmd</kbd>-<kbd>Enter</kbd> on macOS) to start the Stata kernel.
 
-![](../img/atom.png)
+![](../img/stata_kernel_example.gif)
