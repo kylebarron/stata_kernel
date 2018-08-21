@@ -56,7 +56,8 @@ class StataKernel(Kernel):
         # Tokenize code and return code chunks
         cm = CodeManager(code, self.sc_delimit_mode)
         text_to_run, md5, text_to_exclude = cm.get_text(self.conf)
-        rc, res = self.stata.do(text_to_run, md5, text_to_exclude=text_to_exclude)
+        rc, res = self.stata.do(
+            text_to_run, md5, text_to_exclude=text_to_exclude)
 
         # Post magic results, if applicable
         self.magics.post(self)
@@ -119,15 +120,11 @@ class StataKernel(Kernel):
             content = {
                 'data': {
                     'text/plain': no_display_msg,
-                    'image/svg+xml': img
-                },
+                    'image/svg+xml': img},
                 'metadata': {
                     'image/svg+xml': {
                         'width': int(root.attrib['width'][:-2]),
-                        'height': int(root.attrib['height'][:-2])
-                    }
-                }
-            }
+                        'height': int(root.attrib['height'][:-2])}}}
             self.send_response(self.iopub_socket, 'display_data', content)
         elif graph_path.endswith('.png'):
             im = Image.open(graph_path)
@@ -145,15 +142,11 @@ class StataKernel(Kernel):
             content = {
                 'data': {
                     'text/plain': no_display_msg,
-                    'image/png': img
-                },
+                    'image/png': img},
                 'metadata': {
                     'image/png': {
                         'width': width,
-                        'height': height
-                    }
-                }
-            }
+                        'height': height}}}
             self.send_response(self.iopub_socket, 'display_data', content)
 
     def do_shutdown(self, restart):

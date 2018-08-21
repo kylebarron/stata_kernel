@@ -140,8 +140,10 @@ class StataSession():
         log_counter = 0
         rc = 1
         while (rc) and (log_counter < 15):
-            log_path = self.config.get('cache_dir') / 'log{}.log'.format(log_counter)
-            cmd = 'log using `"{}"\', replace text name(stata_kernel_log)'.format(log_path)
+            log_path = self.config.get('cache_dir') / 'log{}.log'.format(
+                log_counter)
+            cmd = 'log using `"{}"\', replace text name(stata_kernel_log)'.format(
+                log_path)
             rc = self.automate('DoCommand', cmd)
             log_counter += 1
             sleep(0.1)
@@ -383,8 +385,7 @@ class StataSession():
                 elif isinstance(val, int):
                     cmd += ' {} {}'.format(key, val)
 
-        res = subprocess.run(['osascript', '-e', cmd],
-                             stdout=subprocess.PIPE,
+        res = subprocess.run(['osascript', '-e', cmd], stdout=subprocess.PIPE,
                              stderr=subprocess.PIPE)
         if res.stderr:
             raise OSError(res.stderr.decode('utf-8') + '\nInput: ' + cmd)

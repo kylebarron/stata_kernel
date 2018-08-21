@@ -192,10 +192,11 @@ class StataMagics():
             """.format(kernel.conf.get('cache_dir'))
         cm = CodeManager(cmd)
         text_to_run, md5, text_to_exclude = cm.get_text(kernel.conf)
-        rc, res = kernel.stata.do(text_to_run, md5, text_to_exclude=text_to_exclude, display=False)
+        rc, res = kernel.stata.do(
+            text_to_run, md5, text_to_exclude=text_to_exclude, display=False)
         df = pd.read_csv(kernel.conf.get('cache_dir') / 'data.csv')
         df.index += 1
-        html = df.to_html(na_rep = '.', notebook=True)
+        html = df.to_html(na_rep='.', notebook=True)
         content = {'data': {'text/html': html}, 'metadata': {}}
         kernel.send_response(kernel.iopub_socket, 'display_data', content)
         self.status = -1
@@ -231,7 +232,8 @@ class StataMagics():
 
         cm = CodeManager("macro dir")
         text_to_run, md5, text_to_exclude = cm.get_text(kernel.conf)
-        rc, res = kernel.stata.do(text_to_run, md5, text_to_exclude=text_to_exclude, display=False)
+        rc, res = kernel.stata.do(
+            text_to_run, md5, text_to_exclude=text_to_exclude, display=False)
         if rc:
             self.status = -1
             return code
@@ -381,7 +383,7 @@ class StataMagics():
             soup = bs(html, 'html.parser')
 
             # Set root for links to https://ww.stata.com
-            for a in soup.find_all('a', href = True):
+            for a in soup.find_all('a', href=True):
                 href = a.get('href')
                 relative = href.find(cmd + '#')
                 if relative >= 0:
@@ -394,10 +396,10 @@ class StataMagics():
             soup.find('h2').decompose()
 
             # Remove Stata help menu
-            soup.find('div', id = 'menu').decompose()
+            soup.find('div', id='menu').decompose()
 
             # Remove Copyright notice
-            soup.find('a', text = 'Copyright').find_parent("table").decompose()
+            soup.find('a', text='Copyright').find_parent("table").decompose()
 
             # Remove last hrule
             soup.find_all('hr')[-1].decompose()
@@ -405,7 +407,7 @@ class StataMagics():
             # Set all the backgrounds to transparent
             for color in ['#ffffff', '#FFFFFF']:
                 for bg in ['bgcolor', 'background', 'background-color']:
-                    for tag in soup.find_all(attrs = {bg: color}):
+                    for tag in soup.find_all(attrs={bg: color}):
                         if tag.get(bg):
                             tag[bg] = 'transparent'
 
