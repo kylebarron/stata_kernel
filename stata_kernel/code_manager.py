@@ -220,6 +220,13 @@ class CodeManager(object):
         # Insert `graph export`
         graph_fmt = config.get('graph_format')
         graph_scale = config.get('graph_scale')
+        graph_width = config.get('graph_width')
+        if graph_width is None:
+            graph_width = 600
+        else:
+            graph_width = int(graph_width)
+
+        graph_height = config.get('graph_height')
         cache_dir = config.get('cache_dir')
         if graph_scale is None:
             graph_scale = 1
@@ -227,13 +234,18 @@ class CodeManager(object):
         else:
             graph_scale = float(graph_scale)
 
+        dim_str = " width({})".format(int(graph_width * graph_scale))
+        if graph_height:
+            graph_height = int(graph_height)
+            dim_str += " height({})".format(int(graph_height * graph_scale))
+
         cache_dir_str = str(cache_dir)
         if platform.system() == 'Windows':
             cache_dir_str = re.sub(r'\\', '/', cache_dir_str)
         gph_cnt = 'stata_kernel_graph_counter'
         g_exp = '\nnoi graph export {}'.format(cache_dir_str)
         g_exp += '/graph${' + gph_cnt + '}'
-        g_exp += '.{}, width({}) replace'.format(graph_fmt, int(600 * graph_scale))
+        g_exp += '.{}, {} replace'.format(graph_fmt, dim_str)
         g_exp += '\nglobal {0} = ${0} + 1'.format(gph_cnt)
 
         lines = [x + g_exp if re.match(graph_keywords, x) else x for x in lines]

@@ -4,6 +4,7 @@ from pathlib import Path
 from textwrap import dedent
 from configparser import ConfigParser
 
+
 class Config(object):
     def __init__(self):
         self.config_path = Path('~/.stata_kernel.conf').expanduser()
@@ -39,6 +40,9 @@ class Config(object):
                 key = 'cache_directory'
                 val = str(val)
 
+            if key.startswith('graph_'):
+                val = str(val)
+
             self.config.set('stata_kernel', key, val)
             with self.config_path.open('w') as f:
                 self.config.write(f)
@@ -65,3 +69,10 @@ class Config(object):
         https://kylebarron.github.io/stata_kernel/user_guide/configuration/
         """.format(option)
         raise ValueError(dedent(msg))
+
+    def _remove_unsafe(self, key, permanent=False):
+        self.env.pop(key, None)
+        if permanent:
+            self.config.remove_option(option=key, section='stata_kernel')
+            with self.config_path.open('w') as f:
+                self.config.write(f)

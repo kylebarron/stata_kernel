@@ -9,7 +9,6 @@ from .code_manager import CodeManager
 from pkg_resources import resource_filename
 
 
-# NOTE(mauricio): Figure  out if passing the kernel around is a problem...
 class StataParser(ArgumentParser):
     def __init__(self, *args, kernel=None, **kwargs):
         super(StataParser, self).__init__(*args, **kwargs)
@@ -29,18 +28,18 @@ class MagicParsers():
     def __init__(self, kernel):
         self.globals = StataParser(prog='%globals', kernel=kernel)
         self.globals.add_argument(
-            'code', nargs='*', type=str, metavar='CODE', help="Code to run")
+            'code', nargs='*', type=str, metavar='REGEX', help="regex to match")
         self.globals.add_argument(
-            '-t', '--truncate', dest='truncate', action='store_true',
-            help="Truncate macro values to first line printed by Stata",
+            '-v', '--verbose', dest='verbose', action='store_true',
+            help="Verbose output (print full contents of matched globals).",
             required=False)
 
         self.locals = StataParser(prog='%locals', kernel=kernel)
         self.locals.add_argument(
-            'code', nargs='*', type=str, metavar='CODE', help="Code to run")
+            'code', nargs='*', type=str, metavar='REGEX', help="regex to match")
         self.locals.add_argument(
-            '-t', '--truncate', dest='truncate', action='store_true',
-            help="Truncate macro values to first line printed by Stata",
+            '-v', '--verbose', dest='verbose', action='store_true',
+            help="Verbose output (print full contents of matched locals).",
             required=False)
 
         self.browse = StataParser(prog='%browse', kernel=kernel)
@@ -62,11 +61,48 @@ class MagicParsers():
             '-n', dest='n', type=int, metavar='N', default=None,
             help="Execute statement N times per loop.", required=False)
 
+        #######################################################################
+        #                                                                     #
+        #                             %set magic                              #
+        #                                                                     #
+        #######################################################################
+
+        self.set = StataParser(prog='%set', kernel=kernel)
+        self.set.add_argument(
+            '--permanently', dest='perm', action='store_true',
+            help="Store settings permanently", required=False)
+        self.set.add_argument(
+            '--reset', dest='reset', action='store_true',
+            help="Restore default settings.", required=False)
+        subparsers = self.set.add_subparsers(
+            dest="setting", help=None, title="settings", description=None,
+            parser_class=StataParser)
+
+        self.set_plot = subparsers.add_parser(
+            "plot", kernel=kernel, help="Plot settings")
+        self.set_plot.add_argument(
+            '--scale', dest='scale', type=float, metavar='SCALE', default=None,
+            help="Scale width and height. Default: 1", required=False)
+        self.set_plot.add_argument(
+            '--width', dest='width', type=int, metavar='WIDTH', default=None,
+            help="Plot width (pixels). Default: 600", required=False)
+        self.set_plot.add_argument(
+            '--height', dest='height', type=int, metavar='HEIGHT', default=None,
+            help="Plot height (pixels). Default: Set by Stata.", required=False)
+        self.set_plot.add_argument(
+            '--format', dest='format', type=str, default=None,
+            choices=kernel.graph_formats, required=False,
+            metavar='{{{0}}}'.format('|'.join(kernel.graph_formats)),
+            help="Plot export format (internal; default: svg).")
+
+        self.set_settings = list(subparsers.choices.keys())
+        self.set__all = subparsers.add_parser(
+            "_all", kernel=kernel, help="all settings")
+
 
 class StataMagics():
     html_base = "https://www.stata.com"
     html_help = urllib.parse.urljoin(html_base, "help.cgi?{}")
-    img_metadata = {'width': 600, 'height': 400}
 
     magic_regex = re.compile(
         r'\A%(?P<magic>.+?)(?P<code>\s+.*)?\Z', flags=re.DOTALL + re.MULTILINE)
@@ -80,12 +116,13 @@ class StataMagics():
         'globals',
         'delimit',
         'time',
-        'timeit']
+        'timeit',
+        'set']
 
     csshelp_default = resource_filename(
         'stata_kernel', 'css/_StataKernelHelpDefault.css')
 
-    def __init__(self):
+    def __init__(self, kernel):
         self.quit_early = None
         self.status = 0
         self.any = False
@@ -94,10 +131,10 @@ class StataMagics():
         self.timeit = 0
         self.time_profile = None
         self.img_set = False
+        self.parse = MagicParsers(kernel)
 
     def magic(self, code, kernel):
-        self.__init__()
-        self.parse = MagicParsers(kernel)
+        self.__init__(kernel)
 
         if code.strip().startswith("%"):
             match = self.magic_regex.match(code.strip())
@@ -175,17 +212,17 @@ class StataMagics():
 
             code = ' '.join(args['code'])
             gregex['match'] = re.compile(code.strip())
-            if args['truncate']:
-                gregex['main'] = re.compile(
-                    r"^(?P<macro>_?[\w\d]*?):"
-                    r"(?P<cr>[\r\n]{0,2} {1,16})"
-                    r"(?P<contents>.*?$)", flags=re.DOTALL + re.MULTILINE)
-            else:
+            if args['verbose']:
                 gregex['main'] = re.compile(
                     r"^(?P<macro>_?[\w\d]*?):"
                     r"(?P<cr>[\r\n]{0,2} {1,16})"
                     r"(?P<contents>.*?$(?:[\r\n]{0,2} {16,16}.*?$)*)",
                     flags=re.DOTALL + re.MULTILINE)
+            else:
+                gregex['main'] = re.compile(
+                    r"^(?P<macro>_?[\w\d]*?):"
+                    r"(?P<cr>[\r\n]{0,2} {1,16})"
+                    r"(?P<contents>.*?$)", flags=re.DOTALL + re.MULTILINE)
         except:
             self.status = -1
 
@@ -201,6 +238,7 @@ class StataMagics():
 
         stata_globals = gregex['main'].findall(res)
         lens = 0
+        note = False
         find_name = gregex['match'] != ''
         print_globals = []
         if len(stata_globals) > 0:
@@ -232,6 +270,20 @@ class StataMagics():
                 else:
                     print_globals += [(macro, contents.lstrip('\r\n'))]
 
+                if len(contents) > 24:
+                    note = True
+
+        if len(print_globals) > 0:
+            if not args['verbose'] and note:
+                if local:
+                    wmacro = 'local'
+                else:
+                    wmacro = 'global'
+
+                msg = "(note: showing first line of " + wmacro
+                msg += " values; run with --verbose)\n"
+                print_kernel(msg, kernel)
+
         fmt = "{{0:{0}}} {{1}}".format(lens)
         for macro, contents in print_globals:
             print_kernel(
@@ -248,6 +300,52 @@ class StataMagics():
     def magic_delimit(self, code, kernel):
         delim = ';' if kernel.sc_delimit_mode else 'cr'
         print_kernel('The delimiter is currently: {}'.format(delim), kernel)
+        return ''
+
+    def magic_set(self, code, kernel):
+        try:
+            settings = code.strip().split(' ')
+            args = vars(self.parse.set.parse_args(settings))
+            perm = args['perm']
+            reset = args['reset']
+            setting = args['setting']
+            args.pop('reset', None)
+            args.pop('perm', None)
+            args.pop('setting', None)
+
+            if setting == 'plot':
+                if reset:
+                    for k, v in args.items():
+                        if v is not None:
+                            msg = 'Cannot set values with --reset.'
+                            self.parse.set.error(msg)
+
+                    # reset graph settings
+                    kernel.conf.set('graph_format', 'svg', permanent=perm)
+                    kernel.conf.set('graph_scale', '1', permanent=perm)
+                    kernel.conf._remove_unsafe('graph_width', permanent=perm)
+                    kernel.conf._remove_unsafe('graph_height', permanent=perm)
+                else:
+                    for k, v in args.items():
+                        if v is not None:
+                            if k in ['width', 'height', 'scale'] and v <= 0:
+                                msg = '{0} should be positive; value: {1}'
+                                self.parse.set_plot.error(msg.format(k, v))
+
+                            kernel.conf.set('graph_' + k, v, permanent=perm)
+            elif setting == '_all':
+                if reset:
+                    # reset graph settings
+                    kernel.conf.set('graph_format', 'svg', permanent=perm)
+                    kernel.conf.set('graph_scale', '1', permanent=perm)
+                    kernel.conf._remove_unsafe('graph_width', permanent=perm)
+                    kernel.conf._remove_unsafe('graph_height', permanent=perm)
+            else:
+                self.parse.set.error('malformed %set call')
+        except:
+            pass
+
+        self.status = -1
         return ''
 
     def magic_time(self, code, kernel):
