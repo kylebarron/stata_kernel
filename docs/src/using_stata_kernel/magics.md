@@ -1,45 +1,129 @@
-# Magics
+# Using the Stata Kernel
 
-**Magics** are programs provided by `stata_kernel` that enhance the experience of working with Stata in Jupyter.
+The Stata kernel is the bridge between Stata and the Jupyter ecosystem. It will work with any of the tools outlined in [Using Jupyter](../using_jupyter/intro.md).
 
-## `%plot`
+After [installing](../getting_started.md) and optionally [configuring](../getting_started.md#configuration) `stata_kernel`, it should be ready for use.
 
-**Force Plot to Show**
+## Magics
 
-In most cases, `stata_kernel` is able to see that you're creating a graph, and will correctly display it. However if you're running a program and a graph is created within the program, you may have to nudge the kernel to show the graph. You can do that with `%plot`.
+**Magics** are programs provided by `stata_kernel` that enhance the experience
+*of working with Stata in Jupyter.
 
-```stata
-program define make_scatter_plot
-    sysuse auto
-    scatter price mpg
-end
+All magics are special commands that start with `%`. They must be the first word
+of the cell or selection, otherwise they won't be intercepted and will be sent
+to Stata.
 
-%plot make_scatter_plot
+For some of the magics listed, you can add `--help` to see a help menu in the kernel. For example,
+```
+In [1]: %locals --help
+usage: %locals [-h] [-v] [REGEX [REGEX ...]]
+
+positional arguments:
+  REGEX          regex to match
+
+optional arguments:
+  -h, --help     show this help message and exit
+  -v, --verbose  Verbose output (print full contents of matched locals).
+```
+
+The magics that respond with richly formatted text, namely `%browse` and
+`%help`, will not work with Jupyter Console or Jupyter QtConsole, since they
+don't support displaying HTML.
+
+### `%browse`
+
+**Interactively view your dataset**
+
+For now, this displays the first 200 rows of your data. This will be expanded in the future to allow for a `varlist`, `if`, and `in` options.
+
+|                      |                                                 |
+|:--------------------:|:-----------------------------------------------:|
+|       **Atom**       |         ![Atom](../img/browse_atom.png)         |
+| **Jupyter Notebook** | ![Jupyter Notebook](../img/browse_notebook.png) |
+
+### `%delimit`
+
+**Print the current delimiter**
+
+This takes no arguments; it prints the delimiter currently set: either `cr` or
+`;`. If you want to change the delimiter, use `#delimit ;` or `#delimit cr`. The
+delimiter will remain set until changed.
+
+```
+In [1]: %delimit
+The delimiter is currently: cr
+
+In [2]: #delimit ;
+delimiter now ;
+In [3]: %delimit
+The delimiter is currently: ;
+
+In [4]: #delimit cr
+delimiter now cr
+```
+
+### `%help`
+
+**Display a help file in rich text**
+
+Add the term you want to search for after `%help`:
+```
+In [1]: %help histogram
+```
+
+The terms in italics (Atom) or underlined (Jupyter Notebook) are _links_. Click
+on them to see another help menu.
+
+
+|                      |                                                 |
+|:--------------------:|:-----------------------------------------------:|
+|       **Atom**       |         ![Atom](../img/atom_help_magic.png)         |
+| **Jupyter Notebook** | ![Jupyter Notebook](../img/notebook_help_magic.png) |
+
+
+### `%locals`, `%globals`
+
+**List local or global macros**
+
+These take two optional arguments:
+
+1. a regular expression for filtering the locals or globals displayed
+2. a `--verbose` flag
+
+```
+In [1]: %globals S_
+(note: showing first line of global values; run with --verbose)
+
+S_ADO:     BASE;SITE;.;PERSONAL;PLUS;OLDPLACE;`"/home/kyle/github/stata/sta
+S_level:   95
+S_CONSOLE: console
+S_FLAVOR:  Intercooled
+S_OS:      Unix
+S_MACH:    PC (64-bit x86-64)
+
+In [2]: %globals S_ --verbose
+S_ADO:     BASE;SITE;.;PERSONAL;PLUS;OLDPLACE;`"/home/kyle/github/stata/sta
+           > ta_kernel/stata_kernel/ado"'
+S_level:   95
+S_CONSOLE: console
+S_FLAVOR:  Intercooled
+S_OS:      Unix
+S_MACH:    PC (64-bit x86-64)
 ```
 
 
-You can provide options after `%plot` and before code:
+### `%set`
+
+**Set configuration settings**
 
 ```
-usage: %plot [-h] [--scale SCALE] [--width WIDTH] [--height HEIGHT] [--set]
-             [CODE [CODE ...]]
+%set plot --format svg
+%set plot --scale 1
+%set plot --width 500
+%set plot --width 400 --height 300
 ```
 
-- `-h` or `--help`: show help menu for `%plot`
-- `--scale`: Scale default height and width. Defaults to 1.
-- `--width`: Plot width in pixels. Defaults to 600px.
-- `--height`: Plot height in pixels. Defaults to 400px.
-- `--set`: Set plot width and height for the rest of the session.
-
-## `%locals`
-
-**List Local Macros**
-
-## `%globals`
-
-**List Global Macros**
-
-## `%time`
+<!-- ### `%time`
 
 **Time Execution of a Command**
 
@@ -47,4 +131,4 @@ This timing is currently most exact on macOS and Linux using the console method 
 
 ```stata
 %time sleep 100
-```
+``` -->

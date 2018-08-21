@@ -3,9 +3,21 @@ import regex
 
 # NOTE: Using regex for (?r) flag
 
+from .code_manager import CodeManager
 
+
+# NOTE: Add extended_fcn completions, `:<tab>
+# NOTE: Add sub-command completions for scalars and matrices?
 class CompletionsManager(object):
-    def __init__(self, kernel):
+    def __init__(self, kernel, config):
+        self.config = config
+
+        # Magic completion
+        self.magic_completion = re.compile(
+            r'\A%(?P<magic>\S*)\Z', flags=re.DOTALL + re.MULTILINE).match
+
+        self.set_magic_completion = re.compile(
+            r'\A%set (?P<setting>\S*)\Z', flags=re.DOTALL + re.MULTILINE).match
 
         # NOTE(mauricio): Locals have to be listed sepparately because
         # inside a Stata program they would only list the locals for
@@ -25,14 +37,17 @@ class CompletionsManager(object):
 
         # Clean line-breaks.
         self.varclean = re.compile(
-            r"(?=\s*)[\s\S]{1,2}?^>\s", flags=re.MULTILINE).sub
+            r"(?=\s*)[\r\n]{1,2}?^>\s", flags=re.MULTILINE).sub
 
         # Macth context; this is used to determine if the line starts
         # with matrix or scalar. It also matches constructs like
         #
         #     (`=)?scalar(
 
-        pre = r"(cap(t(u(re?)?)?)?|n(o(i(s(i(ly?)?)?)?)?)?|qui(e(t(ly?)?)?)?)?"
+        pre = (
+            r'\b(cap(t|tu|tur|ture)?'
+            r'|qui(e|et|etl|etly)?'
+            r'|n(o|oi|ois|oisi|oisil|oisily)?)\b')
         kwargs = {'flags': regex.MULTILINE}
         self.context = {
             'function':
@@ -52,9 +67,13 @@ class CompletionsManager(object):
                     r"\A(\s*{0})*(?<context>\S+)".format(pre), **kwargs).search}
 
         self.suggestions = self.get_suggestions(kernel)
+        self.suggestions['magics'] = kernel.magics.available_magics
+        self.suggestions['magics_set'] = kernel.magics.parse.set_settings
 
     def refresh(self, kernel):
         self.suggestions = self.get_suggestions(kernel)
+        self.suggestions['magics'] = kernel.magics.available_magics
+        self.suggestions['magics_set'] = kernel.magics.parse.set_settings
 
     def get_env(self, code, rdelimit, sc_delimit_mode):
         """Returns completions environment
@@ -67,6 +86,8 @@ class CompletionsManager(object):
 
         Returns:
             env (int):
+                -2: %set magic, %set x*
+                -1: magics, %x*
                 0: varlist
                 1: locals, `x* completed with `x*'
                 2: globals, $x* completed with $x*
@@ -88,6 +109,18 @@ class CompletionsManager(object):
                     scalars: )
                     scalars (if start with `): )'
         """
+
+        lcode = code.lstrip()
+        if self.magic_completion(lcode):
+            pos = code.rfind("%") + 1
+            env = -1
+            rcomp = ""
+            return env, pos, code[pos:], rcomp
+        elif self.set_magic_completion(lcode):
+            pos = code.rfind(" ") + 1
+            env = -2
+            rcomp = ""
+            return env, pos, code[pos:], rcomp
 
         # Detect space-delimited word.
         env = 0
@@ -145,18 +178,21 @@ class CompletionsManager(object):
         # Figure out if this is a local or global; env = 0 (default)
         # will suggest variables in memory.
         chunk = code[pos:]
-        if chunk.find('`') >= 0:
-            pos += chunk.find('`') + 1
+        lfind = chunk.rfind('`')
+        gfind = chunk.rfind('$')
+        if lfind >= 0 and (lfind > gfind):
+            pos += lfind + 1
             env = 1
             rcomp = "" if rdelimit[0:1] == "'" else "'"
-        elif chunk.find('$') >= 0:
-            if chunk.find('{') >= 0:
-                pos += chunk.find('{') + 1
+        elif gfind >= 0:
+            bfind = chunk.rfind('{')
+            if bfind >= 0 and (bfind > gfind):
+                pos += bfind + 1
                 env = 3
                 rcomp = "" if rdelimit[0:1] == "}" else "}"
             else:
                 env = 2
-                pos += chunk.find('$') + 1
+                pos += gfind + 1
         else:
             # Set to matrix or scalar environment, if applicable. Note
             # that matrices and scalars can be set to variable values,
@@ -169,7 +205,15 @@ class CompletionsManager(object):
     def get(self, starts, env, rcomp):
         """Return environment-aware completions list.
         """
-        if env == 0:
+        if env == -2:
+            return [
+                var for var in self.suggestions['magics_set']
+                if var.startswith(starts)]
+        elif env == -1:
+            return [
+                var for var in self.suggestions['magics']
+                if var.startswith(starts)]
+        elif env == 0:
             return [
                 var for var in self.suggestions['varlist']
                 if var.startswith(starts)]
@@ -222,7 +266,7 @@ class CompletionsManager(object):
 
             all_locals = """mata : invtokens(st_dir("local", "macro", "*")')"""
             res = '\r\n'.join(
-                self.quickdo(all_locals, kernel).split('\r\n')[1:])
+                re.split(r'[\r\n]{1,2}', self.quickdo(all_locals, kernel)))
             if res.strip():
                 suggestions['locals'] = self.varlist.findall(
                     self.varclean('', res))
@@ -239,18 +283,9 @@ class CompletionsManager(object):
         return suggestions
 
     def quickdo(self, code, kernel):
-        if kernel.stata.execution_mode == 'console':
-            res, timer = kernel.stata.do_console(code)
-        else:
-            log_path = kernel.stata.cache_dir / '.stata_kernel_completions.log'
-            log_cmd = 'log using `"{}"\', replace text'.format(log_path)
-            rc = kernel.stata.automate('DoCommand', log_cmd)
-            if not rc:
-                fh = open(log_path, 'r')
-                fh.read()
-                rc, timer = kernel.stata.do_aut_sync(code)
-                res = fh.read()
-                kernel.stata.automate('DoCommand', 'cap log close')
-                fh.close()
 
+        cm = CodeManager(code)
+        text_to_run, md5, text_to_exclude = cm.get_text(kernel.conf)
+        rc, res = kernel.stata.do(
+            text_to_run, md5, text_to_exclude=text_to_exclude, display=False)
         return res

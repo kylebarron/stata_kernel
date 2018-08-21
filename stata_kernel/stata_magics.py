@@ -1,11 +1,15 @@
-import argparse
 import sys
 import re
+import urllib
+import pandas as pd
+
+from argparse import ArgumentParser
+from bs4 import BeautifulSoup as bs
 from .code_manager import CodeManager
+from pkg_resources import resource_filename
 
 
-# NOTE(mauricio): Figure  out if passing the kernel around is a problem...
-class StataParser(argparse.ArgumentParser):
+class StataParser(ArgumentParser):
     def __init__(self, *args, kernel=None, **kwargs):
         super(StataParser, self).__init__(*args, **kwargs)
         self.kernel = kernel
@@ -20,29 +24,8 @@ class StataParser(argparse.ArgumentParser):
         sys.exit(2)
 
 
-# ---------------------------------------------------------------------
-# Magic argument parsers
-
-
 class MagicParsers():
     def __init__(self, kernel):
-        self.plot = StataParser(prog='%plot', kernel=kernel)
-        self.plot.add_argument(
-            'code', nargs='*', type=str, metavar='CODE', help="Code to run")
-        self.plot.add_argument(
-            '--scale', dest='scale', type=float, metavar='SCALE', default=1,
-            help="Scale default height and width. Default: 1", required=False)
-        self.plot.add_argument(
-            '--width', dest='width', type=int, metavar='WIDTH', default=600,
-            help="Plot width in pixels. Default: 600", required=False)
-        self.plot.add_argument(
-            '--height', dest='height', type=int, metavar='HEIGHT', default=400,
-            help="Plot height in pixels. Default: 400", required=False)
-        self.plot.add_argument(
-            '--set', dest='set', action='store_true',
-            help="Set plot width and height for the rest of the session.",
-            required=False)
-
         self.globals = StataParser(prog='%globals', kernel=kernel)
         self.globals.add_argument(
             'code', nargs='*', type=str, metavar='REGEX', help="regex to match")
@@ -58,6 +41,8 @@ class MagicParsers():
             '-v', '--verbose', dest='verbose', action='store_true',
             help="Verbose output (print full contents of matched locals).",
             required=False)
+
+        self.browse = StataParser(prog='%browse', kernel=kernel)
 
         self.time = StataParser(prog='%time', kernel=kernel)
         self.time.add_argument(
@@ -76,29 +61,68 @@ class MagicParsers():
             '-n', dest='n', type=int, metavar='N', default=None,
             help="Execute statement N times per loop.", required=False)
 
+        #######################################################################
+        #                                                                     #
+        #                             %set magic                              #
+        #                                                                     #
+        #######################################################################
 
-# ---------------------------------------------------------------------
-# Hack-ish magic parser
+        self.set = StataParser(prog='%set', kernel=kernel)
+        self.set.add_argument(
+            '--permanently', dest='perm', action='store_true',
+            help="Store settings permanently", required=False)
+        self.set.add_argument(
+            '--reset', dest='reset', action='store_true',
+            help="Restore default settings.", required=False)
+        subparsers = self.set.add_subparsers(
+            dest="setting", help=None, title="settings", description=None,
+            parser_class=StataParser)
+
+        self.set_plot = subparsers.add_parser(
+            "plot", kernel=kernel, help="Plot settings")
+        self.set_plot.add_argument(
+            '--scale', dest='scale', type=float, metavar='SCALE', default=None,
+            help="Scale width and height. Default: 1", required=False)
+        self.set_plot.add_argument(
+            '--width', dest='width', type=int, metavar='WIDTH', default=None,
+            help="Plot width (pixels). Default: 600", required=False)
+        self.set_plot.add_argument(
+            '--height', dest='height', type=int, metavar='HEIGHT', default=None,
+            help="Plot height (pixels). Default: Set by Stata.", required=False)
+        self.set_plot.add_argument(
+            '--format', dest='format', type=str, default=None,
+            choices=kernel.graph_formats, required=False,
+            metavar='{{{0}}}'.format('|'.join(kernel.graph_formats)),
+            help="Plot export format (internal; default: svg).")
+
+        self.set_settings = list(subparsers.choices.keys())
+        self.set__all = subparsers.add_parser(
+            "_all", kernel=kernel, help="all settings")
 
 
 class StataMagics():
-    img_metadata = {'width': 600, 'height': 400}
+    html_base = "https://www.stata.com"
+    html_help = urllib.parse.urljoin(html_base, "help.cgi?{}")
 
     magic_regex = re.compile(
         r'\A%(?P<magic>.+?)(?P<code>\s+.*)?\Z', flags=re.DOTALL + re.MULTILINE)
 
     available_magics = [
-        'plot',
-        'graph',
+        'browse',
+        'help',
         # 'exit',
         # 'restart',
         'locals',
         'globals',
         'delimit',
         'time',
-        'timeit']
+        'timeit',
+        'set']
 
-    def __init__(self):
+    csshelp_default = resource_filename(
+        'stata_kernel', 'css/_StataKernelHelpDefault.css')
+
+    def __init__(self, kernel):
         self.quit_early = None
         self.status = 0
         self.any = False
@@ -107,10 +131,10 @@ class StataMagics():
         self.timeit = 0
         self.time_profile = None
         self.img_set = False
+        self.parse = MagicParsers(kernel)
 
     def magic(self, code, kernel):
-        self.__init__()
-        self.parse = MagicParsers(kernel)
+        self.__init__(kernel)
 
         if code.strip().startswith("%"):
             match = self.magic_regex.match(code.strip())
@@ -156,25 +180,27 @@ class StataMagics():
                 for t, l in tprint:
                     print_kernel(fmt.format(t, l), kernel)
 
-    def magic_graph(self, code, kernel):
-        return self.magic_plot(code, kernel)
+    def magic_browse(self, code, kernel):
+        cmd = """\
+            if _N <= 200 {{
+                export delim `"{0}/data.csv"', replace datafmt
+            }}
+            else {{
+                export delim `"{0}/data.csv"' in 1/200, replace datafmt
 
-    def magic_plot(self, code, kernel):
-        try:
-            args = vars(self.parse.plot.parse_args(code.split(' ')))
-            _code = ' '.join(args['code'])
-            args.pop('code', None)
-            args['width'] = args['scale'] * args['width']
-            args['height'] = args['scale'] * args['height']
-            args.pop('scale', None)
-            self.img_set = args['set']
-            args.pop('set', None)
-            self.img_metadata = args
-            self.graphs = 2
-            return _code
-        except:
-            self.status = -1
-            return code
+            }}
+            """.format(kernel.conf.get('cache_dir'))
+        cm = CodeManager(cmd)
+        text_to_run, md5, text_to_exclude = cm.get_text(kernel.conf)
+        rc, res = kernel.stata.do(
+            text_to_run, md5, text_to_exclude=text_to_exclude, display=False)
+        df = pd.read_csv(kernel.conf.get('cache_dir') / 'data.csv')
+        df.index += 1
+        html = df.to_html(na_rep='.', notebook=True)
+        content = {'data': {'text/html': html}, 'metadata': {}}
+        kernel.send_response(kernel.iopub_socket, 'display_data', content)
+        self.status = -1
+        return ''
 
     def magic_globals(self, code, kernel, local=False):
         gregex = {}
@@ -205,7 +231,9 @@ class StataMagics():
             return code
 
         cm = CodeManager("macro dir")
-        rc, imgs, res = kernel.stata.do(cm.get_chunks(), self)
+        text_to_run, md5, text_to_exclude = cm.get_text(kernel.conf)
+        rc, res = kernel.stata.do(
+            text_to_run, md5, text_to_exclude=text_to_exclude, display=False)
         if rc:
             self.status = -1
             return code
@@ -276,6 +304,52 @@ class StataMagics():
         print_kernel('The delimiter is currently: {}'.format(delim), kernel)
         return ''
 
+    def magic_set(self, code, kernel):
+        try:
+            settings = code.strip().split(' ')
+            args = vars(self.parse.set.parse_args(settings))
+            perm = args['perm']
+            reset = args['reset']
+            setting = args['setting']
+            args.pop('reset', None)
+            args.pop('perm', None)
+            args.pop('setting', None)
+
+            if setting == 'plot':
+                if reset:
+                    for k, v in args.items():
+                        if v is not None:
+                            msg = 'Cannot set values with --reset.'
+                            self.parse.set.error(msg)
+
+                    # reset graph settings
+                    kernel.conf.set('graph_format', 'svg', permanent=perm)
+                    kernel.conf.set('graph_scale', '1', permanent=perm)
+                    kernel.conf._remove_unsafe('graph_width', permanent=perm)
+                    kernel.conf._remove_unsafe('graph_height', permanent=perm)
+                else:
+                    for k, v in args.items():
+                        if v is not None:
+                            if k in ['width', 'height', 'scale'] and v <= 0:
+                                msg = '{0} should be positive; value: {1}'
+                                self.parse.set_plot.error(msg.format(k, v))
+
+                            kernel.conf.set('graph_' + k, v, permanent=perm)
+            elif setting == '_all':
+                if reset:
+                    # reset graph settings
+                    kernel.conf.set('graph_format', 'svg', permanent=perm)
+                    kernel.conf.set('graph_scale', '1', permanent=perm)
+                    kernel.conf._remove_unsafe('graph_width', permanent=perm)
+                    kernel.conf._remove_unsafe('graph_height', permanent=perm)
+            else:
+                self.parse.set.error('malformed %set call')
+        except:
+            pass
+
+        self.status = -1
+        return ''
+
     def magic_time(self, code, kernel):
         try:
             args = vars(self.parse.time.parse_args(code.split(' ')))
@@ -297,6 +371,58 @@ class StataMagics():
         print_kernel("Magic timeit has not been implemented.", kernel)
         return code
 
+    def magic_help(self, code, kernel):
+        self.status = -1
+        self.graphs = 0
+        if not code.strip():
+            return ''
+        cmd = code.strip().replace(" ", "_")
+        try:
+            reply = urllib.request.urlopen(self.html_help.format(cmd))
+            html = reply.read().decode("utf-8")
+            soup = bs(html, 'html.parser')
+
+            # Set root for links to https://ww.stata.com
+            for a in soup.find_all('a', href=True):
+                href = a.get('href')
+                relative = href.find(cmd + '#')
+                if relative >= 0:
+                    hrelative = href.find('#')
+                    a['href'] = href[hrelative:]
+                elif not href.startswith('http'):
+                    a['href'] = urllib.parse.urljoin(self.html_base, href)
+
+            # Remove header 'Stata 15 help for ...'
+            soup.find('h2').decompose()
+
+            # Remove Stata help menu
+            soup.find('div', id='menu').decompose()
+
+            # Remove Copyright notice
+            soup.find('a', text='Copyright').find_parent("table").decompose()
+
+            # Remove last hrule
+            soup.find_all('hr')[-1].decompose()
+
+            # Set all the backgrounds to transparent
+            for color in ['#ffffff', '#FFFFFF']:
+                for bg in ['bgcolor', 'background', 'background-color']:
+                    for tag in soup.find_all(attrs={bg: color}):
+                        if tag.get(bg):
+                            tag[bg] = 'transparent'
+
+            # Set html
+            css = soup.find('style', {'type': 'text/css'})
+            with open(self.csshelp_default, 'r') as default:
+                css.string = default.read()
+
+            resp = {'data': {'text/html': str(soup)}, 'metadata': {}}
+            kernel.send_response(kernel.iopub_socket, 'display_data', resp)
+        except urllib.error.HTTPError as e:
+            print_kernel("Failed to fetch HTML help.\r\n" + e.code, kernel)
+
+        return ''
+
     def magic_exit(self, code, kernel):
         self.status = -1
         self.graphs = 0
@@ -315,13 +441,8 @@ class StataMagics():
         return code
 
 
-# ---------------------------------------------------------------------
-# Print messages to the kernel
-
-
 def print_kernel(msg, kernel):
     msg = re.sub(r'$', r'\r\n', msg, flags=re.MULTILINE)
     msg = re.sub(r'[\r\n]{1,2}[\r\n]{1,2}', r'\r\n', msg, flags=re.MULTILINE)
-    stream_content = {'text': msg}
-    stream_content['name'] = 'stdout'
+    stream_content = {'text': msg, 'name': 'stdout'}
     kernel.send_response(kernel.iopub_socket, 'stream', stream_content)

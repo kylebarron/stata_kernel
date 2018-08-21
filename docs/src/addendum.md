@@ -8,5 +8,5 @@ upwards of a _decade_.
 
 ## Contributors
 
-- [Kyle Barron](github.com/kylebarron): main developer.
-- [Mauricio Cáceres](github.com/mcaceresb): wrote magics for timing commands and changing plot size.
+- [Kyle Barron](https://github.com/kylebarron)
+- [Mauricio Cáceres](https://github.com/mcaceresb)

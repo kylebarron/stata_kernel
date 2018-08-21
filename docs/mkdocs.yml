@@ -27,14 +27,14 @@ nav:
     - Using Jupyter:
         - Introduction: 'using_jupyter/intro.md'
         - Jupyter Notebook: 'using_jupyter/notebook.md'
-        - JupyterLab: 'using_jupyter/lab.md'
         - Atom: 'using_jupyter/atom.md'
-        - Jupyter Console: 'using_jupyter/console.md'
+        - JupyterLab: 'using_jupyter/lab.md'
         - Jupyter QtConsole: 'using_jupyter/qtconsole.md'
-        - Using Jupyter on Remote Servers: 'using_jupyter/remote.md'
-    - Using the Stata Kernel:
-        - Introduction: 'using_stata_kernel/intro.md'
-        - Magics: 'using_stata_kernel/magics.md'
+        - Jupyter Console: 'using_jupyter/console.md'
+        # - Using Jupyter on Remote Servers: 'using_jupyter/remote.md'
+    - Using the Stata Kernel: using_stata_kernel/magics.md
+        # - Introduction: 'using_stata_kernel/intro.md'
+        # - Magics: 'using_stata_kernel/magics.md'
     - Troubleshooting: 'troubleshooting.md'
     - Comparison with ipystata: 'comparison_with_ipystata.md'
     - Addendum: 'addendum.md'
@@ -57,7 +57,7 @@ theme:
         code: 'Fira Code'
 
 extra_javascript:
-    - aux/helpers.js
+    - helpers/helpers.js
     - https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.4/MathJax.js?config=TeX-AMS-MML_HTMLorMML
 
 # These extensions are chosen to be a superset of Pandoc's Markdown.
@@ -66,7 +66,8 @@ extra_javascript:
 markdown_extensions:
     - admonition
     - attr_list
-    - codehilite
+    - codehilite:
+        guess_lang: false
     - def_list
     - footnotes
     - pymdownx.arithmatex
