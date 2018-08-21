@@ -283,7 +283,7 @@ class StataMagics():
             # Set root for links to https://ww.stata.com
             for a in soup.find_all('a', href = True):
                 href = a.get('href')
-                relative = href.find('#')
+                relative = href.find(cmd + '#')
                 if relative >= 0:
                     a['href'] = href[relative:]
                 elif not href.startswith('http'):
@@ -296,7 +296,10 @@ class StataMagics():
             soup.find('div', id = 'menu').decompose()
 
             # Remove Copyright notice
-            soup.find('a', text = 'Copyright').parent.parent.decompose()
+            soup.find('a', text = 'Copyright').find_parent("table").decompose()
+
+            # Remove last hrule
+            soup.find_all('hr')[-1].decompose()
 
             # Set all the backgrounds to transparent
             for color in ['#ffffff', '#FFFFFF']:
