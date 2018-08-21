@@ -85,10 +85,10 @@ configuration_setting = value
 These settings can be changed during a session with the `%set` magic, like so:
 
 ```
-%set plot --format svg
-%set plot --scale 1
-%set plot --width 500
-%set plot --width 400 --height 300
+%set graph --format svg
+%set graph --scale 1
+%set graph --width 500
+%set graph --width 400 --height 300
 ```
 
 - `graph_format`: `svg` or `png`, the format to export and display graphs. By default this is `svg` for most operating systems and versions of Stata, but is `png` by default for Windows on Stata 14 and below.

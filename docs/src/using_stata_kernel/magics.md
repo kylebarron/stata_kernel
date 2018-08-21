@@ -13,7 +13,7 @@ All magics are special commands that start with `%`. They must be the first word
 of the cell or selection, otherwise they won't be intercepted and will be sent
 to Stata.
 
-For some of the magics listed, you can add `--help` to see a help menu in the kernel. For example,
+For most of the magics listed, you can add `--help` to see a help menu in the kernel. For example,
 ```
 In [1]: %locals --help
 usage: %locals [-h] [-v] [REGEX [REGEX ...]]
@@ -62,9 +62,29 @@ In [4]: #delimit cr
 delimiter now cr
 ```
 
+### `%head`, `%tail`
+
+**View the first or last observations of the data**
+
+This can optionally be provided with a `varlist`, `N`, or `if`:
+```
+%head [-h] [N] [varlist] [if]
+%tail [-h] [N] [varlist] [if]
+```
+
+For example,
+```
+sysuse auto
+%head 5 make price mpg if mpg < 20
+```
+
 ### `%help`
 
 **Display a help file in rich text**
+
+```
+%help [-h] command_or_topic_name
+```
 
 Add the term you want to search for after `%help`:
 ```
@@ -84,6 +104,11 @@ on them to see another help menu.
 ### `%locals`, `%globals`
 
 **List local or global macros**
+
+```
+%locals [-h] [-v] [REGEX [REGEX ...]]
+%globals [-h] [-v] [REGEX [REGEX ...]]
+```
 
 These take two optional arguments:
 
@@ -116,11 +141,16 @@ S_MACH:    PC (64-bit x86-64)
 
 **Set configuration settings**
 
+Usage:
 ```
-%set plot --format svg
-%set plot --scale 1
-%set plot --width 500
-%set plot --width 400 --height 300
+%set [-h] [--permanently] [--reset] {graph,_all} ...
+```
+
+```
+%set graph --format svg
+%set graph --scale 1
+%set graph --width 500
+%set graph --width 400 --height 300
 ```
 
 <!-- ### `%time`
