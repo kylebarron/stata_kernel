@@ -258,13 +258,16 @@ class CompletionsManager(object):
                     if var.startswith(starts)]
 
     def get_suggestions(self, kernel):
-        match = self.matchall(self.quickdo('_StataKernelCompletions', kernel))
+        match = self.matchall(
+            self.quickdo(
+                kernel.stata._mata_escape('_StataKernelCompletions'), kernel))
         if match:
             suggestions = match.groupdict()
             for k, v in suggestions.items():
                 suggestions[k] = self.varlist.findall(self.varclean('', v))
 
-            all_locals = """mata : invtokens(st_dir("local", "macro", "*")')"""
+            all_locals = kernel.stata._mata_escape(
+                """mata : invtokens(st_dir("local", "macro", "*")')""")
             res = '\r\n'.join(
                 re.split(r'[\r\n]{1,2}', self.quickdo(all_locals, kernel)))
             if res.strip():

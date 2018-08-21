@@ -54,10 +54,14 @@ class StataKernel(Kernel):
             return self.magics.quit_early
 
         # Tokenize code and return code chunks
-        cm = CodeManager(code, self.sc_delimit_mode)
-        text_to_run, md5, text_to_exclude = cm.get_text(self.conf)
+        cm = CodeManager(code, self.sc_delimit_mode, self.stata.mata_mode)
+        self.stata._mata_refresh(cm.mata_mode, cm.mata_open, cm.mata_closed)
+        text_to_run, md5, text_to_exclude = cm.get_text(self.conf, self.stata)
+
+        # Execute code chunk
         rc, res = self.stata.do(
             text_to_run, md5, text_to_exclude=text_to_exclude)
+        res = self.stata._mata_restart(rc, res)
 
         # Post magic results, if applicable
         self.magics.post(self)
@@ -180,4 +184,5 @@ class StataKernel(Kernel):
             'matches': self.completions.get(chunk, env, rcomp)}
 
     def is_complete(self, code):
-        return CodeManager(code, self.sc_delimit_mode).is_complete
+        return CodeManager(
+            code, self.sc_delimit_mode, self.stata.mata_mode).is_complete

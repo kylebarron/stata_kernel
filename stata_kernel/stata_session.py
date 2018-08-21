@@ -44,6 +44,26 @@ class StataSession():
         self.config = config
         self.kernel = kernel
         self.banner = 'stata_kernel: A Jupyter kernel for Stata.'
+
+        self.mata_mode = False
+        self.mata_open = False
+        self.mata_restart = False
+        self.stata_prompt = '\r\n\. '
+        self.mata_prompt = '\r\n: '
+
+        self.stata_prompt_dot = '.'
+        self.mata_prompt_dot = '[:\>]'
+
+        self.stata_prompt_regex = r'^(  \d+)?\.  ??(.+)$'
+        self.mata_prompt_regex = r'^([:\>])  ??(.+)$'
+
+        self.mata_trim = re.compile(
+            r'((\r\n|\r|\n)\s+?)?(\r\n|\r|\n)\Z', flags=re.MULTILINE)
+
+        self.prompt = self.stata_prompt
+        self.prompt_dot = self.stata_prompt_dot
+        self.prompt_regex = self.stata_prompt_regex
+
         if platform.system() == 'Windows':
             self.init_windows()
         elif platform.system() == 'Darwin':
@@ -73,8 +93,8 @@ class StataSession():
         rc, res = self.do(
             'di "`c(stata_version)\'"\n`done\'', md5='done', display=False)
         self.stata_version = res
-        if (platform.system() == 'Windows') and (int(self.stata_version[:2]) <
-                                                 15):
+        isold = int(self.stata_version[:2]) < 15
+        if (platform.system() == 'Windows') and isold:
             self.config.set('graph_format', 'png', permanent=True)
 
     def init_windows(self):
@@ -111,7 +131,7 @@ class StataSession():
             self.config.get('cache_dir') / 'console_debug.log', 'w')
         banner = []
         try:
-            self.child.expect('\r\n\. ', timeout=0.2)
+            self.child.expect(self.prompt, timeout=0.2)
             banner.append(self.child.before)
         except pexpect.TIMEOUT:
             try:
@@ -120,7 +140,7 @@ class StataSession():
                     banner.append(self.child.before)
                     self.child.send('q')
             except pexpect.TIMEOUT:
-                self.child.expect('\r\n\. ')
+                self.child.expect(self.prompt)
                 banner.append(self.child.before)
 
         # Set banner to Stata's shell header
@@ -210,7 +230,7 @@ class StataSession():
         else:
             code_lines = text.split('\n')
 
-        md5 = '. `' + md5 + "'"
+        md5 = self.prompt_dot + ' `' + md5 + "'"
         error_re = r'^r\((\d+)\);'
         cache_dir_str = str(self.config.get('cache_dir'))
         if platform.system() == 'Windows':
@@ -258,6 +278,12 @@ class StataSession():
                 continue
             if match_index == 5:
                 sleep(0.05)
+
+        # Only full input allowed in mata: If command ended in line
+        # continuation, yell at the user.
+        if self.mata_mode and child.after.startswith('> ') and match_index == 0:
+            self.send_break(child=child)
+            self.mata_restart = True
 
         # Then scroll to next newline, but not including period to make it
         # easier to remove code lines later
@@ -308,10 +334,10 @@ class StataSession():
         # somewhere else in the package, but for now, I let there be either one
         # or two such spaces.
         # If the beginning of the first code line is not in res, return
-        if not code_lines[0][:self.linesize - 5] in res[1:].lstrip():
+        if not code_lines[0][:self.linesize - 5].lstrip() in res[1:].lstrip():
             return code_lines, res
 
-        res_match = re.search(r'^(  \d+)?\.  ??(.+)$', res)
+        res_match = re.search(self.prompt_regex, res)
         if not res_match:
             return code_lines, ''
         res = res_match.group(2)
@@ -342,6 +368,7 @@ class StataSession():
         if self.config.get('execution_mode') == 'console':
             child.sendcontrol('c')
             child.sendcontrol('d')
+            child.sendline('\r\n')
         else:
             self.automate('UtilSetStataBreak')
 
@@ -415,3 +442,33 @@ class StataSession():
         else:
             self.child.close(force=True)
         return
+
+    def _mata_refresh(self, mata_mode, mata_open, mata_closed):
+        self.mata_mode = mata_mode and not mata_closed
+        self.mata_open = mata_open
+        if self.mata_mode:
+            self.prompt = self.mata_prompt
+            self.prompt_dot = self.mata_prompt_dot
+            self.prompt_regex = self.mata_prompt_regex
+            # TODO: Figure out graphs in mata mode
+        else:
+            self.prompt = self.stata_prompt
+            self.prompt_dot = self.stata_prompt_dot
+            self.prompt_regex = self.stata_prompt_regex
+
+    def _mata_restart(self, rc, res):
+        # If mata error, restart
+        self.mata_open = self.mata_mode
+        if self.mata_mode and self.mata_restart:
+            self.kernel.send_response(
+                self.kernel.iopub_socket, 'stream', {
+                    'text': "(input incomplete; breaking execution)\n",
+                    'name': 'stdout'})
+            self.mata_restart = False
+        elif self.mata_mode and (rc == 0):
+            res = self.mata_trim.sub('', res)
+
+        return res
+
+    def _mata_escape(self, line):
+        return 'stata(`"{0}"\')'.format(line) if self.mata_open else line

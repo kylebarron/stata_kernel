@@ -7,7 +7,7 @@ from .stata_lexer import StataLexer
 from .stata_lexer import CommentAndDelimitLexer
 
 graph_keywords = [
-    r'gr(a|ap|aph)?' + r'(?!\s+' + r'(save|replay|print|export|dir|set|' +
+    r'gr(a|ap|aph)?' r'(?!\s+' r'(save|replay|print|export|dir|set|'
     r'des(c|cr|cri|crib|cribe)?|rename|copy|drop|close|q(u|ue|uer|uery)?))',
     r'tw(o|ow|owa|oway)?', r'sc(a|at|att|atte|atter)?', r'line',
     r'hist(o|og|ogr|ogra|ogram)?', r'kdensity', r'lowess', r'lpoly',
@@ -33,11 +33,16 @@ class CodeManager(object):
     """Class to deal with text before sending to Stata
     """
 
-    def __init__(self, code, semicolon_delimit=False):
+    def __init__(self, code, semicolon_delimit=False, mata_mode=False):
         code = re.sub(r'\r\n', r'\n', code)
         self.input = code
         if semicolon_delimit:
+            if mata_mode:
+                code = 'mata;\n' + code
+
             code = '#delimit ;\n' + code
+        elif mata_mode:
+            code = 'mata\n' + code
 
         # First use the Comment and Delimiting lexer
         self.tokens_fp_all = self.tokenize_first_pass(code)
@@ -53,7 +58,31 @@ class CodeManager(object):
         text = ''.join([x[1] for x in tokens_nl_delim])
         self.tokens_final = self.tokenize_second_pass(text)
 
+        # TODO: Wrap mata call for include in mata and end. Do not
+        # include end in the include file if the result of this loop is.
+        # False Instead, send end before the include file is done.
+
+        self.mata_mode = False
+        self.mata_open = False
+        if mata_mode:
+            self.mata_open = True
+            self.mata_mode = True
+            self.tokens_final = self.tokens_final[1:]
+
+        self.mata_closed = False
+        for token, chunk in self.tokens_final:
+            if str(token) == 'Token.Mata.Close':
+                self.mata_closed = True
+                self.mata_mode = False
+            elif str(token) == 'Token.Mata.Open':
+                self.mata_closed = False
+                self.mata_mode = True
+
         self.is_complete = self._is_complete()
+
+        if self.mata_mode and self.is_complete:
+            self.mata_open = True
+            self.tokens_final += [('Token.Text', '{}')]
 
     def tokenize_first_pass(self, code):
         """Tokenize input code for Comments and Delimit blocks
@@ -94,7 +123,7 @@ class CodeManager(object):
         """
 
         # If all tokens are newline-delimited, return
-        if not 'Token.TextInSemicolonBlock' in [str(x[0]) for x in tokens]:
+        if 'Token.TextInSemicolonBlock' not in [str(x[0]) for x in tokens]:
             return tokens
 
         # Replace newlines in `;`-delimited blocks with spaces
@@ -151,7 +180,7 @@ class CodeManager(object):
             return True
 
         # block constructs
-        if str(self.tokens_final[-1][0]) == 'Token.TextBlock':
+        if str(self.tokens_final[-1][0]).startswith('Token.TextBlock'):
             return False
 
         # last token a line-continuation comment
@@ -178,7 +207,7 @@ class CodeManager(object):
 
         return True
 
-    def get_text(self, config):
+    def get_text(self, config, stata=None):
         """Get valid, executable text
 
         For any text longer than one line, I save the text to a do file and send
@@ -217,6 +246,9 @@ class CodeManager(object):
         if len(lines) > 1:
             use_include = True
 
+        if stata:
+            use_include = use_include and not stata.mata_open
+
         # Insert `graph export`
         graph_fmt = config.get('graph_format')
         graph_scale = config.get('graph_scale')
@@ -247,6 +279,8 @@ class CodeManager(object):
         g_exp += '/graph${' + gph_cnt + '}'
         g_exp += '.{}, {} replace'.format(graph_fmt, dim_str)
         g_exp += '\nglobal {0} = ${0} + 1'.format(gph_cnt)
+        if stata:
+            g_exp = stata._mata_escape(g_exp)
 
         lines = [x + g_exp if re.match(graph_keywords, x) else x for x in lines]
 

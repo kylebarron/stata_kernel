@@ -117,6 +117,7 @@ class StataMagics():
         'delimit',
         'time',
         'timeit',
+        'status',
         'set']
 
     csshelp_default = resource_filename(
@@ -181,17 +182,27 @@ class StataMagics():
                     print_kernel(fmt.format(t, l), kernel)
 
     def magic_browse(self, code, kernel):
-        cmd = """\
-            if _N <= 200 {{
-                export delim `"{0}/data.csv"', replace datafmt
-            }}
-            else {{
-                export delim `"{0}/data.csv"' in 1/200, replace datafmt
+        if kernel.stata.mata_mode:
+            cmd = """\
+                if `=_N' <= 200 {{
+                    stata(`"export delim `"{0}/data.csv"', replace datafmt"')
+                }}
+                else {{
+                    stata(`"export delim `"{0}/data.csv"' in 1/200, replace datafmt"')
+                }}
+                """
+        else:
+            cmd = """\
+                if `=_N' <= 200 {{
+                    export delim `"{0}/data.csv"', replace datafmt
+                }}
+                else {{
+                    export delim `"{0}/data.csv"' in 1/200, replace datafmt
+                }}
+                """
 
-            }}
-            """.format(kernel.conf.get('cache_dir'))
-        cm = CodeManager(cmd)
-        text_to_run, md5, text_to_exclude = cm.get_text(kernel.conf)
+        cm = CodeManager(cmd.format(kernel.conf.get('cache_dir')))
+        text_to_run, md5, text_to_exclude = cm.get_text(kernel.conf, kernel.stata)
         rc, res = kernel.stata.do(
             text_to_run, md5, text_to_exclude=text_to_exclude, display=False)
         df = pd.read_csv(kernel.conf.get('cache_dir') / 'data.csv')
@@ -230,7 +241,7 @@ class StataMagics():
         if self.status == -1:
             return code
 
-        cm = CodeManager("macro dir")
+        cm = CodeManager(kernel.stata._mata_escape("macro dir"))
         text_to_run, md5, text_to_exclude = cm.get_text(kernel.conf)
         rc, res = kernel.stata.do(
             text_to_run, md5, text_to_exclude=text_to_exclude, display=False)
@@ -439,6 +450,18 @@ class StataMagics():
         self.status = -1
         print_kernel("Magic restart has not been implemented.", kernel)
         return code
+
+    def magic_status(self, code, kernel):
+        self.status = -1
+        delim = ';' if kernel.sc_delimit_mode else 'cr'
+        env = 'mata' if kernel.stata.mata_mode else 'stata'
+        info = (
+            kernel.implementation, kernel.implementation_version,
+            kernel.language, kernel.language_version)
+        print_kernel('{0} {1} for {2} {3}'.format(*info), kernel)
+        print_kernel('\tDelimiter:   {}'.format(delim), kernel)
+        print_kernel('\tEnvironment: {}'.format(env), kernel)
+        return ''
 
 
 def print_kernel(msg, kernel):
