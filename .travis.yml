@@ -16,7 +16,7 @@ script:
 after_success:
   - git config user.name "Kyle Barron";
   - git config user.email "barronk@mit.edu";
-  - git remote add gh-token "https://${GITHUB_TOKEN}@github.com/kylebarron/stata_kernel.git";
+  - git remote add gh-token "https://kylebarron:${GITHUB_TOKEN}@github.com/kylebarron/stata_kernel.git";
   - git fetch gh-token && git fetch gh-token gh-pages:gh-pages;
   - pip install -IU -r requirements_dev.txt;
   - cd docs && mkdocs gh-deploy -v --clean --remote-name gh-token -b gh-pages --force;
