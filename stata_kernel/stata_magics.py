@@ -285,7 +285,8 @@ class StataMagics():
                 href = a.get('href')
                 relative = href.find(cmd + '#')
                 if relative >= 0:
-                    a['href'] = href[relative:]
+                    hrelative = href.find('#')
+                    a['href'] = href[hrelative:]
                 elif not href.startswith('http'):
                     a['href'] = urllib.parse.urljoin(self.html_base, href)
 
