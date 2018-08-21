@@ -73,9 +73,9 @@ class StataSession():
         rc, res = self.do(
             'di "`c(stata_version)\'"\n`done\'', md5='done', display=False)
         self.stata_version = res
-        # if (platform.system() == 'Windows') and (int(self.stata_version[:2]) <
-        #                                          15):
-        #     self.config.set('graph_format', 'png', permanent=True)
+        if (platform.system() == 'Windows') and (int(self.stata_version[:2]) <
+                                                 15):
+            self.config.set('graph_format', 'png', permanent=True)
 
     def init_windows(self):
         """Start Stata on Windows
@@ -294,11 +294,15 @@ class StataSession():
         if code_lines == []:
             return code_lines, res
 
+        # On Windows, sometimes there are two spaces between the dot prompt and
+        # my code, and sometimes there's only one. This might be a fault of
+        # somewhere else in the package, but for now, I let there be either one
+        # or two such spaces.
         # If the beginning of the first code line is not in res, return
-        if not ('. ' + code_lines[0][:self.linesize - 5]) in res:
+        if not code_lines[0][:self.linesize - 5] in res[1:].lstrip():
             return code_lines, res
 
-        res_match = re.search(r'^(  \d+)?\. (.+)$', res)
+        res_match = re.search(r'^(  \d+)?\.  ??(.+)$', res)
         if not res_match:
             return code_lines, ''
         res = res_match.group(2)
