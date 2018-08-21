@@ -1,5 +1,10 @@
 # Changelog
 
+## [1.4.1] - 2018-08-21
+
+- Add `%head` and `%tail` magics
+- Change `%set plot` to `%set graph`
+
 ## [1.4.0] - 2018-08-21
 
 - Return results as Stata returns them, not when command finishes
