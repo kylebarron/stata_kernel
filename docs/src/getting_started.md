@@ -45,6 +45,12 @@ The second command will try to find your Stata executable, and will warn you if
 it can't. In that case, you'll have to set it yourself. Refer to the
 [configuration](#configuration) below.
 
+If Python 2 is the default version of Python on your system, you may need to use
+```
+$ pip3 install stata_kernel
+$ python3 -m stata_kernel.install
+```
+
 To upgrade from a previous version of `stata_kernel`, from a terminal or command prompt run
 
 ```

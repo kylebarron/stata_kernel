@@ -1,10 +1,4 @@
-# Using the Stata Kernel
-
-The Stata kernel is the bridge between Stata and the Jupyter ecosystem. It will work with any of the tools outlined in [Using Jupyter](../using_jupyter/intro.md).
-
-After [installing](../getting_started.md) and optionally [configuring](../getting_started.md#configuration) `stata_kernel`, it should be ready for use.
-
-## Magics
+# Magics
 
 **Magics** are programs provided by `stata_kernel` that enhance the experience
 *of working with Stata in Jupyter.
@@ -30,7 +24,7 @@ The magics that respond with richly formatted text, namely `%browse` and
 `%help`, will not work with Jupyter Console or Jupyter QtConsole, since they
 don't support displaying HTML.
 
-### `%browse`
+## `%browse`
 
 **Interactively view your dataset**
 
@@ -41,7 +35,7 @@ For now, this displays the first 200 rows of your data. This will be expanded in
 |       **Atom**       |         ![Atom](../img/browse_atom.png)         |
 | **Jupyter Notebook** | ![Jupyter Notebook](../img/browse_notebook.png) |
 
-### `%delimit`
+## `%delimit`
 
 **Print the current delimiter**
 
@@ -62,7 +56,7 @@ In [4]: #delimit cr
 delimiter now cr
 ```
 
-### `%head`, `%tail`
+## `%head`, `%tail`
 
 **View the first or last observations of the data**
 
@@ -78,7 +72,7 @@ sysuse auto
 %head 5 make price mpg if mpg < 20
 ```
 
-### `%help`
+## `%help`
 
 **Display a help file in rich text**
 
@@ -101,7 +95,7 @@ on them to see another help menu.
 | **Jupyter Notebook** | ![Jupyter Notebook](../img/notebook_help_magic.png) |
 
 
-### `%locals`, `%globals`
+## `%locals`, `%globals`
 
 **List local or global macros**
 
@@ -137,7 +131,7 @@ S_MACH:    PC (64-bit x86-64)
 ```
 
 
-### `%set`
+## `%set`
 
 **Set configuration settings**
 
@@ -153,7 +147,7 @@ Usage:
 %set graph --width 400 --height 300
 ```
 
-<!-- ### `%time`
+<!-- ## `%time`
 
 **Time Execution of a Command**
 
