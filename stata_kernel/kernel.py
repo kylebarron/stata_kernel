@@ -2,6 +2,7 @@ import base64
 import platform
 
 from PIL import Image
+from textwrap import dedent
 from xml.etree import ElementTree as ET
 from ipykernel.kernelbase import Kernel
 
@@ -43,7 +44,19 @@ class StataKernel(Kernel):
         dictionary as described here:
         https://jupyter-client.readthedocs.io/en/stable/messaging.html#execution-results
         """
+        invalid_input_msg = """\
+        stata_kernel error: code entered was incomplete.
+
+        This usually means that a loop or program was not correctly terminated.
+        This can also happen if you are in `#delimit ;` mode and did not end the
+        command with `;`. Use `%delimit` to see the current delimiter mode.
+        """
         if not self.is_complete(code):
+            self.send_response(
+                self.iopub_socket, 'stream', {
+                    'text': dedent(invalid_input_msg),
+                    'name': 'stderr'})
+
             return {'status': 'error', 'execution_count': self.execution_count}
 
         # Search for magics in the code
