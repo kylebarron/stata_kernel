@@ -21,6 +21,17 @@ class StataLexer(RegexLexer):
 
     Text: Arbitrary text
     Token.SemicolonDelimiter: Delimiter (either \\n or ;), depending on the block
+
+    For mata, we use:
+        Token.Mata.Open
+        Token.Mata.OpenError
+        Token.Mata.Close
+        Token.TextBlockParen
+
+    If mata was opened with a colon, :, an error will close mata. We
+    take into account when determining if mata was left open. Further,
+    we make sure parenthesis behave as blocks, {}, to force the user to
+    close them.
     """
     flags = re.MULTILINE | re.DOTALL
     tokens = {
@@ -32,7 +43,8 @@ class StataLexer(RegexLexer):
             # of syntactic chunks.
             (r'^[^\n]*?`"', Text, 'string-compound'),
             (r'^[^\n]*?(?<!`)"', Text, 'string-regular'),
-            (r'^[^\r\n\S]*m(ata)?[^\r\n\S]*:?[^\r\n\S]*$', Token.Mata.Open, 'mata'),
+            (r'^[^\r\n\S]*m(ata)?[^\r\n\S]*$', Token.Mata.Open, 'mata'),
+            (r'^[^\r\n\S]*m(ata)?[^\r\n\S]*:[^\r\n\S]*$', Token.Mata.OpenError, 'mata'),
             (r'^[^\n]*?\{', Token.TextBlock, 'block'),
             (r'^\s*(pr(ogram|ogra|ogr|og|o)?)\s+(?!di|dr|l)(de(fine|fin|fi|f)?\s+)?', Token.TextBlock, 'program'),
             (r'^\s*inp(u|ut)?', Token.TextBlock, 'program'),
@@ -139,7 +151,8 @@ class CommentAndDelimitLexer(RegexLexer):
             include('comments'),
             include('strings'),
             (r'^\s*#d(e|el|eli|elim|elimi|elimit)?\s*;\s*?$', Comment.Single, 'delimit;'),
-            (r'^[^\r\n\S]*m(ata)?[^\r\n\S]*:?[^\r\n\S]*$', Token.Mata.Open, 'mata'),
+            (r'^[^\r\n\S]*m(ata)?[^\r\n\S]*$', Token.Mata.Open, 'mata'),
+            (r'^[^\r\n\S]*m(ata)?[^\r\n\S]*:[^\r\n\S]*$', Token.Mata.OpenError, 'mata'),
             (r'.', Text),
         ],
         'mata': [
@@ -157,9 +170,9 @@ class CommentAndDelimitLexer(RegexLexer):
             (r'/\*', Comment.Multiline, 'delimit;-comments-block'),
             (r'(^///|(?<=\s)///)', Comment.Special, 'delimit;-comments-triple-slash'),
             include('delimit;-strings'),
-            (r'(\A|;)\s*end(?=(\s|[^\s\w\.]).*?$|$)', Token.Mata.Close, '#pop'),
-            (r';', Token.Keyword.Reserved),
-            (r'.', Text),
+            (r'(?=^|;)\s*end(?=(\s|[^\s\w\.]).*?$|$)', Token.Mata.Close, '#pop'),
+            (r';', Token.SemicolonDelimiter),
+            (r'.', Token.TextInSemicolonBlock),
         ],
 
         'comments': [
@@ -213,8 +226,8 @@ class CommentAndDelimitLexer(RegexLexer):
         ],
         'delimit;': [
             (r'^\s*#d(e|el|eli|elim|elimi|elimit)?\s+cr\s*?$', Comment.Single, '#pop'),
-            # NOTE(mauricio): XX check nesting as mata captures ; as text
-            (r'(\A|;)\s*m(ata)?\s*:?\s*;', Token.Mata.Open, 'mata-delimit'),
+            (r'(?=^|;)\s*m(ata)?\s*(?=;)', Token.Mata.Open, 'mata-delimit'),
+            (r'(?=^|;)\s*m(ata)?\s*:\s*(?=;)', Token.Mata.OpenError, 'mata-delimit'),
             include('delimit;-comments'),
             include('delimit;-strings'),
             (r';', Token.SemicolonDelimiter),

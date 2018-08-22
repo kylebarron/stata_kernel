@@ -47,12 +47,13 @@ class StataSession():
 
         self.mata_mode = False
         self.mata_open = False
+        self.mata_error = False
         self.mata_restart = False
         self.stata_prompt = '\r\n\. '
         self.mata_prompt = '\r\n: '
 
         self.stata_prompt_dot = '.'
-        self.mata_prompt_dot = '[:\>]'
+        self.mata_prompt_dot = '[\.:\>]'
 
         self.stata_prompt_regex = r'^(  \d+)?\.  ??(.+)$'
         self.mata_prompt_regex = r'^([:\>])  ??(.+)$'
@@ -279,11 +280,7 @@ class StataSession():
             if match_index == 5:
                 sleep(0.05)
 
-        # Only full input allowed in mata: If command ended in line
-        # continuation, yell at the user.
-        if self.mata_mode and child.after.startswith('> ') and match_index == 0:
-            self.send_break(child=child)
-            self.mata_restart = True
+        self._mata_break(match_index, child)
 
         # Then scroll to next newline, but not including period to make it
         # easier to remove code lines later
@@ -368,7 +365,6 @@ class StataSession():
         if self.config.get('execution_mode') == 'console':
             child.sendcontrol('c')
             child.sendcontrol('d')
-            child.sendline('\r\n')
         else:
             self.automate('UtilSetStataBreak')
 
@@ -443,9 +439,10 @@ class StataSession():
             self.child.close(force=True)
         return
 
-    def _mata_refresh(self, mata_mode, mata_open, mata_closed):
-        self.mata_mode = mata_mode and not mata_closed
-        self.mata_open = mata_open
+    def _mata_refresh(self, cm):
+        self.mata_mode = cm.mata_mode and not cm.mata_closed
+        self.mata_open = cm.mata_open
+        self.mata_error = cm.mata_error or self.mata_error
         if self.mata_mode:
             self.prompt = self.mata_prompt
             self.prompt_dot = self.mata_prompt_dot
@@ -457,18 +454,60 @@ class StataSession():
             self.prompt_regex = self.stata_prompt_regex
 
     def _mata_restart(self, rc, res):
-        # If mata error, restart
-        self.mata_open = self.mata_mode
-        if self.mata_mode and self.mata_restart:
-            self.kernel.send_response(
-                self.kernel.iopub_socket, 'stream', {
-                    'text': "(input incomplete; breaking execution)\n",
-                    'name': 'stdout'})
+        # If mata was opened with a colon, :, an error ends mata
+        if self.mata_error and rc:
+            self.mata_open = False
+            self.mata_mode = False
             self.mata_restart = False
-        elif self.mata_mode and (rc == 0):
-            res = self.mata_trim.sub('', res)
+            self.mata_error = False
+        else:
+            # If incomplete input, yell at user
+            self.mata_open = self.mata_mode
+            if self.mata_mode and self.mata_restart:
+                self.kernel.send_response(
+                    self.kernel.iopub_socket, 'stream', {
+                        'text': "(input incomplete; breaking execution)\n",
+                        'name': 'stdout'})
+                self.mata_restart = False
+            elif self.mata_mode and (rc == 0):
+                res = self.mata_trim.sub('', res)
 
         return res
 
     def _mata_escape(self, line):
         return 'stata(`"{0}"\')'.format(line) if self.mata_open else line
+
+    def _mata_break(self, match_index, child):
+        # Only full input allowed in mata: If command ended in line
+        # continuation, yell at the user. Note that some valid mata code
+        # ends in a line continuation. In this case we hack it by adding
+        # {} and {}.
+        if self.mata_mode and child.after.startswith('> ') and match_index == 0:
+            mata_index = -1
+            child.sendline('{}\n')
+            while mata_index == -1:
+                mata_index = child.expect(['\r\n\.', '\r\n:', '\r\n>', pexpect.EOF])
+                sleep(0.01)
+
+            mata_index = -1
+            child.sendline('{}\n')
+            while mata_index == -1:
+                mata_index = child.expect(['\r\n\.', '\r\n:', '\r\n>', pexpect.EOF])
+                sleep(0.01)
+
+            res = re.sub(r'^ *{}(\r\n)?', '', child.before)
+            self.kernel.send_response(
+                self.kernel.iopub_socket, 'stream', {
+                    'text': res + '\n',
+                    'name': 'stdout'})
+
+            self.mata_restart = True
+            if re.match(r'(\r?\n)? *>(\r?\n)?', child.after):
+                if self.config.get('execution_mode') == 'console':
+                    child.sendcontrol('c')
+                    child.sendcontrol('d')
+                    child.sendline('\r\n')
+                else:
+                    self.automate('UtilSetStataBreak')
+
+                child.expect('\r?\n: ')

@@ -64,6 +64,7 @@ class CodeManager(object):
 
         self.mata_mode = False
         self.mata_open = False
+        self.mata_error = False
         if mata_mode:
             self.mata_open = True
             self.mata_mode = True
@@ -74,15 +75,13 @@ class CodeManager(object):
             if str(token) == 'Token.Mata.Close':
                 self.mata_closed = True
                 self.mata_mode = False
-            elif str(token) == 'Token.Mata.Open':
+            elif str(token).startswith('Token.Mata.Open'):
                 self.mata_closed = False
                 self.mata_mode = True
+                if str(token) == 'Token.Mata.OpenError':
+                    self.mata_error = True
 
         self.is_complete = self._is_complete()
-
-        if self.mata_mode and self.is_complete:
-            self.mata_open = True
-            self.tokens_final += [('Token.Text', '{}')]
 
     def tokenize_first_pass(self, code):
         """Tokenize input code for Comments and Delimit blocks
@@ -248,6 +247,7 @@ class CodeManager(object):
 
         if stata:
             use_include = use_include and not stata.mata_open
+            use_include = use_include and not stata.mata_mode
 
         # Insert `graph export`
         graph_fmt = config.get('graph_format')

@@ -55,7 +55,7 @@ class StataKernel(Kernel):
 
         # Tokenize code and return code chunks
         cm = CodeManager(code, self.sc_delimit_mode, self.stata.mata_mode)
-        self.stata._mata_refresh(cm.mata_mode, cm.mata_open, cm.mata_closed)
+        self.stata._mata_refresh(cm)
         text_to_run, md5, text_to_exclude = cm.get_text(self.conf, self.stata)
 
         # Execute code chunk
@@ -175,7 +175,7 @@ class StataKernel(Kernel):
         """
         env, pos, chunk, rcomp = self.completions.get_env(
             code[:cursor_pos], code[cursor_pos:(cursor_pos + 2)],
-            self.sc_delimit_mode)
+            self.sc_delimit_mode, self.stata.mata_mode)
 
         return {
             'status': 'ok',
