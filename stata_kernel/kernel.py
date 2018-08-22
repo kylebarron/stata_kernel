@@ -31,7 +31,7 @@ class StataKernel(Kernel):
             r'|n(o|oi|ois|oisi|oisil|oisily)?)\b')
 
         self.inspect_mata = regex.compile(
-            r'^(\s*{0})*(?<context>\w+)'.format(pre),
+            r'^(\s*{0})*(?<context>\w+)\b'.format(pre),
             flags = regex.MULTILINE
         ).search
         self.inspect_keyword = regex.compile(
@@ -220,6 +220,7 @@ class StataKernel(Kernel):
         context = self.inspect_mata(code)
         if context:
             ismata = context.groupdict()['context'].strip() == 'mata'
+            ismata = ismata and code.strip() != 'mata'
 
         found = False
         data = {}
