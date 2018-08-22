@@ -32,9 +32,9 @@ nav:
         - Jupyter QtConsole: 'using_jupyter/qtconsole.md'
         - Jupyter Console: 'using_jupyter/console.md'
         # - Using Jupyter on Remote Servers: 'using_jupyter/remote.md'
-    - Using the Stata Kernel: using_stata_kernel/magics.md
-        # - Introduction: 'using_stata_kernel/intro.md'
-        # - Magics: 'using_stata_kernel/magics.md'
+    - Using the Stata Kernel:
+        - Introduction: 'using_stata_kernel/intro.md'
+        - Magics: 'using_stata_kernel/magics.md'
     - Troubleshooting: 'troubleshooting.md'
     - Comparison with ipystata: 'comparison_with_ipystata.md'
     - Addendum: 'addendum.md'

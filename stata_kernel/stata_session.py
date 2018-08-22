@@ -248,7 +248,7 @@ class StataSession():
         res_list = []
         rc = 0
         while match_index != 0:
-            match_index = child.expect(expect_list, timeout=5)
+            match_index = child.expect(expect_list, timeout=None)
             res = child.before
             if match_index == 0:
                 break

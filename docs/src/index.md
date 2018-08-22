@@ -5,8 +5,12 @@ Linux.
 
 ## What is Jupyter?
 
-Jupyter is an open-source ecosystem for interactive data science. Originally developed around the Python programming language, Jupyter has grown to interface with dozens of programming languages. `stata_kernel`
-is the bridge that interactively connects Stata to all the elements in the ecosystem.
+Jupyter is an open-source ecosystem for interactive data science. Originally
+developed around the Python programming language, Jupyter has grown to interface
+with dozens of programming languages.
+
+`stata_kernel` is the bridge that interactively connects Stata to all the
+elements in the ecosystem.
 
 - The **Jupyter Notebook** is a web-based interactive editor that allows for interweaving of code, text, and results.
 
@@ -42,4 +46,4 @@ If you find bugs, please [submit a bug report here](https://github.com/kylebarro
 
 **Atom**
 
-![Atom](img/atom.png)
+![Atom](img/stata_kernel_example.gif)
