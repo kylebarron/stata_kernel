@@ -1,4 +1,5 @@
 import base64
+import regex
 import platform
 
 from PIL import Image
@@ -24,6 +25,25 @@ class StataKernel(Kernel):
 
     def __init__(self, *args, **kwargs):
         super(StataKernel, self).__init__(*args, **kwargs)
+        pre = (
+            r'\b(cap(t|tu|tur|ture)?'
+            r'|qui(e|et|etl|etly)?'
+            r'|n(o|oi|ois|oisi|oisil|oisily)?)\b')
+
+        self.inspect_mata = regex.compile(
+            r'^(\s*{0})*(?<context>\w+)'.format(pre),
+            flags = regex.MULTILINE
+        ).search
+        self.inspect_keyword = regex.compile(
+            r'(?r)(^|\s+|\=)(?<keyword>\w+)(\(|\s+|$)',
+            flags = regex.MULTILINE
+        ).search
+        self.inspect_not_found = regex.compile(
+            r'help for \w+ not found'
+        ).search
+        self.inspect_html_lines = regex.compile(
+            r'\r?\n'
+        ).sub
 
         # Can't name this `self.config`. Conflicts with a Jupyter attribute
         self.conf = Config()
@@ -194,3 +214,49 @@ class StataKernel(Kernel):
 
     def is_complete(self, code):
         return CodeManager(code, self.sc_delimit_mode).is_complete
+
+    def do_inspect(self, code, cursor_pos, detail_level=0):
+        ismata = False
+        context = self.inspect_mata(code)
+        if context:
+            ismata = context.groupdict()['context'].strip() == 'mata'
+
+        found = False
+        data = {}
+        match = self.inspect_keyword(code)
+        if match:
+            keyword = match.groupdict()['keyword']
+            # if ismata or self.stata.mata_mode:
+            if ismata:
+                keyword = 'mf_' + keyword
+
+            cm = CodeManager('help ' + keyword)
+            text_to_run, md5, text_to_exclude = cm.get_text(self.conf)
+            rc, res = self.stata.do(
+                text_to_run, md5, text_to_exclude=text_to_exclude,
+                display=False)
+
+            if self.inspect_not_found(res) is None:
+                res = res.replace('(View complete PDF manual entry)', '')
+                found = True
+                data = {'text/plain': res, 'text/html': '<pre>' + res + '</pre>'}
+
+                # NOTE: For proper HTML help, uncomment. The issue is
+                # that if the user is offline or has a slow connection,
+                # this would also slow down regular introspection (e.g.
+                # in qtconsole)
+
+                # res_html, err = self.magics._fetch_help(keyword)
+                # res_html = if res_html else '<pre>' + res + '</pre>'
+                # data = {'text/plain': res, 'text/html': res_html}
+
+        content = {
+            'status': 'ok',
+            # found should be true if an object was found, false otherwise
+            'found': found,
+            # data can be empty if nothing is found
+            'data': data,
+            'metadata': {}
+        }
+
+        return content

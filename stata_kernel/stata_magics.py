@@ -473,6 +473,39 @@ class StataMagics():
             return ''
 
         cmd = code.strip().replace(" ", "_")
+        help_html, err = self._fetch_help(cmd)
+        if help_html:
+            fallback = 'This front-end cannot display HTML help.'
+            resp = {
+                'data': {
+                    'text/html': help_html,
+                    'text/plain': fallback},
+                'metadata': {}}
+            kernel.send_response(kernel.iopub_socket, 'display_data', resp)
+        else:
+            msg = "Failed to fetch HTML help.\r\n{0}"
+            print_kernel(msg.format(err), kernel)
+
+        return ''
+
+    def magic_exit(self, code, kernel):
+        self.status = -1
+        self.graphs = 0
+        print_kernel("Magic exit has not been implemented.", kernel)
+        return code
+
+    def magic_restart(self, code, kernel):
+        # magic['name']    = 'restart'
+        # magic['restart'] = True
+        # if code.strip() != '':
+        #     magic['name']   = ''
+        #     magic['status'] = -1
+        #     print("Magic restart must be called by itself.")
+        self.status = -1
+        print_kernel("Magic restart has not been implemented.", kernel)
+        return code
+
+    def _fetch_help(self, cmd):
         try:
             reply = urllib.request.urlopen(
                 self.html_help.format(cmd))
@@ -513,35 +546,9 @@ class StataMagics():
             with open(self.csshelp_default, 'r') as default:
                 css.string = default.read()
 
-            fallback = 'This front-end cannot display HTML help.'
-            resp = {
-                'data': {
-                    'text/html': str(soup),
-                    'text/plain': fallback},
-                'metadata': {}}
-            kernel.send_response(kernel.iopub_socket, 'display_data', resp)
-        except (urllib.error.HTTPError, urllib.error.URLError) as e:
-            msg = "Failed to fetch HTML help.\r\n{0}"
-            print_kernel(msg.format(e), kernel)
-
-        return ''
-
-    def magic_exit(self, code, kernel):
-        self.status = -1
-        self.graphs = 0
-        print_kernel("Magic exit has not been implemented.", kernel)
-        return code
-
-    def magic_restart(self, code, kernel):
-        # magic['name']    = 'restart'
-        # magic['restart'] = True
-        # if code.strip() != '':
-        #     magic['name']   = ''
-        #     magic['status'] = -1
-        #     print("Magic restart must be called by itself.")
-        self.status = -1
-        print_kernel("Magic restart has not been implemented.", kernel)
-        return code
+            return str(soup), ''
+        except (urllib.error.HTTPError, urllib.error.URLError) as err:
+            return '', err
 
 
 def print_kernel(msg, kernel):
