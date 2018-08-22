@@ -447,7 +447,6 @@ class StataSession():
             self.prompt = self.mata_prompt
             self.prompt_dot = self.mata_prompt_dot
             self.prompt_regex = self.mata_prompt_regex
-            # TODO: Figure out graphs in mata mode
         else:
             self.prompt = self.stata_prompt
             self.prompt_dot = self.stata_prompt_dot

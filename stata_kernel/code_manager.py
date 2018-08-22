@@ -58,9 +58,10 @@ class CodeManager(object):
         text = ''.join([x[1] for x in tokens_nl_delim])
         self.tokens_final = self.tokenize_second_pass(text)
 
-        # TODO: Wrap mata call for include in mata and end. Do not
-        # include end in the include file if the result of this loop is.
-        # False Instead, send end before the include file is done.
+        # NOTE: Consider wrapping mata call for include in mata and
+        # end. Do not include end in the include file if the result of
+        # this loop is.  False Instead, send end before the include file
+        # is done.
 
         self.mata_mode = False
         self.mata_open = False

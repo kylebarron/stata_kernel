@@ -147,7 +147,6 @@ class CommentAndDelimitLexer(RegexLexer):
     flags = re.MULTILINE | re.DOTALL
     tokens = {
         'root': [
-            # TODO(mauricio): Is it important to include comments and strings first?
             include('comments'),
             include('strings'),
             (r'^\s*#d(e|el|eli|elim|elimi|elimit)?\s*;\s*?$', Comment.Single, 'delimit;'),
