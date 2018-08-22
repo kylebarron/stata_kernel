@@ -41,9 +41,6 @@ class StataKernel(Kernel):
         self.inspect_not_found = regex.compile(
             r'help for \w+ not found'
         ).search
-        self.inspect_html_lines = regex.compile(
-            r'\r?\n'
-        ).sub
 
         # Can't name this `self.config`. Conflicts with a Jupyter attribute
         self.conf = Config()
