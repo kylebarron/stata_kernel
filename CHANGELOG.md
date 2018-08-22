@@ -1,5 +1,11 @@
 # Changelog
 
+## [1.4.2] - 2018-08-21
+
+- Fix line cleaning for loops/programs of more than 9 lines
+- Remove pexpect timeout
+- Provide error message upon incomplete input sent to `do_execute`
+
 ## [1.4.1] - 2018-08-21
 
 - Add `%head` and `%tail` magics
