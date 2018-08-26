@@ -10,6 +10,8 @@ After [installing](../getting_started.md) and optionally [configuring](../gettin
 
 To minimize false positives, the graph keyword must appear at the beginning of a line. To hide the display of a graph, just prefix `graph` with [`quietly`](https://www.stata.com/help.cgi?quietly).
 
+To display graphs from user created commands (e.g., `coefplot`), use `graph display` after the command that generated the graph.
+
 ## `#delimit ;` mode
 
 Stata lets you use [`;` as a command
