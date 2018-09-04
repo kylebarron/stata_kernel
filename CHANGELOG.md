@@ -1,5 +1,10 @@
 # Changelog
 
+## [1.4.3] - 2018-09-04
+
+- Release to pypi again because 1.4.2 didn't upload correctly. Apparently only a
+  Mac version was uploaded, and even that didn't work.
+
 ## [1.4.2] - 2018-08-21
 
 - Fix line cleaning for loops/programs of more than 9 lines
