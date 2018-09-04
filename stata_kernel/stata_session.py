@@ -86,7 +86,7 @@ class StataSession():
         WinExec(self.config.get('stata_path'))
         sleep(0.25)
         self.stata = win32com.client.Dispatch("stata.StataOLEApp")
-        self.automate(cmd_name='UtilShowStata', value=2)
+        self.automate(cmd_name='UtilShowStata', value=1)
         self.config.set('execution_mode', 'automation', permanent=True)
         self.start_log_aut()
 
