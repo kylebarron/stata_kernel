@@ -179,6 +179,7 @@ class StataSession():
 
         if platform.system() == 'Windows':
             text = re.sub(r'\n', '\r\n', text)
+            text = '\r' + text
 
         if self.config.get('execution_mode') == 'console':
             self.child.sendline(text)
