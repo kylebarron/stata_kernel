@@ -174,6 +174,9 @@ class StataSession():
             display (bool): Whether to send results to front-end
         """
 
+        if platform.system() == 'Windows':
+            text = re.sub(r'\n', '\r\n', text)
+
         if self.config.get('execution_mode') == 'console':
             self.child.sendline(text)
             child = self.child
