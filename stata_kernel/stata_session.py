@@ -86,7 +86,7 @@ class StataSession():
         WinExec(self.config.get('stata_path'))
         sleep(0.25)
         self.stata = win32com.client.Dispatch("stata.StataOLEApp")
-        self.automate(cmd_name='UtilShowStata', value=2)
+        self.automate(cmd_name='UtilShowStata', value=1)
         self.config.set('execution_mode', 'automation', permanent=True)
         self.start_log_aut()
 
@@ -157,6 +157,10 @@ class StataSession():
         else:
             self.log_fd = pexpect.fdpexpect.fdspawn(
                 self.fd, encoding='utf-8', maxread=1)
+
+        self.log_fd.logfile = open(
+            self.config.get('cache_dir') / 'console_debug.log', 'w')
+
         return 0
 
     def do(self, text, md5, **kwargs):
