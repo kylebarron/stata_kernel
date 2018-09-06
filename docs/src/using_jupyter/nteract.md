@@ -4,6 +4,8 @@ Nteract is a desktop-based computing environment to work with Jupyter Notebook f
 
 You can download the software from <https://nteract.io>.
 
+(It's helpful to know that you can use <kbd>Ctrl</kbd>+<kbd>Space</kbd> to trigger autocompletions in Nteract.)
+
 Below is an example screenshot of using Nteract, followed by its PDF output.
 
 ![](../img/nteract.png)
