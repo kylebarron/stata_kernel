@@ -7,7 +7,7 @@ program _StataKernelHead
     * First, parse the number of lines to print. Either the first 10 or
     * the number specified by the user.
 
-    if ( regexm(`"`anything'"', "^\s*([0-9]+)") ) {
+    if ( regexm(`"`anything'"', "^[ ]*([0-9]+)") ) {
         local n1 = regexs(1)
         gettoken n2 anything: anything
         cap assert `n1' == `n2'
