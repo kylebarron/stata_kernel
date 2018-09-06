@@ -316,7 +316,7 @@ class StataSession():
         # somewhere else in the package, but for now, I let there be either one
         # or two such spaces.
         # If the beginning of the first code line is not in res, return
-        if not code_lines[0][:self.linesize - 5] in res[1:].lstrip():
+        if not code_lines[0][:self.linesize - 5].lstrip() in res[1:].lstrip():
             return code_lines, res
 
         res_match = re.search(r'^(\s*\d+)?\.  ??(.+)$', res)
