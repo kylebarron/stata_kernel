@@ -283,6 +283,10 @@ class CompletionsManager(object):
                 'globals': [],
                 'locals': []}
 
+        suggestions['globals'] = [
+            x for x in suggestions['globals']
+            if x != 'stata_kernel_graph_counter']
+
         return suggestions
 
     def quickdo(self, code, kernel):
