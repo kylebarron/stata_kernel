@@ -1,6 +1,7 @@
 capture program drop _StataKernelCompletions
 program _StataKernelCompletions
     local userTrace `c(trace)'
+    set more off
     set trace off
     syntax [varlist]
     disp "%varlist%"
