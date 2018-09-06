@@ -1,5 +1,15 @@
 # Changelog
 
+## [1.4.4] - 2018-09-06
+
+- Fully hide Stata GUI on Windows. Always export log file, even on Windows and Mac Automation.
+- Set more off within ado files. Should fix #132.
+- Use bumpversion for easy version number updating.
+- Add `%help kernel` and `%help magics` options
+- Add general debugging information (like OS/Stata version/package version) to log
+- Add help links to Jupyter Notebook's Help dropdown UI
+- Various docs fixes
+
 ## [1.4.3] - 2018-09-04
 
 - Release to pypi again because 1.4.2 didn't upload correctly. Apparently only a
