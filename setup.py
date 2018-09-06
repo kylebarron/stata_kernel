@@ -1,3 +1,4 @@
+from subprocess import run
 from setuptools import setup
 
 with open('README.md') as f:
@@ -17,6 +18,9 @@ with open('requirements_dev.txt') as test_requirements_file:
 setup_requirements = [
     'setuptools >= 38.6.0',
     'twine >= 1.11.0']
+
+# Recompile included docs
+run(['bash', 'make.sh'], cwd='./stata_kernel/docs/')
 
 setup(
     author='Kyle Barron',

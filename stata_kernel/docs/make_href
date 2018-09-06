@@ -7,7 +7,7 @@ import re
 
 help_msg_html = """\
 <p>
-See the online documentation at
+Online documentation is available at
 <a href="https://kylebarron.github.io/stata_kernel/">
     kylebarron.github.io/stata_kernel
 </a><br>
