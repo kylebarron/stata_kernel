@@ -67,6 +67,10 @@ class StataSession():
             set linesize {2}
             clear all
             global stata_kernel_graph_counter = 0
+
+            di "$S_DATE, $S_TIME"
+            di "Stata version: `c(version)'"
+            di "OS: $S_OS"
             `finished_init_cmd'
             """.format(adodir, os.getcwd(), self.linesize).rstrip()
         self.do(dedent(init_cmd), md5='finished_init_cmd', display=False)
