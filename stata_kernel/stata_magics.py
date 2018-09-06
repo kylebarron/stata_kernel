@@ -70,7 +70,7 @@ class MagicParsers():
 
         info = (
             kernel.implementation, kernel.implementation_version,
-            kernel.language, kernel.language_version)
+            kernel.language.title(), kernel.language_version)
         self.help._msg_html = dedent("""
         <p style="font-family:Monospace;">
         {0} {1} for {2} {3}. Type<br><br>
