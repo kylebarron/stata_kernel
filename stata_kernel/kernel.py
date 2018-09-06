@@ -21,6 +21,10 @@ class StataKernel(Kernel):
         'name': 'stata',
         'mimetype': 'text/x-stata',
         'file_extension': '.do'}
+    help_links = [
+        {'text': 'stata_kernel Help', 'url': 'https://kylebarron.github.io/stata_kernel/'},
+        {'text': 'Stata Help', 'url': 'https://www.stata.com/features/documentation/'}
+    ] # yapf: disable
 
     def __init__(self, *args, **kwargs):
         super(StataKernel, self).__init__(*args, **kwargs)
@@ -36,7 +40,11 @@ class StataKernel(Kernel):
         self.completions = CompletionsManager(self, self.conf)
 
     def do_execute(
-            self, code, silent, store_history=True, user_expressions=None,
+            self,
+            code,
+            silent,
+            store_history=True,
+            user_expressions=None,
             allow_stdin=False):
         """Execute user code.
 
