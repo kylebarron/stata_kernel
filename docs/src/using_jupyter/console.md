@@ -1,8 +1,8 @@
 # Jupyter Console
 
-To use it as a console, run:
+To use it as a console, in your terminal or command prompt run:
 ```
-$ jupyter console --kernel stata
+jupyter console --kernel stata
 ```
 
 Example:
