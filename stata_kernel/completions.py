@@ -200,6 +200,9 @@ class CompletionsManager(object):
             # scalar context.
             env += env_add
 
+        if not self.config.get('autocomplete_closing_symbol', False):
+            rcomp = ''
+
         return env, pos, code[pos:], rcomp
 
     def get(self, starts, env, rcomp):

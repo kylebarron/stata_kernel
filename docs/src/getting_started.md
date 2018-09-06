@@ -75,18 +75,22 @@ configuration_setting = value
 
 ### General settings
 
-- `stata_path`: the path on your file system to your Stata executable. Usually this can be found automatically in the [install step](getting_started.md#package-install), but sometimes may need to be set manually.
+- `stata_path`: a string; the path on your file system to your Stata executable. Usually this can be found automatically in the [install step](getting_started.md#package-install), but sometimes may need to be set manually.
 
-- `cache_directory`: the directory for the kernel to store temporary log files and graphs. By default, this is `~/.stata_kernel_cache`, where `~` means your home directory. You may wish to change this location if, for example, you're working under a Data Use Agreement where all related files must be stored in a specific directory.
+- `cache_directory`: a string; the directory for the kernel to store temporary log files and graphs. By default, this is `~/.stata_kernel_cache`, where `~` means your home directory. You may wish to change this location if, for example, you're working under a Data Use Agreement where all related files must be stored in a specific directory.
 
-- `execution_mode`: For macOS users, this allows for setting the method in which `stata_kernel` communicates with Stata. `automation` uses [Stata Automation](https://www.stata.com/automation/) while `console` controls the console version of Stata.
+- `execution_mode`: **macOS only**, a string of either `"automation"` or `"console"`.
+
+    This allows for setting the method in which `stata_kernel` communicates with Stata. `automation` uses [Stata Automation](https://www.stata.com/automation/) while `console` controls the console version of Stata.
 
     `console` is the default because it allows for multiple independent sessions
-    of Stata to run at the same time. `automation` may be useful if you wish to
-    browse the data interactively with `browse`.
+    of Stata to run at the same time. `automation` could be useful if you wish
+    to also interact with the Stata GUI window.
 
     On Windows, all communication with Stata happens through Stata Automation,
     and on Linux/Unix all communication happens through the console.
+
+- `autocomplete_closing_symbol`: either `True` or `False`; whether autocompletion suggestions should include the closing symbol (i.e. ``'`` for a local macro or `}` if the global starts with `${`). This is `False` by default.
 
 ### Graph settings
 
