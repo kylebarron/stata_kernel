@@ -133,7 +133,7 @@ class StataKernel(Kernel):
 
         no_display_msg = 'This front-end cannot display the desired image type.'
         if graph_path.endswith('.svg'):
-            with open(graph_path, 'r') as f:
+            with open(graph_path, 'r', encoding='utf-8') as f:
                 img = f.read()
             e = ET.ElementTree(ET.fromstring(img))
             root = e.getroot()
