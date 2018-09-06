@@ -1,7 +1,7 @@
 # Magics
 
 **Magics** are programs provided by `stata_kernel` that enhance the experience
-*of working with Stata in Jupyter.
+of working with Stata in Jupyter.
 
 All magics are special commands that start with `%`. They must be the first word
 of the cell or selection, otherwise they won't be intercepted and will be sent
