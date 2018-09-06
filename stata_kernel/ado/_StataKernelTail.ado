@@ -2,6 +2,7 @@ capture program drop _StataKernelTail
 program _StataKernelTail
     syntax [anything] [if] using, [*]
     set more off
+    set trace off
     if ( !`=_N > 0' ) error 2000
 
     * First, parse the number of lines to print. Either the last 10 or

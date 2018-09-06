@@ -2,6 +2,7 @@ capture program drop _StataKernelHead
 program _StataKernelHead
     syntax [anything] [if] using, [*]
     set more off
+    set trace off
     if ( !`=_N > 0' ) error 2000
 
     * First, parse the number of lines to print. Either the first 10 or
