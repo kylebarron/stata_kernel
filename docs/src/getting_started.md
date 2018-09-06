@@ -45,6 +45,9 @@ The second command will try to find your Stata executable, and will warn you if
 it can't. In that case, you'll have to set it yourself. Refer to the
 [configuration](#configuration) below.
 
+`python -m stata_kernel.install` only needs to be run _once ever_. Running it
+more than once will reset any settings to the original defaults.
+
 If Python 2 is the default version of Python on your system, you may need to use
 ```
 pip3 install stata_kernel
@@ -57,9 +60,8 @@ To upgrade from a previous version of `stata_kernel`, from a terminal or command
 pip install stata_kernel --upgrade
 ```
 
-When upgrading, don't run `python -m stata_kernel.install` again. It's
-unnecessary and will overwrite any settings you've defined in the
-[configuration](#configuration).
+When upgrading, don't run `python -m stata_kernel.install` again. It will
+overwrite any settings you've defined in the [configuration](#configuration).
 
 ## Configuration
 
