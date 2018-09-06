@@ -43,7 +43,7 @@ class StataSession():
 
         self.config = config
         self.kernel = kernel
-        self.banner = 'stata_kernel: A Jupyter kernel for Stata.'
+        self.banner = 'stata_kernel {}\n'.format(kernel.implementation_version)
         if platform.system() == 'Windows':
             self.init_windows()
         elif platform.system() == 'Darwin':
@@ -128,7 +128,7 @@ class StataSession():
                 banner.append(self.child.before)
 
         # Set banner to Stata's shell header
-        self.banner = ansi_escape.sub('', '\n'.join(banner))
+        self.banner += ansi_escape.sub('', '\n'.join(banner))
 
     def start_log_aut(self):
         """Start log and watch file
