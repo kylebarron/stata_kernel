@@ -29,11 +29,11 @@ class StataKernel(Kernel):
         self.conf = Config()
         self.graph_formats = ["svg", "png"]
         self.sc_delimit_mode = False
-        self.magics = StataMagics(self)
         self.stata = StataSession(self, self.conf)
-        self.completions = CompletionsManager(self, self.conf)
         self.banner = self.stata.banner
         self.language_version = self.stata.stata_version
+        self.magics = StataMagics(self)
+        self.completions = CompletionsManager(self, self.conf)
 
     def do_execute(
             self, code, silent, store_history=True, user_expressions=None,
