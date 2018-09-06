@@ -83,7 +83,7 @@ class MagicParsers():
             <span style='margin-left:1em;font-weight:bold;'>
             %help magics</span><br><br>
 
-        for info on magics. To fetch HTML help for a Stata command type<br><br>
+        for info on magics. To see the help menu for a Stata command type<br><br>
 
             <span style='margin-left:1em;font-weight:bold;'>
             %help command_or_topic</span>
@@ -92,10 +92,20 @@ class MagicParsers():
         self.help._msg_plain = dedent("""\
         {0} {1} for {2} {3}.
 
-        Note: This front end cannot display HTML help. See the online
+        Note: This front end cannot display rich HTML help. See the online
         documentation at
 
                 https://kylebarron.github.io/stata_kernel/
+
+        For kernel help in plain text, type
+
+            %help kernel
+
+        for help on using the kernel and
+
+            %help magics
+
+        for info on magics.
         """.format(*info))
 
         self.head = StataParser(
