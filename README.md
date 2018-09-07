@@ -7,6 +7,8 @@ Linux.
 
 For documentation and more information, see: [https://kylebarron.github.io/stata_kernel](https://kylebarron.github.io/stata_kernel)
 
-Atom             |  Jupyter Notebook
-:-------------------------:|:-------------------------:
-![Atom](docs/src/img/atom.png)    |  ![Jupyter Notebook](docs/src/img/jupyter_notebook.png)
+#### Atom
+![Atom](docs/src/img/stata_kernel_example.gif)
+
+#### Jupyter Notebook
+![Jupyter Notebook](docs/src/img/jupyter_notebook.png)
