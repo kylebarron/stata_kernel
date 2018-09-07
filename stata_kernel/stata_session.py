@@ -260,7 +260,7 @@ class StataSession():
                 res += '\n'
                 res = ansi_escape.sub('', res)
                 res_list.append(res)
-                if re.search(r'[^\r\n]\r?\n\r?\n$', ''.join(res_list)):
+                if not ''.join(res_list).strip():
                     continue
                 if display:
                     if not ''.join(res_list[:-1]).strip():
