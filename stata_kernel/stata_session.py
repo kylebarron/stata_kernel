@@ -255,7 +255,7 @@ class StataSession():
                 break
             if match_index == 4:
                 code_lines, res = self.clean_log_eol(child, code_lines, res)
-                if res == '':
+                if res is not None:
                     res += '\n'
                 if res:
                     res = ansi_escape.sub('', res)
@@ -278,7 +278,7 @@ class StataSession():
         child.expect('\r?\n')
 
         # Remove line continuation markers in output returned internally
-        res = '\n'.join(res_list)
+        res = ''.join(res_list)
         res = res.replace('\n> ', '')
 
         return rc, res
