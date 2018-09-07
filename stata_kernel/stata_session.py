@@ -255,13 +255,15 @@ class StataSession():
                 break
             if match_index == 4:
                 code_lines, res = self.clean_log_eol(child, code_lines, res)
+                if res == '':
+                    res += '\n'
                 if res:
                     res_list.append(res)
                 if display and res:
                     res = ansi_escape.sub('', res)
                     self.kernel.send_response(
                         self.kernel.iopub_socket, 'stream', {
-                            'text': res + '\n',
+                            'text': res,
                             'name': 'stdout'})
                 continue
             if match_index == 5:
