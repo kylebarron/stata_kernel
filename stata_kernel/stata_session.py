@@ -277,10 +277,12 @@ class StataSession():
                 sleep(0.05)
 
         if display and res_disp:
-            self.kernel.send_response(
-                self.kernel.iopub_socket, 'stream', {
-                    'text': re.sub(r'\n\Z', '', res_disp, re.M),
-                    'name': 'stdout'})
+            text = re.sub(r'\n\Z', '', res_disp, re.M)
+            if text:
+                self.kernel.send_response(
+                    self.kernel.iopub_socket, 'stream', {
+                        'text': text,
+                        'name': 'stdout'})
             res_disp = ''
 
         # Then scroll to next newline, but not including period to make it
