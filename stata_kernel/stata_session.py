@@ -255,14 +255,14 @@ class StataSession():
                 break
             if match_index == 4:
                 code_lines, res = self.clean_log_eol(child, code_lines, res)
-                if res is not None:
-                    res += '\n'
-                if res:
-                    res = ansi_escape.sub('', res)
-                    res_list.append(res)
-                if not ''.join(res_list).strip():
+                if res is None:
                     continue
-                if display and res:
+                res += '\n'
+                res = ansi_escape.sub('', res)
+                res_list.append(res)
+                if re.search(r'[^\r\n]\r?\n\r?\n$', ''.join(res_list)):
+                    continue
+                if display:
                     if not ''.join(res_list[:-1]).strip():
                         res = ''.join(res_list[:-1]) + res
                     self.kernel.send_response(
