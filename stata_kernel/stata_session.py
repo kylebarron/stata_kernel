@@ -258,9 +258,13 @@ class StataSession():
                 if res == '':
                     res += '\n'
                 if res:
-                    res_list.append(res)
-                if display and res:
                     res = ansi_escape.sub('', res)
+                    res_list.append(res)
+                if not ''.join(res_list).strip():
+                    continue
+                if display and res:
+                    if not ''.join(res_list[:-1]).strip():
+                        res = ''.join(res_list[:-1]) + res
                     self.kernel.send_response(
                         self.kernel.iopub_socket, 'stream', {
                             'text': res,
