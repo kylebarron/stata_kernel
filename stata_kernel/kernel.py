@@ -16,12 +16,16 @@ from .stata_magics import StataMagics
 
 class StataKernel(Kernel):
     implementation = 'stata_kernel'
-    implementation_version = '1.4.2'
+    implementation_version = '1.4.5'
     language = 'stata'
     language_info = {
         'name': 'stata',
         'mimetype': 'text/x-stata',
         'file_extension': '.do'}
+    help_links = [
+        {'text': 'stata_kernel Help', 'url': 'https://kylebarron.github.io/stata_kernel/'},
+        {'text': 'Stata Help', 'url': 'https://www.stata.com/features/documentation/'}
+    ] # yapf: disable
 
     def __init__(self, *args, **kwargs):
         super(StataKernel, self).__init__(*args, **kwargs)
@@ -46,14 +50,18 @@ class StataKernel(Kernel):
         self.conf = Config()
         self.graph_formats = ["svg", "png"]
         self.sc_delimit_mode = False
-        self.magics = StataMagics(self)
         self.stata = StataSession(self, self.conf)
-        self.completions = CompletionsManager(self, self.conf)
         self.banner = self.stata.banner
         self.language_version = self.stata.stata_version
+        self.magics = StataMagics(self)
+        self.completions = CompletionsManager(self, self.conf)
 
     def do_execute(
-            self, code, silent, store_history=True, user_expressions=None,
+            self,
+            code,
+            silent,
+            store_history=True,
+            user_expressions=None,
             allow_stdin=False):
         """Execute user code.
 
@@ -142,7 +150,7 @@ class StataKernel(Kernel):
 
         no_display_msg = 'This front-end cannot display the desired image type.'
         if graph_path.endswith('.svg'):
-            with open(graph_path, 'r') as f:
+            with open(graph_path, 'r', encoding='utf-8') as f:
                 img = f.read()
             e = ET.ElementTree(ET.fromstring(img))
             root = e.getroot()

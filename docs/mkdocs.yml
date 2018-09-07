@@ -29,6 +29,7 @@ nav:
         - Jupyter Notebook: 'using_jupyter/notebook.md'
         - Atom: 'using_jupyter/atom.md'
         - JupyterLab: 'using_jupyter/lab.md'
+        - Nteract: 'using_jupyter/nteract.md'
         - Jupyter QtConsole: 'using_jupyter/qtconsole.md'
         - Jupyter Console: 'using_jupyter/console.md'
         # - Using Jupyter on Remote Servers: 'using_jupyter/remote.md'

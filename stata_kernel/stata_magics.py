@@ -2,6 +2,7 @@ import sys
 import re
 import urllib
 import pandas as pd
+from textwrap import dedent
 from argparse import ArgumentParser, SUPPRESS
 
 from bs4 import BeautifulSoup as bs
@@ -65,7 +66,47 @@ class MagicParsers():
             prog='%help', kernel=kernel, description="Display HTML help.",
             usage='%(prog)s [-h] command_or_topic_name')
         self.help.add_argument(
-            'command_or_topic_name', nargs='+', type=str, help=SUPPRESS)
+            'command_or_topic_name', nargs='*', type=str, help=SUPPRESS)
+
+        info = (
+            kernel.implementation, kernel.implementation_version,
+            kernel.language.title(), kernel.language_version)
+        self.help._msg_html = dedent("""
+        <p style="font-family:Monospace;">
+        {0} {1} for {2} {3}. Type<br><br>
+
+            <span style='margin-left:1em;font-weight:bold;'>
+            %help kernel</span><br><br>
+
+        for help on using the kernel and<br><br>
+
+            <span style='margin-left:1em;font-weight:bold;'>
+            %help magics</span><br><br>
+
+        for info on magics. To see the help menu for a Stata command type<br><br>
+
+            <span style='margin-left:1em;font-weight:bold;'>
+            %help command_or_topic</span>
+        </p>
+        """.format(*info))
+        self.help._msg_plain = dedent("""\
+        {0} {1} for {2} {3}.
+
+        Note: This front end cannot display rich HTML help. See the online
+        documentation at
+
+                https://kylebarron.github.io/stata_kernel/
+
+        For kernel help in plain text, type
+
+            %help kernel
+
+        for help on using the kernel and
+
+            %help magics
+
+        for info on magics.
+        """.format(*info))
 
         self.head = StataParser(
             prog='%head', kernel=kernel,
@@ -143,6 +184,14 @@ class StataMagics():
 
     csshelp_default = resource_filename(
         'stata_kernel', 'css/_StataKernelHelpDefault.css')
+    help_kernel_html = resource_filename(
+        'stata_kernel', 'docs/index.html')
+    help_kernel_plain = resource_filename(
+        'stata_kernel', 'docs/index.txt')
+    help_magics_html = resource_filename(
+        'stata_kernel', 'docs/using_stata_kernel/magics.html')
+    help_magics_plain = resource_filename(
+        'stata_kernel', 'docs/using_stata_kernel/magics.txt')
 
     def __init__(self, kernel):
         self.quit_early = None
@@ -464,15 +513,51 @@ class StataMagics():
     def magic_help(self, code, kernel):
         self.status = -1
         self.graphs = 0
+        scode = code.strip()
         try:
-            self.parse.help.parse_args(code.split(' '))
+            self.parse.help.parse_args(scode.split(' '))
         except:
             return ''
 
-        if not code.strip():
+        if not scode:
+            resp = {
+                'data': {
+                    'text/html': self.parse.help._msg_html,
+                    'text/plain': self.parse.help._msg_plain},
+                'metadata': {}}
+            kernel.send_response(kernel.iopub_socket, 'display_data', resp)
             return ''
 
-        cmd = code.strip().replace(" ", "_")
+        if scode == 'kernel':
+            with open(self.help_kernel_html, 'r') as f:
+                help_html = f.read()
+
+            with open(self.help_kernel_plain, 'r') as f:
+                help_plain = f.read()
+
+            resp = {
+                'data': {
+                    'text/html': help_html,
+                    'text/plain': help_plain},
+                'metadata': {}}
+            kernel.send_response(kernel.iopub_socket, 'display_data', resp)
+            return ''
+        elif scode == 'magics':
+            with open(self.help_magics_html, 'r') as f:
+                help_html = f.read()
+
+            with open(self.help_magics_plain, 'r') as f:
+                help_plain = f.read()
+
+            resp = {
+                'data': {
+                    'text/html': help_html,
+                    'text/plain': help_plain},
+                'metadata': {}}
+            kernel.send_response(kernel.iopub_socket, 'display_data', resp)
+            return ''
+
+        cmd = scode.strip().replace(" ", "_")
         help_html, err = self._fetch_help(cmd)
         if help_html:
             fallback = 'This front-end cannot display HTML help.'

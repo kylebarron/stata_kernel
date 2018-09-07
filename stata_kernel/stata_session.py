@@ -43,7 +43,7 @@ class StataSession():
 
         self.config = config
         self.kernel = kernel
-        self.banner = 'stata_kernel: A Jupyter kernel for Stata.'
+        self.banner = 'stata_kernel {}\n'.format(kernel.implementation_version)
         if platform.system() == 'Windows':
             self.init_windows()
         elif platform.system() == 'Darwin':
@@ -67,6 +67,10 @@ class StataSession():
             set linesize {2}
             clear all
             global stata_kernel_graph_counter = 0
+
+            di "$S_DATE, $S_TIME"
+            di "Stata version: `c(version)'"
+            di "OS: $S_OS"
             `finished_init_cmd'
             """.format(adodir, os.getcwd(), self.linesize).rstrip()
         self.do(dedent(init_cmd), md5='finished_init_cmd', display=False)
@@ -86,7 +90,7 @@ class StataSession():
         WinExec(self.config.get('stata_path'))
         sleep(0.25)
         self.stata = win32com.client.Dispatch("stata.StataOLEApp")
-        self.automate(cmd_name='UtilShowStata', value=2)
+        self.automate(cmd_name='UtilShowStata', value=1)
         self.config.set('execution_mode', 'automation', permanent=True)
         self.start_log_aut()
 
@@ -124,7 +128,7 @@ class StataSession():
                 banner.append(self.child.before)
 
         # Set banner to Stata's shell header
-        self.banner = ansi_escape.sub('', '\n'.join(banner))
+        self.banner += ansi_escape.sub('', '\n'.join(banner))
 
     def start_log_aut(self):
         """Start log and watch file
@@ -157,6 +161,10 @@ class StataSession():
         else:
             self.log_fd = pexpect.fdpexpect.fdspawn(
                 self.fd, encoding='utf-8', maxread=1)
+
+        self.log_fd.logfile = open(
+            self.config.get('cache_dir') / 'console_debug.log', 'w')
+
         return 0
 
     def do(self, text, md5, **kwargs):
@@ -308,7 +316,7 @@ class StataSession():
         # somewhere else in the package, but for now, I let there be either one
         # or two such spaces.
         # If the beginning of the first code line is not in res, return
-        if not code_lines[0][:self.linesize - 5] in res[1:].lstrip():
+        if not code_lines[0][:self.linesize - 5].lstrip() in res[1:].lstrip():
             return code_lines, res
 
         res_match = re.search(r'^(\s*\d+)?\.  ??(.+)$', res)

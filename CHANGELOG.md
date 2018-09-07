@@ -1,5 +1,29 @@
 # Changelog
 
+## [1.4.5] - 2018-09-07
+
+- Don't embed images in HTML help; link to them. #140
+- Fix blocking for line continuation when string is before `{` #139
+- Fix hiding of code lines with leading whitespace. #120
+- Remove `stata_kernel_graph_counter` from globals suggestions. #109
+- Always use UTF-8 encoding when loading SVGs. #130
+- Add download count and Atom gif to README. Try to fix images for Pypi page.
+
+## [1.4.4] - 2018-09-06
+
+- Fully hide Stata GUI on Windows. Always export log file, even on Windows and Mac Automation.
+- Set more off within ado files. Should fix #132.
+- Use bumpversion for easy version number updating.
+- Add `%help kernel` and `%help magics` options
+- Add general debugging information (like OS/Stata version/package version) to log
+- Add help links to Jupyter Notebook's Help dropdown UI
+- Various docs fixes
+
+## [1.4.3] - 2018-09-04
+
+- Release to pypi again because 1.4.2 didn't upload correctly. Apparently only a
+  Mac version was uploaded, and even that didn't work.
+
 ## [1.4.2] - 2018-08-21
 
 - Fix line cleaning for loops/programs of more than 9 lines
