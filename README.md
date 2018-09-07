@@ -8,7 +8,7 @@ Linux.
 For documentation and more information, see: [https://kylebarron.github.io/stata_kernel](https://kylebarron.github.io/stata_kernel)
 
 #### Atom
-![Atom](docs/src/img/stata_kernel_example.gif)
+![Atom](https://raw.githubusercontent.com/kylebarron/stata_kernel/master/docs/src/img/stata_kernel_example.gif)
 
 #### Jupyter Notebook
-![Jupyter Notebook](docs/src/img/jupyter_notebook.png)
+![Jupyter Notebook](https://raw.githubusercontent.com/kylebarron/stata_kernel/master/docs/src/img/jupyter_notebook.png)
