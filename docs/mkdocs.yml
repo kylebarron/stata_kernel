@@ -41,6 +41,9 @@ nav:
     - Addendum: 'addendum.md'
     - License: 'license.md'
 
+google_analytics:
+    - 'UA-125422577-1'
+    - 'auto'
 
 # Theme
 theme:
