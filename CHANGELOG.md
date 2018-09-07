@@ -1,5 +1,14 @@
 # Changelog
 
+## [1.4.5] - 2018-09-07
+
+- Don't embed images in HTML help; link to them. #140
+- Fix blocking for line continuation when string is before `{` #139
+- Fix hiding of code lines with leading whitespace. #120
+- Remove `stata_kernel_graph_counter` from globals suggestions. #109
+- Always use UTF-8 encoding when loading SVGs. #130
+- Add download count and Atom gif to README. Try to fix images for Pypi page.
+
 ## [1.4.4] - 2018-09-06
 
 - Fully hide Stata GUI on Windows. Always export log file, even on Windows and Mac Automation.
