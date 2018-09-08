@@ -1,5 +1,10 @@
 # Changelog
 
+## [1.4.6] - 2018-09-08
+
+- Fix `install.py`; previously it had unmatched `{` and `}`
+- Fix display of whitespace when entire result is whitespace. #111
+
 ## [1.4.5] - 2018-09-07
 
 - Don't embed images in HTML help; link to them. #140
