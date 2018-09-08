@@ -1,5 +1,9 @@
 # Changelog
 
+## [1.4.7] - 2018-09-08
+
+- Fix pypi upload. Need to use `python setup.py sdist bdist_wheel` and not `python setup.py sdist bdist`. The latter creates two source packages, and only one source package can ever be uploaded to Pypi per release.
+
 ## [1.4.6] - 2018-09-08
 
 - Fix `install.py`; previously it had unmatched `{` and `}`
