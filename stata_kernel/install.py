@@ -71,7 +71,7 @@ def install_conf():
     cache_directory = ~/.stata_kernel_cache
 
     # Whether autocompletion suggestions should include the closing symbol
-    # (i.e. ``'`` for a local macro or `}` if the global starts with `${`)
+    # (i.e. ``'`` for a local macro or `}}` if the global starts with `${{`)
     autocomplete_closing_symbol = False
 
     # Extension and format for images
