@@ -234,6 +234,7 @@ class StataSession():
         match_index = -1
         res_list = []
         res_disp = ''
+        any_disp = False
         rc = 0
         while match_index != 0:
             match_index = child.expect(expect_list, timeout=None)
@@ -266,6 +267,8 @@ class StataSession():
                     continue
                 if not res_disp.strip():
                     continue
+                else:
+                    any_disp = True
                 if display:
                     self.kernel.send_response(
                         self.kernel.iopub_socket, 'stream', {
@@ -276,13 +279,12 @@ class StataSession():
             if match_index == 5:
                 sleep(0.05)
 
-        if display and res_disp:
-            text = re.sub(r'\n\Z', '', res_disp, re.M)
-            if text:
-                self.kernel.send_response(
-                    self.kernel.iopub_socket, 'stream', {
-                        'text': text,
-                        'name': 'stdout'})
+        res_disp = re.sub(r'\n\Z', '', res_disp, re.M)
+        if display and res_disp and any_disp:
+            self.kernel.send_response(
+                self.kernel.iopub_socket, 'stream', {
+                    'text': res_disp,
+                    'name': 'stdout'})
             res_disp = ''
 
         # Then scroll to next newline, but not including period to make it
