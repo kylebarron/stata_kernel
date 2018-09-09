@@ -36,7 +36,7 @@ def install_conf():
         execution_mode = 'console'
         for i in ['stata-mp', 'StataMP', 'stata-se', 'StataSE', 'stata',
                   'Stata']:
-            stata_path = which('StataMP')
+            stata_path = which(i)
             if stata_path:
                 break
 
