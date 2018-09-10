@@ -35,6 +35,8 @@ class CodeManager(object):
 
     def __init__(self, code, semicolon_delimit=False):
         code = re.sub(r'\r\n', r'\n', code)
+        # Hard tabs in input are not shown in output and mess up removing lines
+        code = re.sub(r'\t', ' ', code)
         self.input = code
         if semicolon_delimit:
             code = '#delimit ;\n' + code
