@@ -23,7 +23,7 @@ class Config(object):
             if not self.get('execution_mode') in ['console', 'automation']:
                 self.raise_config_error('execution_mode')
         elif platform.system() == 'Linux':
-            self.set('stata_path', self.get_linux_stata_path_variant())
+            self.set('stata_path', self.get_linux_stata_path_variant(), permanent=True)
 
         if not self.get('stata_path'):
             self.raise_config_error('stata_path')
