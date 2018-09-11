@@ -573,6 +573,7 @@ class StataMagics():
                     a['href'] = href[hrelative:]
                 elif not href.startswith('http'):
                     a['href'] = urllib.parse.urljoin(self.html_base, href)
+                    a['target'] = '_blank'
 
             # Remove header 'Stata 15 help for ...'
             soup.find('h2').decompose()
