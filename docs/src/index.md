@@ -12,15 +12,15 @@ with dozens of programming languages.
 `stata_kernel` is the bridge that interactively connects Stata to all the
 elements in the ecosystem.
 
-- The **Jupyter Notebook** is a web-based interactive editor that allows for interweaving of code, text, and results.
+- The [**Jupyter Notebook**](using_jupyter/notebook.md) is a web-based interactive editor that allows for interweaving of code, text, and results.
 
     - Splice models in LaTeX math mode with the code that implements them and the graphs depicting their output.
     - Jupyter Notebooks can be exported as PDFs or HTML, and are as good for teaching new students as they are for displaying research results.
     - Use Stata in the same document with R, Python, or Julia code.
 
-- The **Jupyter console** is an enhanced interactive console. Its features include enhanced autocompletion, better searching of history, syntax highlighting, among others.
-- **Hydrogen** is a package for the Atom text editor that connects with Jupyter kernels to display results interactively in your text editor.
-- Enhanced remote work. You can set up Jupyter to run computations remotely but to show results locally, vastly enhancing productivity compared to working with the Stata console through a command line.
+- [**Hydrogen**](using_jupyter/atom.md) is a package for the [Atom text editor](https://atom.io) that connects with Jupyter kernels to display results interactively in your text editor.
+- The [**Jupyter console**](using_jupyter/console.md) is an enhanced interactive console. Its features include enhanced autocompletion, better searching of history, syntax highlighting, among others. The similar [QtConsole](using_jupyter/qtconsole.md) even allows displaying plots within the terminal.
+- [Enhanced remote work](using_jupyter/remote.md). You can set up Jupyter to run computations remotely but to show results locally. Since the only data passing over the network are the text inputs and outputs from Stata, communcation happens much faster than loading `xstata`, especially on slower networks. Being able to use Jupyter Notebook or Hydrogen vastly enhances productivity compared to working with the Stata console through a remote terminal.
 
 ## `stata_kernel` Features
 

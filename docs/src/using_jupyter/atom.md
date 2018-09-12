@@ -1,10 +1,13 @@
-# Atom
+# Hydrogen in Atom
 
-Download the [Atom text editor](https://atom.io) and install the
-[Hydrogen](https://atom.io/packages/hydrogen), and
-[language-stata](https://atom.io/packages/language-stata) packages. The first
-connects to Jupyter kernels and allows you to view results in-line
-next to your code. You can use it with Python, R, and Julia, as well as Stata. The latter provides syntax highlighting for Stata code.
+Hydrogen is a package for the Atom text editor that connects with Jupyter kernels, such as `stata_kernel`, to display results interactively inside the text editor.
+
+## Installation
+
+Download the [Atom text editor](https://atom.io) and install two add-on packages (go to Preferences > Settings or type <kbd>Ctrl</kbd>+<kbd>,</kbd> (<kbd>Cmd</kbd>-<kbd>,</kbd> on macOS), then click Install):
+
+- [Hydrogen](https://atom.io/packages/hydrogen): this connects to Jupyter kernels and allows you to view results in-line next to your code. You can use it with Python, R, and Julia, as well as Stata.
+- [language-stata](https://atom.io/packages/language-stata): this provides syntax highlighting for Stata code and is necessary so that Hydrogen knows to connect to Stata, and not to something else.
 
 Once those are installed, open a do-file and run <kbd>Ctrl</kbd>-<kbd>Enter</kbd> (<kbd>Cmd</kbd>-<kbd>Enter</kbd> on macOS) to start the Stata kernel.
 
