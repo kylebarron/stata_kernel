@@ -195,15 +195,15 @@ Online documentation is available at
 <p>Jupyter is an open-source ecosystem for interactive data science. Originally developed around the Python programming language, Jupyter has grown to interface with dozens of programming languages.</p>
 <p><code>stata_kernel</code> is the bridge that interactively connects Stata to all the elements in the ecosystem.</p>
 <ul>
-<li><p>The <strong>Jupyter Notebook</strong> is a web-based interactive editor that allows for interweaving of code, text, and results.</p>
+<li><p>The <a href="https://kylebarron.github.io/stata_kernel/using_jupyter/notebook"><strong>Jupyter Notebook</strong></a> is a web-based interactive editor that allows for interweaving of code, text, and results.</p>
 <ul>
 <li>Splice models in LaTeX math mode with the code that implements them and the graphs depicting their output.</li>
 <li>Jupyter Notebooks can be exported as PDFs or HTML, and are as good for teaching new students as they are for displaying research results.</li>
 <li>Use Stata in the same document with R, Python, or Julia code.</li>
 </ul></li>
-<li>The <strong>Jupyter console</strong> is an enhanced interactive console. Its features include enhanced autocompletion, better searching of history, syntax highlighting, among others.</li>
-<li><strong>Hydrogen</strong> is a package for the Atom text editor that connects with Jupyter kernels to display results interactively in your text editor.</li>
-<li><p>Enhanced remote work. You can set up Jupyter to run computations remotely but to show results locally, vastly enhancing productivity compared to working with the Stata console through a command line.</p></li>
+<li><a href="https://kylebarron.github.io/stata_kernel/using_jupyter/atom"><strong>Hydrogen</strong></a> is a package for the <a href="https://atom.io">Atom text editor</a> that connects with Jupyter kernels to display results interactively in your text editor.</li>
+<li>The <a href="https://kylebarron.github.io/stata_kernel/using_jupyter/console"><strong>Jupyter console</strong></a> is an enhanced interactive console. Its features include enhanced autocompletion, better searching of history, syntax highlighting, among others. The similar <a href="https://kylebarron.github.io/stata_kernel/using_jupyter/qtconsole">QtConsole</a> even allows displaying plots within the terminal.</li>
+<li><p><a href="https://kylebarron.github.io/stata_kernel/using_jupyter/remote">Enhanced remote work</a>. You can set up Jupyter to run computations remotely but to show results locally. Since the only data passing over the network are the text inputs and outputs from Stata, communcation happens much faster than loading <code>xstata</code>, especially on slower networks. Being able to use Jupyter Notebook or Hydrogen vastly enhances productivity compared to working with the Stata console through a remote terminal.</p></li>
 </ul>
 <h2 id="stata_kernel-features"><code>stata_kernel</code> Features</h2>
 <ul>
