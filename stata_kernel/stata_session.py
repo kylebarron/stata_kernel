@@ -112,7 +112,8 @@ class StataSession():
             self.config.get('stata_path'), encoding='utf-8')
         self.child.delaybeforesend = None
         self.child.logfile = open(
-            self.config.get('cache_dir') / 'console_debug.log', 'w')
+            self.config.get('cache_dir') / 'console_debug.log', 'w',
+            encoding='utf-8')
         banner = []
         try:
             self.child.expect('\r\n\. ', timeout=0.2)
@@ -163,7 +164,8 @@ class StataSession():
                 self.fd, encoding='utf-8', maxread=1)
 
         self.log_fd.logfile = open(
-            self.config.get('cache_dir') / 'console_debug.log', 'w')
+            self.config.get('cache_dir') / 'console_debug.log', 'w',
+            encoding='utf-8')
 
         return 0
 
