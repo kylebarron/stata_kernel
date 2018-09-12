@@ -1,5 +1,13 @@
 # Changelog
 
+## [1.4.8] - 2018-09-12
+
+- Fix use of `which` in install script
+- Redirect `xstata` to `stata` on Linux. #149
+- Fix hiding code lines when there are hard tab characters (`\t`). #153
+- Make HTML help links open in new tab. #158
+- Open log files with utf-8 encoding. https://github.com/kylebarron/language-stata/issues/98
+
 ## [1.4.7] - 2018-09-08
 
 - Fix pypi upload. Need to use `python setup.py sdist bdist_wheel` and not `python setup.py sdist bdist`. The latter creates two source packages, and only one source package can ever be uploaded to Pypi per release.
