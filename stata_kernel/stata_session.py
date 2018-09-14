@@ -226,8 +226,9 @@ class StataSession():
         if platform.system() == 'Windows':
             cache_dir_str = re.sub(r'\\', '/', cache_dir_str)
 
+        # TODO: Use kernel.graph_formats instead of hard coding them
         g_exp = r'\(file ({}'.format(cache_dir_str)
-        g_exp += r'/graph\d+\.(svg|png)) written in (?i:(svg|png)) format\)'
+        g_exp += r'/graph\d+\.(svg|png|pdf)) written in (?i:(svg|png|pdf)) format\)'
 
         more = r'^--more--'
         eol = r'\r?\n'
