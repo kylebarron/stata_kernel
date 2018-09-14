@@ -220,22 +220,11 @@ class CodeManager(object):
             use_include = True
 
         # Insert `graph export`
-        # TODO: Instead of if/else, just add fallbacks to .get()
-        graph_fmt = config.get('graph_format')
-        graph_scale = config.get('graph_scale')
-        graph_width = config.get('graph_width')
-        if graph_width is None:
-            graph_width = 600
-        else:
-            graph_width = int(graph_width)
-
+        graph_fmt = config.get('graph_format', 'svg')
+        graph_scale = float(config.get('graph_scale', '1'))
+        graph_width = int(config.get('graph_width', '600'))
         graph_height = config.get('graph_height')
         cache_dir = config.get('cache_dir')
-        if graph_scale is None:
-            graph_scale = 1
-            config.set('graph_scale', '1', permanent=True)
-        else:
-            graph_scale = float(graph_scale)
 
         dim_str = " width({})".format(int(graph_width * graph_scale))
         if graph_height:
