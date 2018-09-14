@@ -48,6 +48,23 @@ class StataKernel(Kernel):
             cm_path.parents[0].mkdir(parents=True, exist_ok=True)
             shutil.copy(str(cm_path_sk), str(cm_path))
 
+
+        # Copy pygments file to Python location
+        pyg_path = Path(resource_filename('pygments', 'lexers/stata.py'))
+        pyg_path_sk = Path(
+            resource_filename('stata_kernel', 'pygments/stata.py'))
+        copy = False
+        if pyg_path.is_file():
+            pyg_path_dt = datetime.fromtimestamp(pyg_path.stat().st_mtime)
+            pyg_path_sk_dt = datetime.fromtimestamp(pyg_path_sk.stat().st_mtime)
+            if pyg_path_sk_dt > pyg_path_dt:
+                copy = True
+        else:
+            copy = True
+
+        if copy:
+            shutil.copy(str(pyg_path_sk), str(pyg_path))
+
         super(StataKernel, self).__init__(*args, **kwargs)
 
         # Can't name this `self.config`. Conflicts with a Jupyter attribute
