@@ -109,7 +109,7 @@ class StataSession():
         gone away.
         """
         self.child = pexpect.spawn(
-            self.config.get('stata_path'), encoding='utf-8')
+            self.config.get('stata_path'), encoding='utf-8', codec_errors='replace')
         self.child.delaybeforesend = None
         self.child.logfile = open(
             self.config.get('cache_dir') / 'console_debug.log', 'w',
@@ -158,10 +158,10 @@ class StataSession():
 
         self.fd = open(log_path)
         if platform.system() == 'Windows':
-            self.log_fd = pexpect.fdpexpect.fdspawn(self.fd, encoding='utf-8')
+            self.log_fd = pexpect.fdpexpect.fdspawn(self.fd, encoding='utf-8', codec_errors='replace')
         else:
             self.log_fd = pexpect.fdpexpect.fdspawn(
-                self.fd, encoding='utf-8', maxread=1)
+                self.fd, encoding='utf-8', maxread=1, codec_errors='replace')
 
         self.log_fd.logfile = open(
             self.config.get('cache_dir') / 'console_debug.log', 'w',
