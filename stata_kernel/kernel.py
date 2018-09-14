@@ -37,9 +37,9 @@ class StataKernel(Kernel):
             resource_filename('stata_kernel', 'codemirror/stata.js'))
         copy = False
         if cm_path.is_file():
-            pyg_path_dt = datetime.fromtimestamp(cm_path.stat().st_mtime)
-            pyg_path_sk_dt = datetime.fromtimestamp(cm_path_sk.stat().st_mtime)
-            if pyg_path_sk_dt > pyg_path_dt:
+            cm_path_dt = datetime.fromtimestamp(cm_path.stat().st_mtime)
+            cm_path_sk_dt = datetime.fromtimestamp(cm_path_sk.stat().st_mtime)
+            if cm_path_sk_dt > cm_path_dt:
                 copy = True
         else:
             copy = True
