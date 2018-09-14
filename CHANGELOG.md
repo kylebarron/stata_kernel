@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.5.0] - 2018-09-14
+
+- Add CodeMirror syntax highlighting for Jupyter Notebook
+- Improve Pygments syntax highlighting for highlighting of Jupyter QtConsole, Jupyter Console, and Notebook outputs in HTML and PDF format.
+- Restore PDF graph support. Although it doesn't display within the Jupyter Notebook for security (or maybe just practical) reasons, it's helpful when exporting a Notebook to a PDF via LaTeX.
+- Temporarily fix encoding error from CJK characters being split by a line break. #167
+
 ## [1.4.8] - 2018-09-12
 
 - Fix use of `which` in install script
