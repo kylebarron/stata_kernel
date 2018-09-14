@@ -9,3 +9,4 @@ include stata_kernel/docs/*html
 include stata_kernel/docs/*txt
 include stata_kernel/docs/using_stata_kernel/*html
 include stata_kernel/docs/using_stata_kernel/*txt
+include stata_kernel/codemirror/stata.js

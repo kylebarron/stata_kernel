@@ -1,9 +1,13 @@
 import base64
+import shutil
 import platform
 
 from PIL import Image
+from pathlib import Path
 from textwrap import dedent
+from datetime import datetime
 from xml.etree import ElementTree as ET
+from pkg_resources import resource_filename
 from ipykernel.kernelbase import Kernel
 
 from .config import Config
@@ -27,6 +31,22 @@ class StataKernel(Kernel):
     ] # yapf: disable
 
     def __init__(self, *args, **kwargs):
+        # Copy CodeMirror file to Python location
+        cm_path = Path(resource_filename('notebook', 'static/components/codemirror/mode/stata/stata.js'))
+        cm_path_sk = Path(
+            resource_filename('stata_kernel', 'codemirror/stata.js'))
+        copy = False
+        if cm_path.is_file():
+            pyg_path_dt = datetime.fromtimestamp(cm_path.stat().st_mtime)
+            pyg_path_sk_dt = datetime.fromtimestamp(cm_path_sk.stat().st_mtime)
+            if pyg_path_sk_dt > pyg_path_dt:
+                copy = True
+        else:
+            copy = True
+
+        if copy:
+            shutil.copy(str(cm_path_sk), str(cm_path))
+
         super(StataKernel, self).__init__(*args, **kwargs)
 
         # Can't name this `self.config`. Conflicts with a Jupyter attribute
