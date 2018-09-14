@@ -220,6 +220,7 @@ class CodeManager(object):
             use_include = True
 
         # Insert `graph export`
+        # TODO: Instead of if/else, just add fallbacks to .get()
         graph_fmt = config.get('graph_format')
         graph_scale = config.get('graph_scale')
         graph_width = config.get('graph_width')
@@ -240,6 +241,8 @@ class CodeManager(object):
         if graph_height:
             graph_height = int(graph_height)
             dim_str += " height({})".format(int(graph_height * graph_scale))
+        if graph_fmt == 'pdf':
+            dim_str = ''
 
         cache_dir_str = str(cache_dir)
         if platform.system() == 'Windows':

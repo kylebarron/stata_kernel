@@ -58,7 +58,7 @@ class StataKernel(Kernel):
 
         # Can't name this `self.config`. Conflicts with a Jupyter attribute
         self.conf = Config()
-        self.graph_formats = ["svg", "png"]
+        self.graph_formats = ['svg', 'png', 'pdf']
         self.sc_delimit_mode = False
         self.stata = StataSession(self, self.conf)
         self.banner = self.stata.banner
@@ -195,6 +195,15 @@ class StataKernel(Kernel):
                     'image/png': {
                         'width': width,
                         'height': height}}}
+            self.send_response(self.iopub_socket, 'display_data', content)
+        elif graph_path.endswith('.pdf'):
+            with open(graph_path, 'rb') as f:
+                pdf = base64.b64encode(f.read()).decode('utf-8')
+            content = {
+                'data': {
+                    'text/plain': no_display_msg,
+                    'application/pdf': pdf},
+                'metadata': {}}
             self.send_response(self.iopub_socket, 'display_data', content)
 
     def do_shutdown(self, restart):
