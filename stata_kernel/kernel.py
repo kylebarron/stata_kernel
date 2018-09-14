@@ -31,39 +31,28 @@ class StataKernel(Kernel):
     ] # yapf: disable
 
     def __init__(self, *args, **kwargs):
-        # Copy CodeMirror file to Python location
-        cm_path = Path(resource_filename('notebook', 'static/components/codemirror/mode/stata/stata.js'))
-        cm_path_sk = Path(
-            resource_filename('stata_kernel', 'codemirror/stata.js'))
-        copy = False
-        if cm_path.is_file():
-            cm_path_dt = datetime.fromtimestamp(cm_path.stat().st_mtime)
-            cm_path_sk_dt = datetime.fromtimestamp(cm_path_sk.stat().st_mtime)
-            if cm_path_sk_dt > cm_path_dt:
+        # Copy syntax highlighting files
+        from_paths = [
+            Path(resource_filename('stata_kernel', 'pygments/stata.py')),
+            Path(resource_filename('stata_kernel', 'codemirror/stata.js'))]
+        to_paths = [
+            Path(resource_filename('pygments', 'lexers/stata.py')),
+            Path(resource_filename('notebook', 'static/components/codemirror/mode/stata/stata.js'))
+        ]
+
+        for from_path, to_path in zip(from_paths, to_paths):
+            copy = False
+            if to_path.is_file():
+                to_path_dt = datetime.fromtimestamp(to_path.stat().st_mtime)
+                from_path_dt = datetime.fromtimestamp(from_path.stat().st_mtime)
+                if from_path_dt > to_path_dt:
+                    copy = True
+            else:
                 copy = True
-        else:
-            copy = True
 
-        if copy:
-            cm_path.parents[0].mkdir(parents=True, exist_ok=True)
-            shutil.copy(str(cm_path_sk), str(cm_path))
-
-
-        # Copy pygments file to Python location
-        pyg_path = Path(resource_filename('pygments', 'lexers/stata.py'))
-        pyg_path_sk = Path(
-            resource_filename('stata_kernel', 'pygments/stata.py'))
-        copy = False
-        if pyg_path.is_file():
-            pyg_path_dt = datetime.fromtimestamp(pyg_path.stat().st_mtime)
-            pyg_path_sk_dt = datetime.fromtimestamp(pyg_path_sk.stat().st_mtime)
-            if pyg_path_sk_dt > pyg_path_dt:
-                copy = True
-        else:
-            copy = True
-
-        if copy:
-            shutil.copy(str(pyg_path_sk), str(pyg_path))
+            if copy:
+                to_path.parents[0].mkdir(parents=True, exist_ok=True)
+                shutil.copy(str(from_path), str(to_path))
 
         super(StataKernel, self).__init__(*args, **kwargs)
 
