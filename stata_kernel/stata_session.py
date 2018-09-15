@@ -44,7 +44,7 @@ class StataSession():
         self.config = config
         self.kernel = kernel
         self.banner = 'stata_kernel {}\n'.format(kernel.implementation_version)
-        self.linesize = 80
+        self.linesize = 120
         if platform.system() == 'Windows':
             self.init_windows()
         elif platform.system() == 'Darwin':
