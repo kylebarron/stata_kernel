@@ -228,7 +228,9 @@ class StataSession():
 
         # TODO: Use kernel.graph_formats instead of hard coding them
         g_exp = r'\(file ({}'.format(cache_dir_str)
-        g_exp += r'/graph\d+\.(svg|png|pdf)) written in (?i:(svg|png|pdf)) format\)'
+        g_fmts = '|'.join(self.kernel.graph_formats)
+        g_exp += r'/graph\d+\.({0})) written in (?i:({0})) format\)'.format(
+            g_fmts)
 
         more = r'^--more--'
         eol = r'\r?\n'
