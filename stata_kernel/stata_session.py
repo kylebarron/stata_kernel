@@ -44,6 +44,7 @@ class StataSession():
         self.config = config
         self.kernel = kernel
         self.banner = 'stata_kernel {}\n'.format(kernel.implementation_version)
+        self.linesize = 80
         if platform.system() == 'Windows':
             self.init_windows()
         elif platform.system() == 'Darwin':
@@ -58,7 +59,6 @@ class StataSession():
         adofile = resource_filename(
             'stata_kernel', 'ado/_StataKernelCompletions.ado')
         adodir = Path(adofile).resolve().parent
-        self.linesize = 80
         init_cmd = """\
             adopath + `"{0}"\'
             cd `"{1}"\'
