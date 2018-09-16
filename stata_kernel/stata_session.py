@@ -186,6 +186,10 @@ class StataSession():
             display (bool): Whether to send results to front-end
         """
 
+        self.cache_dir_str = str(self.config.get('cache_dir'))
+        if platform.system() == 'Windows':
+            self.cache_dir_str = re.sub(r'\\', '/', self.cache_dir_str)
+
         if self.config.get('execution_mode') == 'console':
             self.child.sendline(text)
             child = self.child
@@ -205,10 +209,7 @@ class StataSession():
         """Watch for end of command from file descriptor or pty
 
         Args:
-            text (str): string of text to exclude from output. It is expected
-                that this string include many lines. It will be split on \\n in
-                `expect`. This is sent in case text_to_exclude is None. (Will
-                probably be consolidated in the future.)
+            text (str): Text sent to Stata.
             child (pexpect.spawn or fdpexpect.spawn): pty or log file to watch
             md5 (str): current value of md5 to watch for
             text_to_exclude (str): string of text to exclude from output. It is
@@ -222,14 +223,10 @@ class StataSession():
         else:
             code_lines = text.split('\n')
 
-        md5 = '. `' + md5 + "'"
+        md5 = '. `?' + md5 + "'"
         error_re = r'^r\((\d+)\);'
-        cache_dir_str = str(self.config.get('cache_dir'))
-        if platform.system() == 'Windows':
-            cache_dir_str = re.sub(r'\\', '/', cache_dir_str)
 
-        # TODO: Use kernel.graph_formats instead of hard coding them
-        g_exp = r'\(file ({}'.format(cache_dir_str)
+        g_exp = r'\(file ({}'.format(self.cache_dir_str)
         g_fmts = '|'.join(self.kernel.graph_formats)
         g_exp += r'/graph\d+\.({0})) written in (?i:({0})) format\)'.format(
             g_fmts)
@@ -261,7 +258,7 @@ class StataSession():
                     self.kernel.send_image(child.match.group(1))
             if match_index == 3:
                 self.send_break(child=child)
-                break
+                expect_list = [md5]
             if match_index == 4:
                 code_lines, res = self.clean_log_eol(child, code_lines, res)
                 if res is None:
@@ -327,11 +324,8 @@ class StataSession():
             - List of code lines not yet matched in output after this
             - Result to be displayed
         """
-        cache_dir_str = str(self.config.get('cache_dir'))
-        if platform.system() == 'Windows':
-            cache_dir_str = re.sub(r'\\', '/', cache_dir_str)
-        regex = r'^\(note: file {}/graph\d+\.(svg|png) not found\)'.format(
-            cache_dir_str)
+        regex = r'^\(note: file {}/graph\d+\.({}) not found\)'.format(
+            self.cache_dir_str, self.kernel.graph_formats)
         if re.search(regex, res):
             return code_lines, None
 
@@ -371,26 +365,13 @@ class StataSession():
         most consistent way for the console version to stop execution.
 
         Args:
-            child (pexpect.spawn): pexpect instance to watch for successful
-                break.
+            child (pexpect.spawn): pexpect instance to send break to
         """
         if self.config.get('execution_mode') == 'console':
             child.sendcontrol('c')
             child.sendcontrol('d')
         else:
             self.automate('UtilSetStataBreak')
-
-        child.expect('--Break--')
-        child.expect(r'r\(1\);')
-        # When sent inside `include`, two sets of --Break-- are shown
-        try:
-            child.expect('--Break--', timeout=0.3)
-            child.expect(r'r\(1\);', timeout=0.3)
-        except pexpect.TIMEOUT:
-            pass
-
-        # There are two newlines before the next period. Remove one of them
-        child.expect('\r?\n')
 
     def automate(self, cmd_name, value=None, **kwargs):
         """Execute `cmd_name` through Automation in a cross-platform manner
