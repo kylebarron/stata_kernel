@@ -1,7 +1,9 @@
 import re
 import platform
 import hashlib
+
 from pygments import lex
+from textwrap import dedent
 
 from .stata_lexer import StataLexer
 from .stata_lexer import CommentAndDelimitLexer
@@ -225,6 +227,11 @@ class CodeManager(object):
         graph_width = int(config.get('graph_width', '600'))
         graph_height = config.get('graph_height')
         cache_dir = config.get('cache_dir')
+        if graph_fmt == 'svg':
+            pdf_dup = config.get('graph_svg_redundancy', 'True')
+        elif graph_fmt == 'png':
+            pdf_dup = config.get('graph_png_redundancy', 'False')
+        pdf_dup = pdf_dup.lower() == 'true'
 
         dim_str = " width({})".format(int(graph_width * graph_scale))
         if graph_height:
@@ -237,10 +244,16 @@ class CodeManager(object):
         if platform.system() == 'Windows':
             cache_dir_str = re.sub(r'\\', '/', cache_dir_str)
         gph_cnt = 'stata_kernel_graph_counter'
-        g_exp = '\nnoi graph export {}'.format(cache_dir_str)
-        g_exp += '/graph${' + gph_cnt + '}'
-        g_exp += '.{}, {} replace'.format(graph_fmt, dim_str)
-        g_exp += '\nglobal {0} = ${0} + 1'.format(gph_cnt)
+        g_exp = dedent("""
+        noi gr export {0}/graph${{{1}}}.{2},{3} replace\
+        """.format(cache_dir_str, gph_cnt, graph_fmt, dim_str))
+        if pdf_dup:
+            g_exp += dedent("""
+            noi gr export {0}/graph${{{1}}}.pdf, replace\
+            """.format(cache_dir_str, gph_cnt))
+        g_exp += dedent("""
+        global {0} = ${0} + 1\
+        """.format(gph_cnt))
 
         lines = [x + g_exp if re.match(graph_keywords, x) else x for x in lines]
 

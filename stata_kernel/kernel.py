@@ -37,8 +37,10 @@ class StataKernel(Kernel):
             Path(resource_filename('stata_kernel', 'codemirror/stata.js'))]
         to_paths = [
             Path(resource_filename('pygments', 'lexers/stata.py')),
-            Path(resource_filename('notebook', 'static/components/codemirror/mode/stata/stata.js'))
-        ]
+            Path(
+                resource_filename(
+                    'notebook',
+                    'static/components/codemirror/mode/stata/stata.js'))]
 
         for from_path, to_path in zip(from_paths, to_paths):
             copy = False
@@ -70,11 +72,7 @@ class StataKernel(Kernel):
         self.completions = CompletionsManager(self, self.conf)
 
     def do_execute(
-            self,
-            code,
-            silent,
-            store_history=True,
-            user_expressions=None,
+            self, code, silent, store_history=True, user_expressions=None,
             allow_stdin=False):
         """Execute user code.
 
@@ -143,7 +141,7 @@ class StataKernel(Kernel):
         self.completions.refresh(self)
         return return_obj
 
-    def send_image(self, graph_path):
+    def send_image(self, graph_paths):
         """Load graph and send to frontend
 
         In `code_manager.get_text`, I send to Stata only the `width` argument.
@@ -158,56 +156,81 @@ class StataKernel(Kernel):
         benefit over SVG.
 
         Args:
-            graph_path (str): path to exported graph
+            graph_paths (List[str]): path to exported graph
         """
 
         no_display_msg = 'This front-end cannot display the desired image type.'
-        if graph_path.endswith('.svg'):
-            with open(graph_path, 'r', encoding='utf-8') as f:
-                img = f.read()
-            e = ET.ElementTree(ET.fromstring(img))
-            root = e.getroot()
+        content = {'data': {'text/plan': no_display_msg}, 'metadata': {}}
+        warn = False
+        for graph_path in graph_paths:
+            file_size = Path(graph_path).stat().st_size
+            if (file_size > 2 * (1024 ** 3)) & (len(graph_paths) >= 2):
+                warn = True
 
-            content = {
-                'data': {
-                    'text/plain': no_display_msg,
-                    'image/svg+xml': img},
-                'metadata': {
-                    'image/svg+xml': {
-                        'width': int(root.attrib['width'][:-2]),
-                        'height': int(root.attrib['height'][:-2])}}}
-            self.send_response(self.iopub_socket, 'display_data', content)
-        elif graph_path.endswith('.png'):
-            im = Image.open(graph_path)
-            width = im.size[0]
-            height = im.size[1]
+            if graph_path.endswith('.svg'):
+                with open(graph_path, 'r', encoding='utf-8') as f:
+                    img = f.read()
+                e = ET.ElementTree(ET.fromstring(img))
+                root = e.getroot()
 
-            # On my Mac, the width is double what I told Stata to export. This
-            # is not true on my Windows test VM
-            if platform.system() == 'Darwin':
-                width /= 2
-                height /= 2
-            with open(graph_path, 'rb') as f:
-                img = base64.b64encode(f.read()).decode('utf-8')
+                content['data']['image/svg+xml'] = img
+                content['metadata']['image/svg+xml'] = {
+                    'width': int(root.attrib['width'][:-2]),
+                    'height': int(root.attrib['height'][:-2])}
 
-            content = {
-                'data': {
-                    'text/plain': no_display_msg,
-                    'image/png': img},
-                'metadata': {
-                    'image/png': {
-                        'width': width,
-                        'height': height}}}
-            self.send_response(self.iopub_socket, 'display_data', content)
-        elif graph_path.endswith('.pdf'):
-            with open(graph_path, 'rb') as f:
-                pdf = base64.b64encode(f.read()).decode('utf-8')
-            content = {
-                'data': {
-                    'text/plain': no_display_msg,
-                    'application/pdf': pdf},
-                'metadata': {}}
-            self.send_response(self.iopub_socket, 'display_data', content)
+            elif graph_path.endswith('.png'):
+                im = Image.open(graph_path)
+                width = im.size[0]
+                height = im.size[1]
+
+                # On my Mac, the width is double what I told Stata to export.
+                # This is not true on my Windows test VM
+                if platform.system() == 'Darwin':
+                    width /= 2
+                    height /= 2
+                with open(graph_path, 'rb') as f:
+                    img = base64.b64encode(f.read()).decode('utf-8')
+
+                content['data']['image/png'] = img
+                content['metadata']['image/png'] = {
+                    'width': width,
+                    'height': height}
+
+            elif graph_path.endswith('.pdf'):
+                with open(graph_path, 'rb') as f:
+                    pdf = base64.b64encode(f.read()).decode('utf-8')
+                content['data']['application/pdf'] = pdf
+
+        msg = """\
+        **`stata_kernel` Warning**: One of your image files is larger than 2MB
+        and you have Graph Redundancy on. If you don't plan to export the
+        Jupyter Notebook file to PDF, you can save space by running:
+
+        ```
+        %set graph_svg_redundancy false [--permanently]
+        %set graph_png_redundancy false [--permanently]
+        ```
+
+        To turn off this warning, run:
+
+        ```
+        %set graph_redundancy_warning false [--permanently]
+        ```
+
+        For more information, see:
+        <https://kylebarron.github.io/stata_kernel/test>
+        """
+        msg = dedent(msg)
+        warn_setting = self.config.get('graph_redundancy_warning', 'True')
+        warn_setting = warn_setting.lower() == 'true'
+        if warn and warn_setting:
+            self.send_response(
+                self.iopub_socket, 'display_data', {
+                    'data': {
+                        'text/plain': msg,
+                        'text/markdown': msg},
+                    'metadata': {}})
+        self.send_response(self.iopub_socket, 'display_data', content)
 
     def do_shutdown(self, restart):
         """Shutdown the Stata session
