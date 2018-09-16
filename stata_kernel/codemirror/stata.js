@@ -431,11 +431,13 @@ CodeMirror.defineSimpleMode("stata",{
     {regex: /"/, token: 'string', push: 'string_regular'},
     {regex: /`"/, token: 'string', push: 'string_compound'},
 
+    // Macros
+    {regex: /`/, token: 'variable-2', push: 'macro_local'},
+    {regex: /\$/, token: 'variable-2', push: 'macro_global'},
+
     // Decimal Numbers
     {regex: /\b[+-]?(?:[0-9]+(?:\.[0-9]+)?|\.[0-9]+|\.)(?:[eE][+-]?[0-9]+)?[i]?\b/,
       token: 'number'},
-
-    {regex: 'testing', token: 'builtin'},
 
     // Keywords
     // There are two separate dictionaries because the `\b` at the beginning of the regex seemed not to work. So instead, I either match the preceding space before the keyword or require the keyword to be at beginning of the string. I think this necessitates two different strings.
@@ -449,7 +451,7 @@ CodeMirror.defineSimpleMode("stata",{
     {regex: /[\}]/, dedent: true},
 
     {regex: /-|==|<=|>=|<|>|&|!=/, token: 'operator'},
-    {regex: /\*|\+|\^|\/|!|~|==|~=/, token: 'operator'},
+    {regex: /\*|\+|\^|\/|!|~|=|~=/, token: 'operator'},
   ],
   comments_block: [
     {regex: /\/\*/, token: 'comment', push: 'comments_block'},
@@ -464,13 +466,26 @@ CodeMirror.defineSimpleMode("stata",{
   string_compound: [
     {regex: /`"/, token: 'string', push: 'string_compound'},
     {regex: /"'/, token: 'string', pop: true},
+    {regex: /`/, token: 'variable-2', push: 'macro_local'},
+    {regex: /\$/, token: 'variable-2', push: 'macro_global'},
     {regex: /./, token: 'string'}
   ],
   string_regular: [
     {regex: /"/, token: 'string', pop: true},
+    {regex: /`/, token: 'variable-2', push: 'macro_local'},
+    {regex: /\$/, token: 'variable-2', push: 'macro_global'},
     {regex: /./, token: 'string'}
   ],
-
+  macro_local: [
+    {regex: /`/, token: 'variable-2', push: 'macro_local'},
+    {regex: /'/, token: 'variable-2', pop: true},
+    {regex: /./, token: 'variable-2'},
+  ],
+  macro_global: [
+    {regex: /\}/, token: 'variable-2', pop: true},
+    {regex: /.(?=[^\w\{\}])/, token: 'variable-2', pop: true},
+    {regex: /./, token: 'variable-2'},
+  ],
   meta: {
     closeBrackets: {pairs: "()[]{}`'\"\""},
     dontIndentStates: ['comment'],
