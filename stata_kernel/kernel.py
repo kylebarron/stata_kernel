@@ -51,8 +51,11 @@ class StataKernel(Kernel):
                 copy = True
 
             if copy:
-                to_path.parents[0].mkdir(parents=True, exist_ok=True)
-                shutil.copy(str(from_path), str(to_path))
+                try:
+                    to_path.parents[0].mkdir(parents=True, exist_ok=True)
+                    shutil.copy(str(from_path), str(to_path))
+                except OSError:
+                    pass
 
         super(StataKernel, self).__init__(*args, **kwargs)
 

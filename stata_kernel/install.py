@@ -5,9 +5,10 @@ import json
 import argparse
 import platform
 
-from shutil import which
+from shutil import copyfile, which
 from pathlib import Path
 from textwrap import dedent
+from pkg_resources import resource_filename
 from IPython.utils.tempdir import TemporaryDirectory
 from jupyter_client.kernelspec import KernelSpecManager
 
@@ -22,6 +23,10 @@ def install_my_kernel_spec(user=True, prefix=None):
         os.chmod(td, 0o755)  # Starts off as 700, not user readable
         with open(os.path.join(td, 'kernel.json'), 'w') as f:
             json.dump(kernel_json, f, sort_keys=True)
+
+        # Copy logo to tempdir to be installed with kernelspec
+        logo_path = resource_filename('stata_kernel', 'docs/logo-64x64.png')
+        copyfile(logo_path, os.path.join(td, 'logo-64x64.png'))
 
         print('Installing Jupyter kernel spec')
         KernelSpecManager().install_kernel_spec(
