@@ -472,6 +472,7 @@ CodeMirror.defineSimpleMode("stata",{
   ],
 
   meta: {
+    closeBrackets: {pairs: "()[]{}`'\"\""},
     dontIndentStates: ['comment'],
     electricInput: /^\s*\}$/,
     blockCommentStart: '/*',
