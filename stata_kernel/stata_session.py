@@ -223,7 +223,6 @@ class StataSession():
         else:
             code_lines = text.split('\n')
 
-        md5 = '. `?' + md5 + "'"
         error_re = r'^r\((\d+)\);'
 
         g_exp = r'\(file ({}'.format(self.cache_dir_str)
@@ -258,7 +257,10 @@ class StataSession():
                     self.kernel.send_image(child.match.group(1))
             if match_index == 3:
                 self.send_break(child=child)
-                expect_list = [md5]
+                # Here, I expect for the last 31 characters of the MD5 because
+                # the first character is often cut off after `--more--`
+                child.expect_exact(md5[1:])
+                break
             if match_index == 4:
                 code_lines, res = self.clean_log_eol(child, code_lines, res)
                 if res is None:
