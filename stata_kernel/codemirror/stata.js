@@ -422,8 +422,8 @@ CodeMirror.defineSimpleMode("stata",{
   // The start state contains the rules that are intially used
   start: [
     // Comments
-    {regex: /\/\/(?!\/).*$/, token: 'comment', sol: true},
-    {regex: /(\s)\/\/(?!\/).*$/, token: 'comment'},
+    {regex: /\/\/\/?.*$/, token: 'comment', sol: true},
+    {regex: /(\s)\/\/\/?.*$/, token: 'comment'},
     {regex: /\s*\*.*$/, token: 'comment', sol: true},
     {regex: /\/\*/, token: 'comment', push: 'comments_block'},
 
