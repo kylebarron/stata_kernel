@@ -3,13 +3,15 @@ import re
 import pexpect
 import pexpect.fdpexpect
 import platform
+import requests
 import subprocess
-from pkg_resources import resource_filename
 
 from time import sleep
 # from timeit import default_timer
 from pathlib import Path
 from textwrap import dedent
+from packaging import version
+from pkg_resources import resource_filename
 
 if platform.system() == 'Windows':
     import win32com.client
@@ -44,6 +46,19 @@ class StataSession():
         self.config = config
         self.kernel = kernel
         self.banner = 'stata_kernel {}\n'.format(kernel.implementation_version)
+
+        try:
+            r = requests.get('https://pypi.org/pypi/stata-kernel/json')
+            pypi_v = r.json()['info']['version']
+            if version.parse(pypi_v) > version.parse(
+                    kernel.implementation_version):
+                msg = '\nNOTE: A newer version of stata_kernel exists. Run\n'
+                msg += '    pip install stata_kernel --upgrade\n'
+                msg += 'to install the latest version.\n'
+                self.banner += msg
+        except requests.exceptions.RequestException:
+            pass
+
         if platform.system() == 'Windows':
             self.init_windows()
         elif platform.system() == 'Darwin':
