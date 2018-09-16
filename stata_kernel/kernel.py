@@ -218,7 +218,7 @@ class StataKernel(Kernel):
         ```
 
         For more information, see:
-        <https://kylebarron.github.io/stata_kernel/test>
+        <https://kylebarron.github.io/stata_kernel/using_stata_kernel/intro/#graph-redundancy>
         """
         msg = dedent(msg)
         warn_setting = self.config.get('graph_redundancy_warning', 'True')
