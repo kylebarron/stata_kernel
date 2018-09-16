@@ -200,7 +200,7 @@ class StataSession():
         try:
             rc, res = self.expect(text=text, child=child, md5=md5, **kwargs)
         except KeyboardInterrupt:
-            self.send_break(child=child)
+            self.send_break(child=child, md5="`{}'".format(md5))
             rc, res = 1, ''
 
         return rc, res
@@ -223,6 +223,7 @@ class StataSession():
         else:
             code_lines = text.split('\n')
 
+        md5 = ". `{}'".format(md5)
         error_re = r'^r\((\d+)\);'
 
         g_exp = r'\(file ({}'.format(self.cache_dir_str)
@@ -256,10 +257,8 @@ class StataSession():
                 if display:
                     self.kernel.send_image(child.match.group(1))
             if match_index == 3:
-                self.send_break(child=child)
-                # Here, I expect for the last 31 characters of the MD5 because
-                # the first character is often cut off after `--more--`
-                child.expect_exact(md5[1:])
+                self.send_break(child=child, md5=md5[2:])
+                child.expect_exact(md5, timeout=None)
                 break
             if match_index == 4:
                 code_lines, res = self.clean_log_eol(child, code_lines, res)
@@ -359,21 +358,28 @@ class StataSession():
 
         return code_lines[1:], None
 
-    def send_break(self, child):
+    def send_break(self, child, md5):
         """Send break to Stata
 
         Tell Stata to stop current execution. This is used when `expect` hits
         more and for a KeyboardInterrupt. I've found that ctrl-C, ctrl-D is the
         most consistent way for the console version to stop execution.
 
+        Often, the first characters after sending ctrl-C, ctrl-D get removed.
+        Thus, I send the md5 an extra time so that the full md5 can be matched
+        without issues.
+
         Args:
             child (pexpect.spawn): pexpect instance to send break to
+            md5 (str): The md5 to send a second time
         """
         if self.config.get('execution_mode') == 'console':
             child.sendcontrol('c')
             child.sendcontrol('d')
+            self.child.sendline(md5)
         else:
             self.automate('UtilSetStataBreak')
+            self.automate('DoCommandAsync', md5)
 
     def automate(self, cmd_name, value=None, **kwargs):
         """Execute `cmd_name` through Automation in a cross-platform manner
