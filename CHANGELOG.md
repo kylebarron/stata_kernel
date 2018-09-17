@@ -1,5 +1,18 @@
 # Changelog
 
+## [1.5.1] - 2018-09-17
+
+- Fix issues with `--more--`. #103
+- PDF Graph redundancy. This improves ease of export to PDF via LaTeX.
+- Catch PermissionsError when copying syntax highlighting files
+- Add Stata logo for Jupyter Notebook
+- Autoclose local macro quotes in Jupyter Notebook
+- Highlight /// as comments in Jupyter Notebook
+- Highlight macros in Jupyter Notebook
+- Check latest PyPi package version and add alert to banner if newer
+- Simplify `%set` magic
+- Set default linesize to 255 for now to improve image handling. #177
+
 ## [1.5.0] - 2018-09-14
 
 - Add CodeMirror syntax highlighting for Jupyter Notebook
