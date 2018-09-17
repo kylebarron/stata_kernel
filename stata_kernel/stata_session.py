@@ -59,7 +59,8 @@ class StataSession():
         except requests.exceptions.RequestException:
             pass
 
-        self.linesize = 120
+        # See https://github.com/kylebarron/stata_kernel/issues/177
+        self.linesize = 255
         if platform.system() == 'Windows':
             self.init_windows()
         elif platform.system() == 'Darwin':
