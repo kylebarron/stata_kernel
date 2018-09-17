@@ -269,8 +269,20 @@ class StataSession():
                             'name': 'stderr'})
                 continue
             if match_index == 2:
+                g_path = [child.match.group(1)]
+                g_fmt = child.match.group(2)
+                if g_fmt == 'svg':
+                    pdf_dup = self.config.get('graph_svg_redundancy', 'True')
+                elif g_fmt == 'png':
+                    pdf_dup = self.config.get('graph_png_redundancy', 'False')
+                pdf_dup = pdf_dup.lower() == 'true'
+
+                if pdf_dup:
+                    child.expect(g_exp, timeout=None)
+                    code_lines = code_lines[1:]
+                    g_path.append(child.match.group(1))
                 if display:
-                    self.kernel.send_image(child.match.group(1))
+                    self.kernel.send_image(g_path)
             if match_index == 3:
                 self.send_break(child=child, md5=md5[2:])
                 child.expect_exact(md5, timeout=None)
