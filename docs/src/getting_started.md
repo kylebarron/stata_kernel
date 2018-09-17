@@ -4,7 +4,7 @@ It doesn't take much to get `stata_kernel` up and running. Here's how:
 
 ## Prerequisites
 
-- **Python**. In order to install the kernel, Python >= 3.5 needs to be installed on the computer on which Stata is running.
+- **Python**. In order to install the kernel, Python 3.5, 3.6, or 3.7 needs to be installed on the computer on which Stata is running.
 
     I suggest installing the [Anaconda
     distribution](https://www.anaconda.com/download/), which doesn't require
@@ -13,8 +13,7 @@ It doesn't take much to get `stata_kernel` up and running. Here's how:
     The Anaconda installer includes many third party libraries for Python that
     `stata_kernel` doesn't use. If you don't plan to use Python and want to use
     less disk space, install [Miniconda](https://conda.io/miniconda.html), which
-    includes few packages other than Python. Then in [Package
-    Install](#package-install) any other necessary dependencies will be
+    includes few packages other than Python. Then when [installing the package](#package-install) any other necessary dependencies will be
     downloaded automatically.
 
 
@@ -73,6 +72,14 @@ changing the `value` of any line of the form
 configuration_setting = value
 ```
 
+You can also make changes to the configuration while the kernel is running with the [%set magic](using_stata_kernel/magics.md#set). For example:
+
+```
+%set autocomplete_closing_symbol False
+%set graph_format png
+```
+
+
 ### General settings
 
 - `stata_path`: a string; the path on your file system to your Stata executable. Usually this can be found automatically in the [install step](getting_started.md#package-install), but sometimes may need to be set manually.
@@ -94,14 +101,7 @@ configuration_setting = value
 
 ### Graph settings
 
-These settings can be changed during a session with the `%set` magic, like so:
-
-```
-%set graph --format svg
-%set graph --scale 1
-%set graph --width 500
-%set graph --width 400 --height 300
-```
+These settings determine how graphs are displayed internally.
 
 - `graph_format`: `svg` or `png`, the format to export and display graphs. By default this is `svg` for most operating systems and versions of Stata, but is `png` by default for Windows on Stata 14 and below.
 

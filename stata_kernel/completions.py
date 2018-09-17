@@ -68,12 +68,12 @@ class CompletionsManager(object):
 
         self.suggestions = self.get_suggestions(kernel)
         self.suggestions['magics'] = kernel.magics.available_magics
-        self.suggestions['magics_set'] = kernel.magics.parse.set_settings
+        self.suggestions['magics_set'] = kernel.conf.all_settings
 
     def refresh(self, kernel):
         self.suggestions = self.get_suggestions(kernel)
         self.suggestions['magics'] = kernel.magics.available_magics
-        self.suggestions['magics_set'] = kernel.magics.parse.set_settings
+        self.suggestions['magics_set'] = kernel.conf.all_settings
 
     def get_env(self, code, rdelimit, sc_delimit_mode):
         """Returns completions environment
@@ -200,7 +200,9 @@ class CompletionsManager(object):
             # scalar context.
             env += env_add
 
-        if not self.config.get('autocomplete_closing_symbol', False):
+        closing_symbol = self.config.get('autocomplete_closing_symbol', 'False')
+        closing_symbol = closing_symbol.lower() == 'true'
+        if not closing_symbol:
             rcomp = ''
 
         return env, pos, code[pos:], rcomp

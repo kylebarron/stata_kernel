@@ -133,18 +133,25 @@ S_MACH:    PC (64-bit x86-64)
 
 ## `%set`
 
-**Set configuration settings**
+**Set configuration value**
 
 Usage:
 ```
-%set [-h] [--permanently] [--reset] {graph,_all} ...
+%set [-h] [--permanently] [--reset] key value
 ```
 
+- `key`: Configuration key name. The full list of configuration options is shown on the [Getting Started](../getting_started.md#configuration) page.
+- `value`: Value to set.
+- `--permanently`: Store settings permanently.
+- `--reset`: Restore default settings.
+
+As an example, you can change the graph settings like so:
+
 ```
-%set graph --format svg
-%set graph --scale 1
-%set graph --width 500
-%set graph --width 400 --height 300
+%set graph_format svg --permanently
+%set graph_scale 1
+%set graph_width 500
+%set graph_height 300
 ```
 
 <!-- ## `%time`
