@@ -144,23 +144,16 @@ class StataKernel(Kernel):
     def send_image(self, graph_paths):
         """Load graph and send to frontend
 
-        In `code_manager.get_text`, I send to Stata only the `width` argument.
-        This way, the graphs are always scaled in accordance with their aspect
-        ratio. However this means that I don't know their aspect ratio. For this
-        reason, I load the SVG or PNG image into memory so that I can get the
-        image dimensions to relay to the frontend.
-
-        As of now, this only supports SVG and PNG formats. I see no real need to
-        change this. PDF isn't supported in Atom or in Jupyter. TIFF is 1-2
-        orders of magnitude larger than SVG and PNG images without a real
-        benefit over SVG.
+        This supports SVG, PNG, and PDF formats. While PDF display isn't
+        supported in Atom or Jupyter, the data can be stored within the Jupyter
+        Notebook file and makes exporting images to PDF through LaTeX easier.
 
         Args:
             graph_paths (List[str]): path to exported graph
         """
 
         no_display_msg = 'This front-end cannot display the desired image type.'
-        content = {'data': {'text/plan': no_display_msg}, 'metadata': {}}
+        content = {'data': {'text/plain': no_display_msg}, 'metadata': {}}
         warn = False
         for graph_path in graph_paths:
             file_size = Path(graph_path).stat().st_size
@@ -222,8 +215,7 @@ class StataKernel(Kernel):
         """
         msg = dedent(msg)
         warn_setting = self.config.get('graph_redundancy_warning', 'True')
-        warn_setting = warn_setting.lower() == 'true'
-        if warn and warn_setting:
+        if warn and (warn_setting.lower() == 'true'):
             self.send_response(
                 self.iopub_socket, 'display_data', {
                     'data': {

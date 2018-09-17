@@ -13,7 +13,10 @@ class Config(object):
         'execution_mode',
         'graph_format',
         'graph_height',
+        'graph_png_redundancy',
+        'graph_redundancy_warning',
         'graph_scale',
+        'graph_svg_redundancy',
         'graph_width',
         'stata_path', ]  # yapf: ignore
 
