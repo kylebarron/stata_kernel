@@ -110,6 +110,17 @@ class StataKernel(Kernel):
 
         # Post magic results, if applicable
         self.magics.post(self)
+        self.post_do_hook()
+
+        # Alert if delimiter changed. NOTE: This compares the delimiter at the
+        # end of the code block with that at the end of the previous code block.
+        if (not silent) and (cm.ends_sc != self.sc_delimit_mode):
+            delim = ';' if cm.ends_sc else 'cr'
+            self.send_response(
+                self.iopub_socket, 'stream', {
+                    'text': 'delimiter now {}'.format(delim),
+                    'name': 'stdout'})
+        self.sc_delimit_mode = cm.ends_sc
 
         # The base class increments the execution count
         return_obj = {'execution_count': self.execution_count}
@@ -119,27 +130,21 @@ class StataKernel(Kernel):
             return_obj['status'] = 'ok'
             return_obj['payload'] = []
             return_obj['user_expressions'] = {}
+        return return_obj
 
-        if silent:
-            # Refresh completions
-            self.completions.refresh(self)
-            return return_obj
+    def post_do_hook(self):
+        """Things to do after running commands in Stata
+        """
 
-        # Send message if delimiter changed.
-        # NOTE: This uses the delimiter at the _end_ of the code block. It
-        # prints only if the delimiter at the end is different than the one
-        # before the chunk.
-        if cm.ends_sc != self.sc_delimit_mode:
-            delim = ';' if cm.ends_sc else 'cr'
-            self.send_response(
-                self.iopub_socket, 'stream', {
-                    'text': 'delimiter now {}'.format(delim),
-                    'name': 'stdout'})
-        self.sc_delimit_mode = cm.ends_sc
+        cm = CodeManager("di `c(linesize)'")
+        text_to_run, md5, text_to_exclude = cm.get_text(self.conf)
+        rc, res = self.stata.do(
+            text_to_run, md5, text_to_exclude=text_to_exclude, display=False)
+        if not rc:
+            self.stata.linesize = int(res.strip())
 
         # Refresh completions
         self.completions.refresh(self)
-        return return_obj
 
     def send_image(self, graph_paths):
         """Load graph and send to frontend

@@ -59,6 +59,8 @@ class StataSession():
         except requests.exceptions.RequestException:
             pass
 
+        # See https://github.com/kylebarron/stata_kernel/issues/177
+        self.linesize = 255
         if platform.system() == 'Windows':
             self.init_windows()
         elif platform.system() == 'Darwin':
@@ -73,7 +75,6 @@ class StataSession():
         adofile = resource_filename(
             'stata_kernel', 'ado/_StataKernelCompletions.ado')
         adodir = Path(adofile).resolve().parent
-        self.linesize = 80
         init_cmd = """\
             adopath + `"{0}"\'
             cd `"{1}"\'
