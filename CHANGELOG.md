@@ -1,5 +1,10 @@
 # Changelog
 
+## [1.5.2] - 2018-09-19
+
+- Add pywin32 as a pip dependency on Windows, thus making installation easier.
+- Add jupyter 1.0.0 metapackage as a dependency, so that installs from Miniconda also install all of Jupyter.
+
 ## [1.5.1] - 2018-09-17
 
 - Fix issues with `--more--`. #103
