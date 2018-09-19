@@ -1,4 +1,5 @@
 beautifulsoup4>=4.6.3
+jupyter>=1.0.0
 jupyter_client>=5.2.3
 IPython>=6.5.0
 ipykernel>=4.8.2
