@@ -1,3 +1,4 @@
+import platform
 from subprocess import run
 from setuptools import setup
 
@@ -20,7 +21,8 @@ setup_requirements = [
     'twine >= 1.11.0']
 
 # Recompile included docs
-run(['bash', 'make.sh'], cwd='./stata_kernel/docs/')
+if platform.system() != 'Windows':
+    run(['bash', 'make.sh'], cwd='./stata_kernel/docs/')
 
 setup(
     author='Kyle Barron',
