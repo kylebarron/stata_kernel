@@ -1,5 +1,9 @@
 # Changelog
 
+## [1.5.3] - 2018-09-20
+
+- Set pexpect terminal size to 255 columns. #190
+
 ## [1.5.2] - 2018-09-19
 
 - Add pywin32 as a pip dependency on Windows, thus making installation easier.
