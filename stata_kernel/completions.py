@@ -74,6 +74,7 @@ class CompletionsManager(object):
         self.suggestions = self.get_suggestions(kernel)
         self.suggestions['magics'] = kernel.magics.available_magics
         self.suggestions['magics_set'] = kernel.conf.all_settings
+        self.globals = self.get_globals(kernel)
 
     def get_env(self, code, rdelimit, sc_delimit_mode):
         """Returns completions environment
@@ -290,6 +291,15 @@ class CompletionsManager(object):
             if x != 'stata_kernel_graph_counter']
 
         return suggestions
+
+    def get_globals(self, kernel):
+        res = self.quickdo("macro list `:all globals'", kernel)
+        vals = re.split(r'^(\w+):', res, flags=re.MULTILINE)
+        # TODO: Check if leading line in output
+        if not vals[0].strip():
+            vals = vals[1:]
+        vals = [x.strip() for x in vals]
+        return {x:y for x, y in zip(vals[::2], vals[1::2])}
 
     def quickdo(self, code, kernel):
 
