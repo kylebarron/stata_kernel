@@ -280,7 +280,12 @@ class StataSession():
                 pdf_dup = pdf_dup.lower() == 'true'
 
                 if pdf_dup:
-                    child.expect(g_exp, timeout=None)
+                    while True:
+                        ind = child.expect([g_exp, pexpect.EOF], timeout=None)
+                        if ind == 0:
+                            break
+                        sleep(0.1)
+
                     code_lines = code_lines[1:]
                     g_path.append(child.match.group(1))
                 if display:
