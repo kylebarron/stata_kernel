@@ -1,5 +1,10 @@
 # Changelog
 
+## [1.5.4] - 2018-09-21
+
+- Force utf-8 encoding when writing `include` code to file. #196
+- Catch `EOF` when waiting for the PDF copy of graph. #192
+
 ## [1.5.3] - 2018-09-20
 
 - Set pexpect terminal size to 255 columns. #190
