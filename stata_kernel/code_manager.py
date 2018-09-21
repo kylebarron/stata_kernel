@@ -261,7 +261,7 @@ class CodeManager(object):
         hash_text = hashlib.md5(text.encode('utf-8')).hexdigest()
         text_to_exclude = text
         if use_include:
-            with open(cache_dir / 'include.do', 'w') as f:
+            with open(cache_dir / 'include.do', 'w', encoding='utf-8') as f:
                 f.write(text + '\n')
             text = "include {}/include.do".format(cache_dir_str)
             text_to_exclude = text + '\n' + text_to_exclude
