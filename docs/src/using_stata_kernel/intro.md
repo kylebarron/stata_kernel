@@ -6,11 +6,14 @@ After [installing](../getting_started.md) and optionally [configuring](../gettin
 
 ## Displaying graphs
 
-`stata_kernel` displays graphs by quietly inserting a `graph export` command after any command that creates a graph, and then loading the saved file. The advantage of this approach is that it will display _all_ graphs created, even inside a loop or program.
+`stata_kernel` displays graphs by quietly inserting a `graph export` command after any command that creates a graph, and then loading and displaying the saved file. The advantage of this approach is that it will display _all_ graphs created, even inside a loop or program.
 
 To minimize false positives, the graph keyword must appear at the beginning of a line. To hide the display of a graph, just prefix `graph` with [`quietly`](https://www.stata.com/help.cgi?quietly).
 
-To display graphs from user created commands (e.g., `coefplot`), use `graph display` after the command that generated the graph.
+To display graphs from user created commands (e.g., `coefplot` or `vioplot`),
+add the keyword to the [`user_graph_keywords` setting](../../getting_started#graph-settings). You can do this either in
+the configuration file before starting the session or with `%set
+user_graph_keywords coefplot,vioplot` during the session.
 
 ### Graph display format
 

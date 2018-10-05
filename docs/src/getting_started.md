@@ -104,3 +104,11 @@ These settings determine how graphs are displayed internally.
 - `graph_width`: an integer. This is the width in pixels of graphs displayed. If no `graph_height` is set, Stata will determine the optimal height for the specific image.
 
 - `graph_height`: an integer. This is the height in pixels of graphs displayed.
+
+- `user_graph_keywords`: a string. `stata_kernel` [displays graphs](using_stata_kernel/intro.md#displaying-graphs) by quietly inserting a `graph export` command after any command that creates a graph, and then loading and displaying the saved file. By default, it only looks for the base list of graph commands.
+
+    If you use third party commands that generate figures, this option allows you to provide a list of commands that will also display graphs. Provide multiple graph names as a comma-delimited string, e.g. in the configuration file add:
+
+    ```
+    user_graph_keywords = vioplot, coefplot
+    ```

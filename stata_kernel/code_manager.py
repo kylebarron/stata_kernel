@@ -8,7 +8,7 @@ from textwrap import dedent
 from .stata_lexer import StataLexer
 from .stata_lexer import CommentAndDelimitLexer
 
-graph_keywords = [
+base_graph_keywords = [
     r'gr(a|ap|aph)?' + r'(?!\s+' + r'(save|replay|print|export|dir|set|' +
     r'des(c|cr|cri|crib|cribe)?|rename|copy|drop|close|q(u|ue|uer|uery)?))',
     r'tw(o|ow|owa|oway)?', r'sc(a|at|att|atte|atter)?', r'line',
@@ -28,7 +28,6 @@ graph_keywords = [
     r'mdsconfig', r'mdsshepard', r'cusum', r'cchart', r'pchart', r'rchart',
     r'xchart', r'shewhart', r'serrbar', r'marginsplot', r'bayesgraph',
     r'tabodds', r'teffects\s+overlap', r'npgraph', r'grmap', r'pkexamine']
-graph_keywords = r'^\s*\b(' + '|'.join(graph_keywords) + r')\b'
 
 
 class CodeManager(object):
@@ -255,6 +254,13 @@ class CodeManager(object):
         global {0} = ${0} + 1\
         """.format(gph_cnt))
 
+        user_graph_keywords = config.get(
+            'user_graph_keywords', 'coefplot,vioplot')
+        user_graph_keywords = [
+            re.sub(r'\s+', '\\s+', x.strip())
+            for x in user_graph_keywords.split(',')]
+        graph_keywords = r'^\s*\b({})\b'.format(
+            '|'.join([*base_graph_keywords, *user_graph_keywords]))
         lines = [x + g_exp if re.match(graph_keywords, x) else x for x in lines]
 
         text = '\n'.join(lines)

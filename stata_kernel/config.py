@@ -18,7 +18,8 @@ class Config(object):
         'graph_scale',
         'graph_svg_redundancy',
         'graph_width',
-        'stata_path', ]  # yapf: ignore
+        'stata_path',
+        'user_graph_keywords', ]  # yapf: ignore
 
     def __init__(self):
         self.config_path = Path('~/.stata_kernel.conf').expanduser()
@@ -37,7 +38,8 @@ class Config(object):
                 self.raise_config_error('execution_mode')
         elif platform.system() == 'Linux':
             self.set(
-                'stata_path', self.get_linux_stata_path_variant(),
+                'stata_path',
+                self.get_linux_stata_path_variant(),
                 permanent=True)
 
         if not self.get('stata_path'):
