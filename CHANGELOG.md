@@ -1,5 +1,9 @@
 # Changelog
 
+## [1.5.5] - 2018-10-05
+
+- Add `user_graph_keywords` setting to allow graphs to be displayed for third-party commands.
+
 ## [1.5.4] - 2018-09-21
 
 - Force utf-8 encoding when writing `include` code to file. #196
