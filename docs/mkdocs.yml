@@ -36,7 +36,8 @@ nav:
     - Using the Stata Kernel:
         - Introduction: 'using_stata_kernel/intro.md'
         - Magics: 'using_stata_kernel/magics.md'
-    - Troubleshooting: 'troubleshooting.md'
+        - Limitations: 'using_stata_kernel/limitations.md'
+        - Troubleshooting: 'using_stata_kernel/troubleshooting.md'
     - Comparison with ipystata: 'comparison_with_ipystata.md'
     - Addendum: 'addendum.md'
     - License: 'license.md'
