@@ -1,3 +1,4 @@
+import re
 import base64
 import shutil
 import platform
@@ -141,7 +142,13 @@ class StataKernel(Kernel):
         rc, res = self.stata.do(
             text_to_run, md5, text_to_exclude=text_to_exclude, display=False)
         if not rc:
-            self.stata.linesize = int(res.strip())
+            # Remove rmsg lines when rmsg is on
+            rmsg_regex = r'r(\(\d+\))?;\s+t=\d*\.\d*\s*\d*:\d*:\d*'
+            res = [
+                x for x in res.split('\n')
+                if not re.search(rmsg_regex, x.strip())]
+            res = '\n'.join(res).strip()
+            self.stata.linesize = int(res)
 
         # Refresh completions
         self.completions.refresh(self)
