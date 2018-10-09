@@ -1,5 +1,9 @@
 # Changelog
 
+## [1.5.6] - 2018-10-09
+
+- Fix bug that prevented `set rmsg on` from working. #199
+
 ## [1.5.5] - 2018-10-05
 
 - Add `user_graph_keywords` setting to allow graphs to be displayed for third-party commands.
