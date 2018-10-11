@@ -1,5 +1,9 @@
 # Changelog
 
+## [1.5.7] - 2018-10-09
+
+- Fix bug that parsed multiple `///` on a single line incorrectly. #200
+
 ## [1.5.6] - 2018-10-09
 
 - Fix bug that prevented `set rmsg on` from working. #199
