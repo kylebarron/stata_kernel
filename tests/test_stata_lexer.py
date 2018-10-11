@@ -114,7 +114,7 @@ class TestCommentsFromStataList(object):
         expected = [
             (Token.Comment.Single, '*'),
             (Token.Comment.Single, ' '),
-            (Token.Comment.Single, '///\n'),
+            (Token.Comment.Special, '///\n'),
             (Token.Comment.Special, 'a'),
             (Token.Comment.Special, '\n'),
             (Token.Text, 'a'),
@@ -196,7 +196,7 @@ class TestCommentsFromStataList(object):
             (Token.Comment.Single, ' '),
             (Token.Comment.Single, 'a'),
             (Token.Comment.Single, ' '),
-            (Token.Comment.Single, '///\n'),
+            (Token.Comment.Special, '///\n'),
             (Token.Comment.Single, '// a ///'),
             (Token.Text, '\n'),
             (Token.Text, 'a'),
