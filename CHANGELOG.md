@@ -1,5 +1,9 @@
 # Changelog
 
+## [1.5.8] - 2018-10-11
+
+- Fix incorrect regex escaping. #201
+
 ## [1.5.7] - 2018-10-11
 
 - Fix bug that parsed multiple `///` on a single line incorrectly. #200
