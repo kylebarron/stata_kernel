@@ -257,7 +257,7 @@ class CodeManager(object):
         user_graph_keywords = config.get(
             'user_graph_keywords', 'coefplot,vioplot')
         user_graph_keywords = [
-            re.sub(r'\s+', '\\s+', x.strip())
+            re.sub(r'\s+', '\\\\s+', x.strip())
             for x in user_graph_keywords.split(',')]
         graph_keywords = r'^\s*\b({})\b'.format(
             '|'.join([*base_graph_keywords, *user_graph_keywords]))
