@@ -129,7 +129,7 @@ class CommentAndDelimitLexer(RegexLexer):
         'comments-triple-slash': [
             (r'\n', Comment.Special, '#pop'),
             # A // breaks out of a comment for the rest of the line
-            (r'//.*?(?=\n)', Comment.Single, '#pop'),
+            (r'(^//|(?<=\s)//)(?!/)[^\n]*', Comment.Single, '#pop'),
             (r'.', Comment.Special),
         ],
         'comments-double-slash': [
@@ -187,7 +187,7 @@ class CommentAndDelimitLexer(RegexLexer):
         'delimit;-comments-triple-slash': [
             (r'\n', Comment.Special, '#pop'),
             # A // breaks out of a comment for the rest of the line
-            (r'//.*?(?=\n)', Comment.Single, '#pop'),
+            (r'((^\s+//)|(?<=\s)\s*//)(?!/)[^\n]*', Comment.Single, '#pop'),
             (r'.', Comment.Special),
         ],
         'delimit;-comments-double-slash': [
