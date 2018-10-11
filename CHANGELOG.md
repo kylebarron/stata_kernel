@@ -1,6 +1,6 @@
 # Changelog
 
-## [1.5.7] - 2018-10-09
+## [1.5.7] - 2018-10-11
 
 - Fix bug that parsed multiple `///` on a single line incorrectly. #200
 
