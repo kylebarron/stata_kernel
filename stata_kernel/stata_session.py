@@ -245,8 +245,10 @@ class StataSession():
 
         g_exp = r'\(file ({}'.format(self.cache_dir_str)
         g_fmts = '|'.join(self.kernel.graph_formats)
-        g_exp += r'/graph\d+\.({0})) written in (?i:({0})) format\)'.format(
-            g_fmts)
+        g_exp += r'/graph\d+\.({0})) written in ({0}) format\)'.format(g_fmts)
+        # Ignore case for SVG/PDF/PNG
+        # This is not a `(?i:)` flag to support Python 3.5
+        g_exp = re.compile(g_exp, re.IGNORECASE)
 
         more = r'^--more--'
         eol = r'\r?\n'
@@ -272,7 +274,7 @@ class StataSession():
                 continue
             if match_index == 2:
                 g_path = [child.match.group(1)]
-                g_fmt = child.match.group(2)
+                g_fmt = child.match.group(2).lower()
                 if g_fmt == 'svg':
                     pdf_dup = self.config.get('graph_svg_redundancy', 'True')
                 elif g_fmt == 'png':
