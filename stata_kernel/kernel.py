@@ -173,7 +173,7 @@ class StataKernel(Kernel):
                 warn = True
 
             if graph_path.endswith('.svg'):
-                with open(graph_path, 'r', encoding='utf-8') as f:
+                with Path(graph_path).open('r', encoding='utf-8') as f:
                     img = f.read()
                 e = ET.ElementTree(ET.fromstring(img))
                 root = e.getroot()
@@ -193,7 +193,7 @@ class StataKernel(Kernel):
                 if platform.system() == 'Darwin':
                     width /= 2
                     height /= 2
-                with open(graph_path, 'rb') as f:
+                with Path(graph_path).open('rb') as f:
                     img = base64.b64encode(f.read()).decode('utf-8')
 
                 content['data']['image/png'] = img
@@ -202,7 +202,7 @@ class StataKernel(Kernel):
                     'height': height}
 
             elif graph_path.endswith('.pdf'):
-                with open(graph_path, 'rb') as f:
+                with Path(graph_path).open('rb') as f:
                     pdf = base64.b64encode(f.read()).decode('utf-8')
                 content['data']['application/pdf'] = pdf
 

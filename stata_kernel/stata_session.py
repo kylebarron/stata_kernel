@@ -129,9 +129,9 @@ class StataSession():
             codec_errors='replace')
         self.child.setwinsize(100, 255)
         self.child.delaybeforesend = None
-        self.child.logfile = open(
-            self.config.get('cache_dir') / 'console_debug.log', 'w',
-            encoding='utf-8')
+        self.child.logfile = (
+            self.config.get('cache_dir') / 'console_debug.log').open(
+                'w', encoding='utf-8')
         banner = []
         try:
             self.child.expect('\r\n\. ', timeout=0.2)
@@ -174,7 +174,7 @@ class StataSession():
         if rc:
             return rc
 
-        self.fd = open(log_path)
+        self.fd = Path(log_path).open()
         if platform.system() == 'Windows':
             self.log_fd = pexpect.fdpexpect.fdspawn(
                 self.fd, encoding='utf-8', codec_errors='replace')
@@ -182,9 +182,9 @@ class StataSession():
             self.log_fd = pexpect.fdpexpect.fdspawn(
                 self.fd, encoding='utf-8', maxread=1, codec_errors='replace')
 
-        self.log_fd.logfile = open(
-            self.config.get('cache_dir') / 'console_debug.log', 'w',
-            encoding='utf-8')
+        self.log_fd.logfile = (
+            self.config.get('cache_dir') / 'console_debug.log').open(
+                'w', encoding='utf-8')
 
         return 0
 
