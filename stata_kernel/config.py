@@ -24,7 +24,7 @@ class Config(object):
     def __init__(self):
         self.config_path = Path('~/.stata_kernel.conf').expanduser()
         self.config = ConfigParser()
-        self.config.read(self.config_path)
+        self.config.read(str(self.config_path))
 
         self.env = dict(self.config.items('stata_kernel'))
         self.env['cache_dir'] = Path(

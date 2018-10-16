@@ -90,7 +90,7 @@ def install_conf():
     user_graph_keywords = vioplot
     """.format(stata_path, execution_mode))
 
-    with open(Path('~/.stata_kernel.conf').expanduser(), 'w') as f:
+    with Path('~/.stata_kernel.conf').expanduser().open('w') as f:
         f.write(conf_default)
 
 
