@@ -1,5 +1,9 @@
 # Changelog
 
+## [1.5.9] - 2018-10-16
+
+- Fix bugs with Python 3.5. #203
+
 ## [1.5.8] - 2018-10-11
 
 - Fix incorrect regex escaping. #201
