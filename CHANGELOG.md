@@ -1,5 +1,30 @@
 # Changelog
 
+## [1.5.9] - 2018-10-16
+
+- Fix bugs with Python 3.5. #203
+
+## [1.5.8] - 2018-10-11
+
+- Fix incorrect regex escaping. #201
+
+## [1.5.7] - 2018-10-11
+
+- Fix bug that parsed multiple `///` on a single line incorrectly. #200
+
+## [1.5.6] - 2018-10-09
+
+- Fix bug that prevented `set rmsg on` from working. #199
+
+## [1.5.5] - 2018-10-05
+
+- Add `user_graph_keywords` setting to allow graphs to be displayed for third-party commands.
+
+## [1.5.4] - 2018-09-21
+
+- Force utf-8 encoding when writing `include` code to file. #196
+- Catch `EOF` when waiting for the PDF copy of graph. #192
+
 ## [1.5.3] - 2018-09-20
 
 - Set pexpect terminal size to 255 columns. #190

@@ -118,7 +118,7 @@ class CommentAndDelimitLexer(RegexLexer):
             (r'.', Comment.Multiline),
         ],
         'comments-star': [
-            (r'///.*?\n', Comment.Single,
+            (r'///.*?\n', Comment.Special,
                 ('#pop', 'comments-triple-slash')),
             (r'(^//|(?<=\s)//)(?!/)', Comment.Single,
                 ('#pop', 'comments-double-slash')),
@@ -129,7 +129,7 @@ class CommentAndDelimitLexer(RegexLexer):
         'comments-triple-slash': [
             (r'\n', Comment.Special, '#pop'),
             # A // breaks out of a comment for the rest of the line
-            (r'//.*?(?=\n)', Comment.Single, '#pop'),
+            (r'(^//|(?<=\s)//)(?!/)[^\n]*', Comment.Single, '#pop'),
             (r'.', Comment.Special),
         ],
         'comments-double-slash': [
@@ -176,7 +176,7 @@ class CommentAndDelimitLexer(RegexLexer):
             (r'.', Comment.Multiline),
         ],
         'delimit;-comments-star': [
-            (r'///.*?\n', Comment.Single,
+            (r'///.*?\n', Comment.Special,
                 ('#pop', 'delimit;-comments-triple-slash')),
             # // doesn't break out of star comment inside #delimit ;
             (r'/\*', Comment.Multiline, 'delimit;-comments-block'),
@@ -187,7 +187,7 @@ class CommentAndDelimitLexer(RegexLexer):
         'delimit;-comments-triple-slash': [
             (r'\n', Comment.Special, '#pop'),
             # A // breaks out of a comment for the rest of the line
-            (r'//.*?(?=\n)', Comment.Single, '#pop'),
+            (r'((^\s+//)|(?<=\s)\s*//)(?!/)[^\n]*', Comment.Single, '#pop'),
             (r'.', Comment.Special),
         ],
         'delimit;-comments-double-slash': [

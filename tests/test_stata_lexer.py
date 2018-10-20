@@ -114,7 +114,7 @@ class TestCommentsFromStataList(object):
         expected = [
             (Token.Comment.Single, '*'),
             (Token.Comment.Single, ' '),
-            (Token.Comment.Single, '///\n'),
+            (Token.Comment.Special, '///\n'),
             (Token.Comment.Special, 'a'),
             (Token.Comment.Special, '\n'),
             (Token.Text, 'a'),
@@ -196,7 +196,7 @@ class TestCommentsFromStataList(object):
             (Token.Comment.Single, ' '),
             (Token.Comment.Single, 'a'),
             (Token.Comment.Single, ' '),
-            (Token.Comment.Single, '///\n'),
+            (Token.Comment.Special, '///\n'),
             (Token.Comment.Single, '// a ///'),
             (Token.Text, '\n'),
             (Token.Text, 'a'),
@@ -300,6 +300,42 @@ class TestLineContinuationComments(object):
             (Token.Comment.Special, '///'),
             (Token.Comment.Special, '\n'),
             (Token.Text, 'a'),
+            (Token.Text, '\n')]
+        assert tokens == expected
+
+    def test4(self):
+        code = 'a ///\n/// a ///'
+        tokens = CodeManager(code).tokens_fp_all
+        expected = [
+            (Token.Text, 'a'),
+            (Token.Text, ' '),
+            (Token.Comment.Special, '///'),
+            (Token.Comment.Special, '\n'),
+            (Token.Comment.Special, '///'),
+            (Token.Comment.Special, ' '),
+            (Token.Comment.Special, 'a'),
+            (Token.Comment.Special, ' '),
+            (Token.Comment.Special, '/'),
+            (Token.Comment.Special, '/'),
+            (Token.Comment.Special, '/'),
+            (Token.Comment.Special, '\n')]
+        assert tokens == expected
+
+    def test5(self):
+        code = 'a ///\n// a ///'
+        tokens = CodeManager(code).tokens_fp_all
+        expected = [
+            (Token.Text, 'a'),
+            (Token.Text, ' '),
+            (Token.Comment.Special, '///'),
+            (Token.Comment.Special, '\n'),
+            (Token.Comment.Single, '//'),
+            (Token.Comment.Single, ' '),
+            (Token.Comment.Single, 'a'),
+            (Token.Comment.Single, ' '),
+            (Token.Comment.Single, '/'),
+            (Token.Comment.Single, '/'),
+            (Token.Comment.Single, '/'),
             (Token.Text, '\n')]
         assert tokens == expected
 

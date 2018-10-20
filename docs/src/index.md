@@ -27,11 +27,11 @@ elements in the ecosystem.
 - [x] Supports Windows, macOS, and Linux.
 - [x] Use any type of comments in your code, not just `*`.
 - [x] Autocompletions as you type based on the variables, macros, and return objects currently in memory.
-- [x] Display graphs.
+- [x] [Display graphs](using_stata_kernel/intro/#displaying-graphs).
 - [x] Receive results as they appear, not after the entire command finishes.
-- [x] [Pull up interactive help files within the kernel.](using_stata_kernel/magics.md#help)
-- [x] [Browse data interactively](using_stata_kernel/magics.md#browse)
-- [x] [`#delimit ;` interactive support.](using_stata_kernel/magics.md#delimit)
+- [x] [Pull up interactive help files within the kernel.](using_stata_kernel/magics#help)
+- [x] [Browse data interactively](using_stata_kernel/magics#browse)
+- [x] [`#delimit ;` interactive support.](using_stata_kernel/intro#delimit-mode)
 - [x] Work with a remote session of Stata
 - [ ] Mata interactive support
 - [ ] Cross-session history file

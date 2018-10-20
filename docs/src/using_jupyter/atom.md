@@ -21,6 +21,24 @@ There are three main ways to run code using Hydrogen:
 - Cursor block. When `Hydrogen: Run` is called and no code is selected, Hydrogen runs the current line. If code following the present line is more indented than the current line, Hydrogen will run the entire indented block.
 - Cell. A cell is a block of lines to be executed at once. They are defined using `%%` inside comments. See [here](https://nteract.gitbooks.io/hydrogen/docs/Usage/GettingStarted.html#hydrogen-run-cell) for more information.
 
+### Output
+
+Output will display directly beside or beneath the block of code that was
+selected to be run. Code that does not produce any output will show a check mark
+when completed.
+
+### Watch Expressions
+
+Hydrogen allows for [_watch expressions_](https://nteract.gitbooks.io/hydrogen/docs/Usage/GettingStarted.html#watch-expressions). These are expressions that are automatically re-run after every command sent to the kernel. This is convenient for viewing regression output, graphs, or the data set after changing a parameter.
+
+Note that since the watch expression is run after _every_ command, it shouldn't be something that changes the state of the data. For example, `replace mpg = mpg * 2` would be unwise to set as a watch expression because that would change the column's data after every command.
+
+Using watch expressions with a graph:
+![](../img/hydrogen-watch-graph.gif)
+
+Using watch expressions to browse data:
+![](../img/hydrogen-watch-browse.gif)
+
 ## Indentation and for loops
 
 Stata `foreach` loops and programs must be sent as a whole to the kernel. The

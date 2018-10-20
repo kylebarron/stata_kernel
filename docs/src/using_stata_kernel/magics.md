@@ -30,6 +30,9 @@ don't support displaying HTML.
 
 For now, this displays the first 200 rows of your data. This will be expanded in the future to allow for a `varlist`, `if`, and `in` options.
 
+If you're using Windows or macOS with Automation mode, you can also run `browse`
+(without the `%`) and it will open the usual Stata data explorer.
+
 |                      |                                                 |
 |:--------------------:|:-----------------------------------------------:|
 |       **Atom**       |         ![Atom](../img/browse_atom.png)         |
