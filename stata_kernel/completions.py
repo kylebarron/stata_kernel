@@ -304,7 +304,7 @@ class CompletionsManager(object):
         try:
             top_dir, dirs, files = next(os.walk(os.path.expanduser(folder)))
             # Replace tilde if it started as tilde
-            if path[0] == '~':
+            if path.startswith('~'):
                 top_dir = top_dir.replace(os.path.expanduser('~'), '~')
 
             results = [x + '/' for x in dirs] + files
