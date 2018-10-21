@@ -140,9 +140,9 @@ class CompletionsManager(object):
             if linecontext:
                 context = linecontext.groupdict()['context']
                 equals = (code.find('=') > 0)
-                if context.strip() == 'scalar':
+                if re.match(r'^sca(lar|la|l)?$', context.strip()):
                     env_add = 7 if equals else 4
-                elif context.strip() == 'matrix':
+                elif re.match(r'^mat(rix|ri|r)?$', context.strip()):
                     env_add = 8 if equals else 6
 
             # Constructs of the form scalar(x<tab> will be filled only

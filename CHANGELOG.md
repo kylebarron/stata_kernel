@@ -4,6 +4,8 @@
 
 - Fix `scatter` in graph regex. Only `sc` and `scatter` produce plots when not
   preceded by `twoway`. #205
+- Give matrix and scalar autocompletions when using shortened command names.
+  #206
 
 ## [1.5.9] - 2018-10-16
 
