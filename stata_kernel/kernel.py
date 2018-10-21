@@ -137,7 +137,14 @@ class StataKernel(Kernel):
         """Things to do after running commands in Stata
         """
 
-        cm = CodeManager("di `c(linesize)'")
+        self.stata.linesize = int(self.quickdo("di `c(linesize)'"))
+        self.stata.cwd = self.quickdo("pwd")
+
+        # Refresh completions
+        self.completions.refresh(self)
+
+    def quickdo(self, code):
+        cm = CodeManager(code)
         text_to_run, md5, text_to_exclude = cm.get_text(self.conf)
         rc, res = self.stata.do(
             text_to_run, md5, text_to_exclude=text_to_exclude, display=False)
@@ -148,10 +155,7 @@ class StataKernel(Kernel):
                 x for x in res.split('\n')
                 if not re.search(rmsg_regex, x.strip())]
             res = '\n'.join(res).strip()
-            self.stata.linesize = int(res)
-
-        # Refresh completions
-        self.completions.refresh(self)
+            return res
 
     def send_image(self, graph_paths):
         """Load graph and send to frontend

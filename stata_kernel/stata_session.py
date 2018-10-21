@@ -61,6 +61,7 @@ class StataSession():
 
         # See https://github.com/kylebarron/stata_kernel/issues/177
         self.linesize = 255
+        self.cwd = os.getcwd()
         if platform.system() == 'Windows':
             self.init_windows()
         elif platform.system() == 'Darwin':
