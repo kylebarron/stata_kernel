@@ -314,7 +314,7 @@ class CompletionsManager(object):
             results = [
                 user_folder + x
                 for x in results
-                if not x.startswith('.') and x.startswith(user_starts)]
+                if not x.startswith('.') and re.match(user_starts, x, re.I)]
 
         except StopIteration:
             results = []
