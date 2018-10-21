@@ -1,5 +1,10 @@
 # Changelog
 
+## Next release
+
+- Fix `scatter` in graph regex. Only `sc` and `scatter` produce plots when not
+  preceded by `twoway`. #205
+
 ## [1.5.9] - 2018-10-16
 
 - Fix bugs with Python 3.5. #203
