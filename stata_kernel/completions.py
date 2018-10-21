@@ -302,7 +302,8 @@ class CompletionsManager(object):
 
         # Replace globals with their values
         globals_re = r'\$\{?(?![0-9_])\w{1,32}\}?'
-        folder = re.sub(globals_re, lambda x: self.globals[x.group(0)[1:]], user_folder)
+        folder = re.sub(
+            globals_re, lambda x: self.globals[x.group(0)[1:]], user_folder)
 
         # Use Stata's relative path
         abspath = folder.startswith('/') or folder.startswith('~')
