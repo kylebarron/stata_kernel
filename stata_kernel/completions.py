@@ -291,6 +291,11 @@ class CompletionsManager(object):
             ind = max(chunk.rfind('/'), chunk.rfind('\\'))
             user_folder = chunk[:ind + 1]
             user_starts = chunk[ind + 1:]
+
+            # Replace multiple consecutive / with a single /
+            user_folder = re.sub(r'/+', '/', user_folder)
+            # user_folder = re.sub(r'\\', '\\', user_folder)
+
         else:
             user_folder = ''
             user_starts = chunk
@@ -298,10 +303,6 @@ class CompletionsManager(object):
         # Replace globals with their values
         globals_re = r'\$\{?(?![0-9_])\w{1,32}\}?'
         folder = re.sub(globals_re, lambda x: self.globals[x.group(0)[1:]], user_folder)
-
-        # Replace multiple consecutive / with a single /
-        folder = re.sub(r'/+', '/', folder)
-        # folder = re.sub(r'\\', '\\', folder)
 
         # Use Stata's relative path
         abspath = folder.startswith('/') or folder.startswith('~')
