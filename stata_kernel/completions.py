@@ -11,6 +11,7 @@ from .code_manager import CodeManager
 class CompletionsManager(object):
     def __init__(self, kernel, config):
         self.config = config
+        self.kernel = kernel
 
         # Magic completion
         self.magic_completion = re.compile(
@@ -274,7 +275,8 @@ class CompletionsManager(object):
         """Get file paths based on chunk
 
         Args:
-            chunk (str): chunk of text after last space
+            chunk (str): chunk of text after last space. Doesn't include string
+                punctuation characters
 
         Returns:
             (List[str]): folders and files at that location
@@ -284,34 +286,35 @@ class CompletionsManager(object):
         if re.search(r'[`\']', chunk):
             return []
 
+        # Get directory without ending file, and without / or \
+        if any(x in chunk for x in ['/', '\\']):
+            ind = max(chunk.rfind('/'), chunk.rfind('\\'))
+            user_folder = chunk[:ind + 1]
+            user_starts = chunk[ind + 1:]
+        else:
+            user_folder = ''
+            user_starts = chunk
+
         # Replace globals with their values
         globals_re = r'\$\{?(?![0-9_])\w{1,32}\}?'
-        path = re.sub(globals_re, lambda x: self.globals[x.group(0)[1:]], chunk)
+        folder = re.sub(globals_re, lambda x: self.globals[x.group(0)[1:]], user_folder)
 
         # Replace multiple consecutive / with a single /
-        path = re.sub(r'/+', '/', path)
-        # path = re.sub(r'\\', '\\', path)
+        folder = re.sub(r'/+', '/', folder)
+        # folder = re.sub(r'\\', '\\', folder)
 
-        # Get directory without ending file, and without / or \
-        if any(x in path for x in ['/', '\\']):
-            ind = max(path.rfind('/'), path.rfind('\\'))
-            folder = path[:ind]
-            starts = path[ind + 1:]
-        else:
-            folder = '.'
-            starts = path
+        # Use Stata's relative path
+        abspath = folder.startswith('/') or folder.startswith('~')
+        if not abspath:
+            folder = self.kernel.stata.cwd + '/' + folder
 
         try:
             top_dir, dirs, files = next(os.walk(os.path.expanduser(folder)))
-            # Replace tilde if it started as tilde
-            if path.startswith('~'):
-                top_dir = top_dir.replace(os.path.expanduser('~'), '~')
-
             results = [x + '/' for x in dirs] + files
             results = [
-                top_dir + '/' + x
+                user_folder + x
                 for x in results
-                if not x.startswith('.') and x.startswith(starts)]
+                if not x.startswith('.') and x.startswith(user_starts)]
 
         except StopIteration:
             results = []
