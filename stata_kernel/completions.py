@@ -182,7 +182,8 @@ class CompletionsManager(object):
         lfind = chunk.rfind('`')
         gfind = chunk.rfind('$')
         path_chars = any(x in chunk for x in ['/', '\\', '~'])
-        if lfind >= 0 and (lfind > gfind):
+        if lfind >= 0 and (lfind >
+                           gfind) and not chunk[lfind:].startswith('`"'):
             pos += lfind + 1
             env = 1
             rcomp = "" if rdelimit[0:1] == "'" else "'"
@@ -195,6 +196,10 @@ class CompletionsManager(object):
             else:
                 env = 2
                 pos += gfind + 1
+        elif chunk.startswith('"'):
+            pos += 1
+        elif chunk.startswith('`"'):
+            pos += 2
         else:
             # Set to matrix or scalar environment, if applicable. Note
             # that matrices and scalars can be set to variable values,
