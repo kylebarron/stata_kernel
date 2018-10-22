@@ -302,8 +302,14 @@ class CompletionsManager(object):
 
         # Replace globals with their values
         globals_re = r'\$\{?(?![0-9_])\w{1,32}\}?'
-        folder = re.sub(
-            globals_re, lambda x: self.globals[x.group(0)[1:]], user_folder)
+        try:
+            folder = re.sub(
+                globals_re, lambda x: self.globals[x.group(0)[1:]], user_folder)
+        except KeyError:
+            # If the global doesn't exist in self.globals (aka it hasn't been
+            # defined in the Stata environment yet), then there are no paths to
+            # check
+            return []
 
         # Use Stata's relative path
         abspath = folder.startswith('/') or folder.startswith('~')
