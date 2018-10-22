@@ -327,9 +327,8 @@ class CompletionsManager(object):
             top_dir, dirs, files = next(os.walk(os.path.expanduser(folder)))
             results = [x + dir_sep for x in dirs] + files
             results = [
-                user_folder + x
-                for x in results
-                if not x.startswith('.') and re.match(user_starts, x, re.I)]
+                user_folder + x for x in results if not x.startswith('.')
+                and re.match(re.escape(user_starts), x, re.I)]
 
         except StopIteration:
             results = []
