@@ -2,6 +2,7 @@ import os
 import re
 # NOTE: Using regex for (?r) flag
 import regex
+import platform
 
 from .code_manager import CodeManager
 
@@ -286,6 +287,12 @@ class CompletionsManager(object):
         if re.search(r'[`\']', chunk):
             return []
 
+        # Define directory separator
+        dir_sep = '/'
+        if platform.system() == 'Windows':
+            if '/' not in chunk:
+                dir_sep = '\\'
+
         # Get directory without ending file, and without / or \
         if any(x in chunk for x in ['/', '\\']):
             ind = max(chunk.rfind('/'), chunk.rfind('\\'))
@@ -294,7 +301,7 @@ class CompletionsManager(object):
 
             # Replace multiple consecutive / with a single /
             user_folder = re.sub(r'/+', '/', user_folder)
-            # user_folder = re.sub(r'\\', '\\', user_folder)
+            user_folder = re.sub(r'\\+', r'\\', user_folder)
 
         else:
             user_folder = ''
@@ -312,13 +319,13 @@ class CompletionsManager(object):
             return []
 
         # Use Stata's relative path
-        abspath = folder.startswith('/') or folder.startswith('~')
+        abspath = re.search(r'^([/~]|[a-zA-Z]):', folder)
         if not abspath:
             folder = self.kernel.stata.cwd + '/' + folder
 
         try:
             top_dir, dirs, files = next(os.walk(os.path.expanduser(folder)))
-            results = [x + '/' for x in dirs] + files
+            results = [x + dir_sep for x in dirs] + files
             results = [
                 user_folder + x
                 for x in results
