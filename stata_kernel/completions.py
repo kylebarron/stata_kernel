@@ -319,7 +319,7 @@ class CompletionsManager(object):
             return []
 
         # Use Stata's relative path
-        abspath = re.search(r'^([/~]|[a-zA-Z]):', folder)
+        abspath = re.search(r'^([/~]|[a-zA-Z]:)', folder)
         if not abspath:
             folder = self.kernel.stata.cwd + '/' + folder
 
