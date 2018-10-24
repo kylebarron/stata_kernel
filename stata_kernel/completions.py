@@ -45,9 +45,9 @@ class CompletionsManager(object):
         #     (`=)?scalar(
 
         pre = (
-            r'\b(cap(t|tu|tur|ture)?'
+            r'(cap(t|tu|tur|ture)?'
             r'|qui(e|et|etl|etly)?'
-            r'|n(o|oi|ois|oisi|oisil|oisily)?)\b')
+            r'|n(o|oi|ois|oisi|oisil|oisily)?)')
         kwargs = {'flags': re.MULTILINE}
         self.context = {
             'function':
@@ -59,11 +59,11 @@ class CompletionsManager(object):
                     r"\s(?P<fluff>.*?)`\=(?P<context>\S+?)"
                     r"\([^\)\s]*?\Z", **kwargs).search,
             'line':
-                re.compile(r"^(\s*{0})*(?P<context>\S+)".format(pre), **kwargs)
+                re.compile(r"^\s*({0}\s+)*(?P<context>\S+)".format(pre), **kwargs)
                 .search,
             'delimit_line':
                 re.compile(
-                    r"\A(\s*{0})*(?P<context>\S+)".format(pre), **kwargs)
+                    r"\A\s*({0}\s+)*(?P<context>\S+)".format(pre), **kwargs)
                 .search}
 
         self.suggestions = self.get_suggestions(kernel)
