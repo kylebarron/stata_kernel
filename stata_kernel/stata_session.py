@@ -296,6 +296,11 @@ class StataSession():
             if match_index == 3:
                 self.send_break(child=child, md5=md5[2:])
                 child.expect_exact(md5, timeout=None)
+                if display:
+                    self.kernel.send_response(
+                        self.kernel.iopub_socket, 'stream', {
+                            'text': '--more--\n',
+                            'name': 'stdout'})
                 break
             if match_index == 4:
                 code_lines, res = self.clean_log_eol(child, code_lines, res)
