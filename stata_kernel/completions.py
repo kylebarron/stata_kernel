@@ -59,12 +59,12 @@ class CompletionsManager(object):
                     r"\s(?P<fluff>.*?)`\=(?P<context>\S+?)"
                     r"\([^\)\s]*?\Z", **kwargs).search,
             'line':
-                re.compile(
-                    r"^(\s*{0})*(?P<context>\S+)".format(pre), **kwargs)
+                re.compile(r"^(\s*{0})*(?P<context>\S+)".format(pre), **kwargs)
                 .search,
             'delimit_line':
                 re.compile(
-                    r"\A(\s*{0})*(?P<context>\S+)".format(pre), **kwargs).search}
+                    r"\A(\s*{0})*(?P<context>\S+)".format(pre), **kwargs)
+                .search}
 
         self.suggestions = self.get_suggestions(kernel)
         self.suggestions['magics'] = kernel.magics.available_magics
