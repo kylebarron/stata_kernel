@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.6.1] - 2018-10-24
+
+- Remove `regex` package as a dependency. #212
+- Fix `cap`/`noi`/`qui` completions with scalars and matrices. #213
+- Close Stata graph window after saving graph. #214
+- Fix regex to hide "note: graph.svg not found"
+
 ## [1.6.0] - 2018-10-24
 
 - File path autocompletions. Currently only works when files have no spaces in them. #195
