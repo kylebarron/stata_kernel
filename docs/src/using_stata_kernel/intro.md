@@ -43,6 +43,12 @@ To turn off graph redundancy, change both configuration options to False:
 
 Because both image formats will be stored within the Jupyter Notebook file, `stata_kernel` will warn you if graph redundancy is on and an image is larger than 2 megabytes. To turn off this warning, set `graph_redundancy_warning` to `False`.
 
+## Autocompletion
+
+Based on the current Stata environment, `stata_kernel` will autocomplete variables, locals, globals, scalars, matrices, _and file paths_ (as of version 1.6.0).
+
+As of version 1.6.0, file paths will only generate suggestions if there are no spaces in what you've typed. In the future I hope to relax this restriction, so that quoted file paths with spaces will still allow autocomplete.
+
 ## `#delimit ;` mode
 
 Stata lets you use [`;` as a command

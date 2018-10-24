@@ -1,7 +1,8 @@
+import os
 import re
-import regex
-
 # NOTE: Using regex for (?r) flag
+import regex
+import platform
 
 from .code_manager import CodeManager
 
@@ -11,6 +12,7 @@ from .code_manager import CodeManager
 class CompletionsManager(object):
     def __init__(self, kernel, config):
         self.config = config
+        self.kernel = kernel
 
         # Magic completion
         self.magic_completion = re.compile(
@@ -19,7 +21,7 @@ class CompletionsManager(object):
         self.set_magic_completion = re.compile(
             r'\A%set (?P<setting>\S*)\Z', flags=re.DOTALL + re.MULTILINE).match
 
-        # NOTE(mauricio): Locals have to be listed sepparately because
+        # NOTE(mauricio): Locals have to be listed separately because
         # inside a Stata program they would only list the locals for
         # that program. Further, we need to match the output until the
         # end of the string OR until '---+\s*end' (the latter in case
@@ -74,6 +76,7 @@ class CompletionsManager(object):
         self.suggestions = self.get_suggestions(kernel)
         self.suggestions['magics'] = kernel.magics.available_magics
         self.suggestions['magics_set'] = kernel.conf.all_settings
+        self.globals = self.get_globals(kernel)
 
     def get_env(self, code, rdelimit, sc_delimit_mode):
         """Returns completions environment
@@ -88,7 +91,7 @@ class CompletionsManager(object):
             env (int):
                 -2: %set magic, %set x*
                 -1: magics, %x*
-                0: varlist
+                0: varlist and/or file path
                 1: locals, `x* completed with `x*'
                 2: globals, $x* completed with $x*
                 3: globals, ${x* completed with ${x*}
@@ -96,7 +99,7 @@ class CompletionsManager(object):
                 5: scalars, scalar(x* completed with scalar(x*
                 6: matrices, matrix .* x* completed with x*
                 7: scalars and varlist, scalar .* = x* completed with x*
-                8: matrices and varlsit, matrix .* = x* completed with x*
+                8: matrices and varlist, matrix .* = x* completed with x*
             pos (int):
                 Where the completions start. This is set to the start
                 of the word to be completed.
@@ -180,11 +183,13 @@ class CompletionsManager(object):
         chunk = code[pos:]
         lfind = chunk.rfind('`')
         gfind = chunk.rfind('$')
-        if lfind >= 0 and (lfind > gfind):
+        path_chars = any(x in chunk for x in ['/', '\\', '~'])
+        if lfind >= 0 and (lfind >
+                           gfind) and not chunk[lfind:].startswith('`"'):
             pos += lfind + 1
             env = 1
             rcomp = "" if rdelimit[0:1] == "'" else "'"
-        elif gfind >= 0:
+        elif gfind >= 0 and not path_chars:
             bfind = chunk.rfind('{')
             if bfind >= 0 and (bfind > gfind):
                 pos += bfind + 1
@@ -193,6 +198,10 @@ class CompletionsManager(object):
             else:
                 env = 2
                 pos += gfind + 1
+        elif chunk.startswith('"'):
+            pos += 1
+        elif chunk.startswith('`"'):
+            pos += 2
         else:
             # Set to matrix or scalar environment, if applicable. Note
             # that matrices and scalars can be set to variable values,
@@ -219,7 +228,8 @@ class CompletionsManager(object):
                 var for var in self.suggestions['magics']
                 if var.startswith(starts)]
         elif env == 0:
-            return [
+            paths = self.get_file_paths(starts)
+            return paths + [
                 var for var in self.suggestions['varlist']
                 if var.startswith(starts)]
         elif env == 1:
@@ -262,6 +272,69 @@ class CompletionsManager(object):
                     var for var in self.suggestions['varlist']
                     if var.startswith(starts)]
 
+    def get_file_paths(self, chunk):
+        """Get file paths based on chunk
+
+        Args:
+            chunk (str): chunk of text after last space. Doesn't include string
+                punctuation characters
+
+        Returns:
+            (List[str]): folders and files at that location
+        """
+
+        # If local exists, return empty list
+        if re.search(r'[`\']', chunk):
+            return []
+
+        # Define directory separator
+        dir_sep = '/'
+        if platform.system() == 'Windows':
+            if '/' not in chunk:
+                dir_sep = '\\'
+
+        # Get directory without ending file, and without / or \
+        if any(x in chunk for x in ['/', '\\']):
+            ind = max(chunk.rfind('/'), chunk.rfind('\\'))
+            user_folder = chunk[:ind + 1]
+            user_starts = chunk[ind + 1:]
+
+            # Replace multiple consecutive / with a single /
+            user_folder = re.sub(r'/+', '/', user_folder)
+            user_folder = re.sub(r'\\+', r'\\', user_folder)
+
+        else:
+            user_folder = ''
+            user_starts = chunk
+
+        # Replace globals with their values
+        globals_re = r'\$\{?(?![0-9_])\w{1,32}\}?'
+        try:
+            folder = re.sub(
+                globals_re, lambda x: self.globals[x.group(0)[1:]], user_folder)
+        except KeyError:
+            # If the global doesn't exist in self.globals (aka it hasn't been
+            # defined in the Stata environment yet), then there are no paths to
+            # check
+            return []
+
+        # Use Stata's relative path
+        abspath = re.search(r'^([/~]|[a-zA-Z]:)', folder)
+        if not abspath:
+            folder = self.kernel.stata.cwd + '/' + folder
+
+        try:
+            top_dir, dirs, files = next(os.walk(os.path.expanduser(folder)))
+            results = [x + dir_sep for x in dirs] + files
+            results = [
+                user_folder + x for x in results if not x.startswith('.')
+                and re.match(re.escape(user_starts), x, re.I)]
+
+        except StopIteration:
+            results = []
+
+        return sorted(results)
+
     def get_suggestions(self, kernel):
         match = self.matchall(self.quickdo('_StataKernelCompletions', kernel))
         if match:
@@ -290,6 +363,15 @@ class CompletionsManager(object):
             if x != 'stata_kernel_graph_counter']
 
         return suggestions
+
+    def get_globals(self, kernel):
+        res = self.quickdo("macro list `:all globals'", kernel)
+        vals = re.split(r'^(\w+):', res, flags=re.MULTILINE)
+        # TODO: Check if leading line in output
+        if not vals[0].strip():
+            vals = vals[1:]
+        vals = [x.strip() for x in vals]
+        return {x: y for x, y in zip(vals[::2], vals[1::2])}
 
     def quickdo(self, code, kernel):
 

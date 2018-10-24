@@ -26,7 +26,7 @@ elements in the ecosystem.
 
 - [x] Supports Windows, macOS, and Linux.
 - [x] Use any type of comments in your code, not just `*`.
-- [x] Autocompletions as you type based on the variables, macros, and return objects currently in memory.
+- [x] Autocompletions as you type based on the variables, macros, scalars, and matrices currently in memory. As of version 1.6.0 it also suggests file paths for autocompletion.
 - [x] [Display graphs](using_stata_kernel/intro/#displaying-graphs).
 - [x] Receive results as they appear, not after the entire command finishes.
 - [x] [Pull up interactive help files within the kernel.](using_stata_kernel/magics#help)
