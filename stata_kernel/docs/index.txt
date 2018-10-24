@@ -46,8 +46,9 @@ stata_kernel Features
 
 -   [x] Supports Windows, macOS, and Linux.
 -   [x] Use any type of comments in your code, not just *.
--   [x] Autocompletions as you type based on the variables, macros, and
-    return objects currently in memory.
+-   [x] Autocompletions as you type based on the variables, macros,
+    scalars, and matrices currently in memory. As of version 1.6.0 it
+    also suggests file paths for autocompletion.
 -   [x] Display graphs.
 -   [x] Receive results as they appear, not after the entire command
     finishes.
