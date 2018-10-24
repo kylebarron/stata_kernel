@@ -243,16 +243,24 @@ class CodeManager(object):
         if platform.system() == 'Windows':
             cache_dir_str = re.sub(r'\\', '/', cache_dir_str)
         gph_cnt = 'stata_kernel_graph_counter'
-        g_exp = dedent("""
-        noi gr export {0}/graph${{{1}}}.{2},{3} replace\
-        """.format(cache_dir_str, gph_cnt, graph_fmt, dim_str))
-        if pdf_dup:
-            g_exp += dedent("""
-            noi gr export {0}/graph${{{1}}}.pdf, replace\
-            """.format(cache_dir_str, gph_cnt))
-        g_exp += dedent("""
-        global {0} = ${0} + 1\
-        """.format(gph_cnt))
+
+        # yapf: disable
+        if not pdf_dup:
+            g_exp = dedent("""
+            if _rc == 0 {{
+                noi gr export {0}/graph${1}.{2},{3} replace
+                global {1} = ${1} + 1
+            }}\
+            """.format(cache_dir_str, gph_cnt, graph_fmt, dim_str))
+        else:
+            g_exp = dedent("""
+            if _rc == 0 {{
+                noi gr export {0}/graph${1}.{2},{3} replace
+                noi gr export {0}/graph${1}.pdf, replace
+                global {1} = ${1} + 1
+            }}\
+            """.format(cache_dir_str, gph_cnt, graph_fmt, dim_str))
+        # yapf: enable
 
         user_graph_keywords = config.get(
             'user_graph_keywords', 'coefplot,vioplot')
@@ -261,7 +269,9 @@ class CodeManager(object):
             for x in user_graph_keywords.split(',')]
         graph_keywords = r'^\s*\b({})\b'.format(
             '|'.join([*base_graph_keywords, *user_graph_keywords]))
-        lines = [x + g_exp if re.match(graph_keywords, x) else x for x in lines]
+        lines = [
+            'cap noi ' + x + g_exp if re.match(graph_keywords, x) else x
+            for x in lines]
 
         text = '\n'.join(lines)
         hash_text = hashlib.md5(text.encode('utf-8')).hexdigest()
