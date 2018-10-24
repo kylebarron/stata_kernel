@@ -1,7 +1,10 @@
 # Changelog
 
-## Next release
+## [1.6.0] - 2018-10-24
 
+- File path autocompletions. Currently only works when files have no spaces in them. #195
+- Only export graph after successful command. #210
+- Display `--more--` in frontend when it stops the display. #198
 - Fix `scatter` in graph regex. Only `sc` and `scatter` produce plots when not
   preceded by `twoway`. #205
 - Give matrix and scalar autocompletions when using shortened command names.
