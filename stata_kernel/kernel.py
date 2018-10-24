@@ -1,9 +1,14 @@
+import re
 import base64
+import shutil
 import platform
 
 from PIL import Image
+from pathlib import Path
 from textwrap import dedent
+from datetime import datetime
 from xml.etree import ElementTree as ET
+from pkg_resources import resource_filename
 from ipykernel.kernelbase import Kernel
 
 from .config import Config
@@ -15,7 +20,7 @@ from .stata_magics import StataMagics
 
 class StataKernel(Kernel):
     implementation = 'stata_kernel'
-    implementation_version = '1.4.7'
+    implementation_version = '1.6.0'
     language = 'stata'
     language_info = {
         'name': 'stata',
@@ -27,11 +32,39 @@ class StataKernel(Kernel):
     ] # yapf: disable
 
     def __init__(self, *args, **kwargs):
+        # Copy syntax highlighting files
+        from_paths = [
+            Path(resource_filename('stata_kernel', 'pygments/stata.py')),
+            Path(resource_filename('stata_kernel', 'codemirror/stata.js'))]
+        to_paths = [
+            Path(resource_filename('pygments', 'lexers/stata.py')),
+            Path(
+                resource_filename(
+                    'notebook',
+                    'static/components/codemirror/mode/stata/stata.js'))]
+
+        for from_path, to_path in zip(from_paths, to_paths):
+            copy = False
+            if to_path.is_file():
+                to_path_dt = datetime.fromtimestamp(to_path.stat().st_mtime)
+                from_path_dt = datetime.fromtimestamp(from_path.stat().st_mtime)
+                if from_path_dt > to_path_dt:
+                    copy = True
+            else:
+                copy = True
+
+            if copy:
+                try:
+                    to_path.parents[0].mkdir(parents=True, exist_ok=True)
+                    shutil.copy(str(from_path), str(to_path))
+                except OSError:
+                    pass
+
         super(StataKernel, self).__init__(*args, **kwargs)
 
         # Can't name this `self.config`. Conflicts with a Jupyter attribute
         self.conf = Config()
-        self.graph_formats = ["svg", "png"]
+        self.graph_formats = ['svg', 'png', 'pdf']
         self.sc_delimit_mode = False
         self.stata = StataSession(self, self.conf)
         self.banner = self.stata.banner
@@ -40,11 +73,7 @@ class StataKernel(Kernel):
         self.completions = CompletionsManager(self, self.conf)
 
     def do_execute(
-            self,
-            code,
-            silent,
-            store_history=True,
-            user_expressions=None,
+            self, code, silent, store_history=True, user_expressions=None,
             allow_stdin=False):
         """Execute user code.
 
@@ -82,6 +111,17 @@ class StataKernel(Kernel):
 
         # Post magic results, if applicable
         self.magics.post(self)
+        self.post_do_hook()
+
+        # Alert if delimiter changed. NOTE: This compares the delimiter at the
+        # end of the code block with that at the end of the previous code block.
+        if (not silent) and (cm.ends_sc != self.sc_delimit_mode):
+            delim = ';' if cm.ends_sc else 'cr'
+            self.send_response(
+                self.iopub_socket, 'stream', {
+                    'text': 'delimiter now {}'.format(delim),
+                    'name': 'stdout'})
+        self.sc_delimit_mode = cm.ends_sc
 
         # The base class increments the execution count
         return_obj = {'execution_count': self.execution_count}
@@ -91,84 +131,114 @@ class StataKernel(Kernel):
             return_obj['status'] = 'ok'
             return_obj['payload'] = []
             return_obj['user_expressions'] = {}
+        return return_obj
 
-        if silent:
-            # Refresh completions
-            self.completions.refresh(self)
-            return return_obj
+    def post_do_hook(self):
+        """Things to do after running commands in Stata
+        """
 
-        # Send message if delimiter changed.
-        # NOTE: This uses the delimiter at the _end_ of the code block. It
-        # prints only if the delimiter at the end is different than the one
-        # before the chunk.
-        if cm.ends_sc != self.sc_delimit_mode:
-            delim = ';' if cm.ends_sc else 'cr'
-            self.send_response(
-                self.iopub_socket, 'stream', {
-                    'text': 'delimiter now {}'.format(delim),
-                    'name': 'stdout'})
-        self.sc_delimit_mode = cm.ends_sc
+        self.stata.linesize = int(self.quickdo("di `c(linesize)'"))
+        self.stata.cwd = self.quickdo("pwd")
 
         # Refresh completions
         self.completions.refresh(self)
-        return return_obj
 
-    def send_image(self, graph_path):
+    def quickdo(self, code):
+        cm = CodeManager(code)
+        text_to_run, md5, text_to_exclude = cm.get_text(self.conf)
+        rc, res = self.stata.do(
+            text_to_run, md5, text_to_exclude=text_to_exclude, display=False)
+        if not rc:
+            # Remove rmsg lines when rmsg is on
+            rmsg_regex = r'r(\(\d+\))?;\s+t=\d*\.\d*\s*\d*:\d*:\d*'
+            res = [
+                x for x in res.split('\n')
+                if not re.search(rmsg_regex, x.strip())]
+            res = '\n'.join(res).strip()
+            return res
+
+    def send_image(self, graph_paths):
         """Load graph and send to frontend
 
-        In `code_manager.get_text`, I send to Stata only the `width` argument.
-        This way, the graphs are always scaled in accordance with their aspect
-        ratio. However this means that I don't know their aspect ratio. For this
-        reason, I load the SVG or PNG image into memory so that I can get the
-        image dimensions to relay to the frontend.
-
-        As of now, this only supports SVG and PNG formats. I see no real need to
-        change this. PDF isn't supported in Atom or in Jupyter. TIFF is 1-2
-        orders of magnitude larger than SVG and PNG images without a real
-        benefit over SVG.
+        This supports SVG, PNG, and PDF formats. While PDF display isn't
+        supported in Atom or Jupyter, the data can be stored within the Jupyter
+        Notebook file and makes exporting images to PDF through LaTeX easier.
 
         Args:
-            graph_path (str): path to exported graph
+            graph_paths (List[str]): path to exported graph
         """
 
         no_display_msg = 'This front-end cannot display the desired image type.'
-        if graph_path.endswith('.svg'):
-            with open(graph_path, 'r', encoding='utf-8') as f:
-                img = f.read()
-            e = ET.ElementTree(ET.fromstring(img))
-            root = e.getroot()
+        content = {'data': {'text/plain': no_display_msg}, 'metadata': {}}
+        warn = False
+        for graph_path in graph_paths:
+            file_size = Path(graph_path).stat().st_size
+            if (file_size > 2 * (1024 ** 3)) & (len(graph_paths) >= 2):
+                warn = True
 
-            content = {
-                'data': {
-                    'text/plain': no_display_msg,
-                    'image/svg+xml': img},
-                'metadata': {
-                    'image/svg+xml': {
-                        'width': int(root.attrib['width'][:-2]),
-                        'height': int(root.attrib['height'][:-2])}}}
-            self.send_response(self.iopub_socket, 'display_data', content)
-        elif graph_path.endswith('.png'):
-            im = Image.open(graph_path)
-            width = im.size[0]
-            height = im.size[1]
+            if graph_path.endswith('.svg'):
+                with Path(graph_path).open('r', encoding='utf-8') as f:
+                    img = f.read()
+                e = ET.ElementTree(ET.fromstring(img))
+                root = e.getroot()
 
-            # On my Mac, the width is double what I told Stata to export. This
-            # is not true on my Windows test VM
-            if platform.system() == 'Darwin':
-                width /= 2
-                height /= 2
-            with open(graph_path, 'rb') as f:
-                img = base64.b64encode(f.read()).decode('utf-8')
+                content['data']['image/svg+xml'] = img
+                content['metadata']['image/svg+xml'] = {
+                    'width': int(root.attrib['width'][:-2]),
+                    'height': int(root.attrib['height'][:-2])}
 
-            content = {
-                'data': {
-                    'text/plain': no_display_msg,
-                    'image/png': img},
-                'metadata': {
-                    'image/png': {
-                        'width': width,
-                        'height': height}}}
-            self.send_response(self.iopub_socket, 'display_data', content)
+            elif graph_path.endswith('.png'):
+                im = Image.open(graph_path)
+                width = im.size[0]
+                height = im.size[1]
+
+                # On my Mac, the width is double what I told Stata to export.
+                # This is not true on my Windows test VM
+                if platform.system() == 'Darwin':
+                    width /= 2
+                    height /= 2
+                with Path(graph_path).open('rb') as f:
+                    img = base64.b64encode(f.read()).decode('utf-8')
+
+                content['data']['image/png'] = img
+                content['metadata']['image/png'] = {
+                    'width': width,
+                    'height': height}
+
+            elif graph_path.endswith('.pdf'):
+                with Path(graph_path).open('rb') as f:
+                    pdf = base64.b64encode(f.read()).decode('utf-8')
+                content['data']['application/pdf'] = pdf
+
+        msg = """\
+        **`stata_kernel` Warning**: One of your image files is larger than 2MB
+        and you have Graph Redundancy on. If you don't plan to export the
+        Jupyter Notebook file to PDF, you can save space by running:
+
+        ```
+        %set graph_svg_redundancy false [--permanently]
+        %set graph_png_redundancy false [--permanently]
+        ```
+
+        To turn off this warning, run:
+
+        ```
+        %set graph_redundancy_warning false [--permanently]
+        ```
+
+        For more information, see:
+        <https://kylebarron.github.io/stata_kernel/using_stata_kernel/intro/#graph-redundancy>
+        """
+        msg = dedent(msg)
+        warn_setting = self.config.get('graph_redundancy_warning', 'True')
+        if warn and (warn_setting.lower() == 'true'):
+            self.send_response(
+                self.iopub_socket, 'display_data', {
+                    'data': {
+                        'text/plain': msg,
+                        'text/markdown': msg},
+                    'metadata': {}})
+        self.send_response(self.iopub_socket, 'display_data', content)
 
     def do_shutdown(self, restart):
         """Shutdown the Stata session

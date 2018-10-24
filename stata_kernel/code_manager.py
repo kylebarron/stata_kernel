@@ -1,15 +1,17 @@
 import re
 import platform
 import hashlib
+
 from pygments import lex
+from textwrap import dedent
 
 from .stata_lexer import StataLexer
 from .stata_lexer import CommentAndDelimitLexer
 
-graph_keywords = [
+base_graph_keywords = [
     r'gr(a|ap|aph)?' + r'(?!\s+' + r'(save|replay|print|export|dir|set|' +
     r'des(c|cr|cri|crib|cribe)?|rename|copy|drop|close|q(u|ue|uer|uery)?))',
-    r'tw(o|ow|owa|oway)?', r'sc(a|at|att|atte|atter)?', r'line',
+    r'tw(o|ow|owa|oway)?', r'sc(atter)?', r'line',
     r'hist(o|og|ogr|ogra|ogram)?', r'kdensity', r'lowess', r'lpoly',
     r'tsr?line', r'symplot', r'quantile', r'qnorm', r'pnorm', r'qchi', r'pchi',
     r'qqplot', r'gladder', r'qladder', r'rvfplot', r'avplot', r'avplots',
@@ -26,7 +28,6 @@ graph_keywords = [
     r'mdsconfig', r'mdsshepard', r'cusum', r'cchart', r'pchart', r'rchart',
     r'xchart', r'shewhart', r'serrbar', r'marginsplot', r'bayesgraph',
     r'tabodds', r'teffects\s+overlap', r'npgraph', r'grmap', r'pkexamine']
-graph_keywords = r'^\s*\b(' + '|'.join(graph_keywords) + r')\b'
 
 
 class CodeManager(object):
@@ -35,6 +36,8 @@ class CodeManager(object):
 
     def __init__(self, code, semicolon_delimit=False):
         code = re.sub(r'\r\n', r'\n', code)
+        # Hard tabs in input are not shown in output and mess up removing lines
+        code = re.sub(r'\t', ' ', code)
         self.input = code
         if semicolon_delimit:
             code = '#delimit ;\n' + code
@@ -218,43 +221,63 @@ class CodeManager(object):
             use_include = True
 
         # Insert `graph export`
-        graph_fmt = config.get('graph_format')
-        graph_scale = config.get('graph_scale')
-        graph_width = config.get('graph_width')
-        if graph_width is None:
-            graph_width = 600
-        else:
-            graph_width = int(graph_width)
-
+        graph_fmt = config.get('graph_format', 'svg')
+        graph_scale = float(config.get('graph_scale', '1'))
+        graph_width = int(config.get('graph_width', '600'))
         graph_height = config.get('graph_height')
         cache_dir = config.get('cache_dir')
-        if graph_scale is None:
-            graph_scale = 1
-            config.set('graph_scale', '1', permanent=True)
-        else:
-            graph_scale = float(graph_scale)
+        if graph_fmt == 'svg':
+            pdf_dup = config.get('graph_svg_redundancy', 'True')
+        elif graph_fmt == 'png':
+            pdf_dup = config.get('graph_png_redundancy', 'False')
+        pdf_dup = pdf_dup.lower() == 'true'
 
         dim_str = " width({})".format(int(graph_width * graph_scale))
         if graph_height:
             graph_height = int(graph_height)
             dim_str += " height({})".format(int(graph_height * graph_scale))
+        if graph_fmt == 'pdf':
+            dim_str = ''
 
         cache_dir_str = str(cache_dir)
         if platform.system() == 'Windows':
             cache_dir_str = re.sub(r'\\', '/', cache_dir_str)
         gph_cnt = 'stata_kernel_graph_counter'
-        g_exp = '\nnoi graph export {}'.format(cache_dir_str)
-        g_exp += '/graph${' + gph_cnt + '}'
-        g_exp += '.{}, {} replace'.format(graph_fmt, dim_str)
-        g_exp += '\nglobal {0} = ${0} + 1'.format(gph_cnt)
 
-        lines = [x + g_exp if re.match(graph_keywords, x) else x for x in lines]
+        # yapf: disable
+        if not pdf_dup:
+            g_exp = dedent("""
+            if _rc == 0 {{
+                noi gr export {0}/graph${1}.{2},{3} replace
+                global {1} = ${1} + 1
+            }}\
+            """.format(cache_dir_str, gph_cnt, graph_fmt, dim_str))
+        else:
+            g_exp = dedent("""
+            if _rc == 0 {{
+                noi gr export {0}/graph${1}.{2},{3} replace
+                noi gr export {0}/graph${1}.pdf, replace
+                global {1} = ${1} + 1
+            }}\
+            """.format(cache_dir_str, gph_cnt, graph_fmt, dim_str))
+        # yapf: enable
+
+        user_graph_keywords = config.get(
+            'user_graph_keywords', 'coefplot,vioplot')
+        user_graph_keywords = [
+            re.sub(r'\s+', '\\\\s+', x.strip())
+            for x in user_graph_keywords.split(',')]
+        graph_keywords = r'^\s*\b({})\b'.format(
+            '|'.join([*base_graph_keywords, *user_graph_keywords]))
+        lines = [
+            'cap noi ' + x + g_exp if re.match(graph_keywords, x) else x
+            for x in lines]
 
         text = '\n'.join(lines)
         hash_text = hashlib.md5(text.encode('utf-8')).hexdigest()
         text_to_exclude = text
         if use_include:
-            with open(cache_dir / 'include.do', 'w') as f:
+            with (cache_dir / 'include.do').open('w', encoding='utf-8') as f:
                 f.write(text + '\n')
             text = "include {}/include.do".format(cache_dir_str)
             text_to_exclude = text + '\n' + text_to_exclude

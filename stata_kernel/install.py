@@ -5,9 +5,10 @@ import json
 import argparse
 import platform
 
-from shutil import which
+from shutil import copyfile, which
 from pathlib import Path
 from textwrap import dedent
+from pkg_resources import resource_filename
 from IPython.utils.tempdir import TemporaryDirectory
 from jupyter_client.kernelspec import KernelSpecManager
 
@@ -23,6 +24,10 @@ def install_my_kernel_spec(user=True, prefix=None):
         with open(os.path.join(td, 'kernel.json'), 'w') as f:
             json.dump(kernel_json, f, sort_keys=True)
 
+        # Copy logo to tempdir to be installed with kernelspec
+        logo_path = resource_filename('stata_kernel', 'docs/logo-64x64.png')
+        copyfile(logo_path, os.path.join(td, 'logo-64x64.png'))
+
         print('Installing Jupyter kernel spec')
         KernelSpecManager().install_kernel_spec(
             td, 'stata', user=user, replace=True, prefix=prefix)
@@ -36,7 +41,7 @@ def install_conf():
         execution_mode = 'console'
         for i in ['stata-mp', 'StataMP', 'stata-se', 'StataSE', 'stata',
                   'Stata']:
-            stata_path = which('StataMP')
+            stata_path = which(i)
             if stata_path:
                 break
 
@@ -79,9 +84,13 @@ def install_conf():
 
     # Scaling factor for graphs
     graph_scale = 1
+
+    # List of user-created keywords that produce graphs.
+    # Should be comma-delimited.
+    user_graph_keywords = vioplot
     """.format(stata_path, execution_mode))
 
-    with open(Path('~/.stata_kernel.conf').expanduser(), 'w') as f:
+    with Path('~/.stata_kernel.conf').expanduser().open('w') as f:
         f.write(conf_default)
 
 

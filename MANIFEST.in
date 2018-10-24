@@ -5,7 +5,10 @@ include requirements_dev.txt
 include LICENSE
 include stata_kernel/ado/*.ado
 include stata_kernel/css/*.css
+include stata_kernel/docs/logo-64x64.png
 include stata_kernel/docs/*html
 include stata_kernel/docs/*txt
 include stata_kernel/docs/using_stata_kernel/*html
 include stata_kernel/docs/using_stata_kernel/*txt
+include stata_kernel/codemirror/stata.js
+include stata_kernel/pygments/stata.py

@@ -3,13 +3,15 @@ import re
 import pexpect
 import pexpect.fdpexpect
 import platform
+import requests
 import subprocess
-from pkg_resources import resource_filename
 
 from time import sleep
 # from timeit import default_timer
 from pathlib import Path
 from textwrap import dedent
+from packaging import version
+from pkg_resources import resource_filename
 
 if platform.system() == 'Windows':
     import win32com.client
@@ -44,6 +46,22 @@ class StataSession():
         self.config = config
         self.kernel = kernel
         self.banner = 'stata_kernel {}\n'.format(kernel.implementation_version)
+
+        try:
+            r = requests.get('https://pypi.org/pypi/stata-kernel/json')
+            pypi_v = r.json()['info']['version']
+            if version.parse(pypi_v) > version.parse(
+                    kernel.implementation_version):
+                msg = '\nNOTE: A newer version of stata_kernel exists. Run\n'
+                msg += '    pip install stata_kernel --upgrade\n'
+                msg += 'to install the latest version.\n'
+                self.banner += msg
+        except requests.exceptions.RequestException:
+            pass
+
+        # See https://github.com/kylebarron/stata_kernel/issues/177
+        self.linesize = 255
+        self.cwd = os.getcwd()
         if platform.system() == 'Windows':
             self.init_windows()
         elif platform.system() == 'Darwin':
@@ -58,7 +76,6 @@ class StataSession():
         adofile = resource_filename(
             'stata_kernel', 'ado/_StataKernelCompletions.ado')
         adodir = Path(adofile).resolve().parent
-        self.linesize = 80
         init_cmd = """\
             adopath + `"{0}"\'
             cd `"{1}"\'
@@ -109,10 +126,13 @@ class StataSession():
         gone away.
         """
         self.child = pexpect.spawn(
-            self.config.get('stata_path'), encoding='utf-8')
+            self.config.get('stata_path'), encoding='utf-8',
+            codec_errors='replace')
+        self.child.setwinsize(100, 255)
         self.child.delaybeforesend = None
-        self.child.logfile = open(
-            self.config.get('cache_dir') / 'console_debug.log', 'w')
+        self.child.logfile = (
+            self.config.get('cache_dir') / 'console_debug.log').open(
+                'w', encoding='utf-8')
         banner = []
         try:
             self.child.expect('\r\n\. ', timeout=0.2)
@@ -155,15 +175,17 @@ class StataSession():
         if rc:
             return rc
 
-        self.fd = open(log_path)
+        self.fd = Path(log_path).open()
         if platform.system() == 'Windows':
-            self.log_fd = pexpect.fdpexpect.fdspawn(self.fd, encoding='utf-8')
+            self.log_fd = pexpect.fdpexpect.fdspawn(
+                self.fd, encoding='utf-8', codec_errors='replace')
         else:
             self.log_fd = pexpect.fdpexpect.fdspawn(
-                self.fd, encoding='utf-8', maxread=1)
+                self.fd, encoding='utf-8', maxread=1, codec_errors='replace')
 
-        self.log_fd.logfile = open(
-            self.config.get('cache_dir') / 'console_debug.log', 'w')
+        self.log_fd.logfile = (
+            self.config.get('cache_dir') / 'console_debug.log').open(
+                'w', encoding='utf-8')
 
         return 0
 
@@ -182,6 +204,10 @@ class StataSession():
             display (bool): Whether to send results to front-end
         """
 
+        self.cache_dir_str = str(self.config.get('cache_dir'))
+        if platform.system() == 'Windows':
+            self.cache_dir_str = re.sub(r'\\', '/', self.cache_dir_str)
+
         if self.config.get('execution_mode') == 'console':
             self.child.sendline(text)
             child = self.child
@@ -192,7 +218,7 @@ class StataSession():
         try:
             rc, res = self.expect(text=text, child=child, md5=md5, **kwargs)
         except KeyboardInterrupt:
-            self.send_break(child=child)
+            self.send_break(child=child, md5="`{}'".format(md5))
             rc, res = 1, ''
 
         return rc, res
@@ -201,10 +227,7 @@ class StataSession():
         """Watch for end of command from file descriptor or pty
 
         Args:
-            text (str): string of text to exclude from output. It is expected
-                that this string include many lines. It will be split on \\n in
-                `expect`. This is sent in case text_to_exclude is None. (Will
-                probably be consolidated in the future.)
+            text (str): Text sent to Stata.
             child (pexpect.spawn or fdpexpect.spawn): pty or log file to watch
             md5 (str): current value of md5 to watch for
             text_to_exclude (str): string of text to exclude from output. It is
@@ -218,14 +241,15 @@ class StataSession():
         else:
             code_lines = text.split('\n')
 
-        md5 = '. `' + md5 + "'"
+        md5 = ". `{}'".format(md5)
         error_re = r'^r\((\d+)\);'
-        cache_dir_str = str(self.config.get('cache_dir'))
-        if platform.system() == 'Windows':
-            cache_dir_str = re.sub(r'\\', '/', cache_dir_str)
 
-        g_exp = r'\(file ({}'.format(cache_dir_str)
-        g_exp += r'/graph\d+\.(svg|png)) written in (?i:(svg|png)) format\)'
+        g_exp = r'\(file ({}'.format(self.cache_dir_str)
+        g_fmts = '|'.join(self.kernel.graph_formats)
+        g_exp += r'/graph\d+\.({0})) written in ({0}) format\)'.format(g_fmts)
+        # Ignore case for SVG/PDF/PNG
+        # This is not a `(?i:)` flag to support Python 3.5
+        g_exp = re.compile(g_exp, re.IGNORECASE)
 
         more = r'^--more--'
         eol = r'\r?\n'
@@ -250,10 +274,33 @@ class StataSession():
                             'name': 'stderr'})
                 continue
             if match_index == 2:
+                g_path = [child.match.group(1)]
+                g_fmt = child.match.group(2).lower()
+                if g_fmt == 'svg':
+                    pdf_dup = self.config.get('graph_svg_redundancy', 'True')
+                elif g_fmt == 'png':
+                    pdf_dup = self.config.get('graph_png_redundancy', 'False')
+                pdf_dup = pdf_dup.lower() == 'true'
+
+                if pdf_dup:
+                    while True:
+                        ind = child.expect([g_exp, pexpect.EOF], timeout=None)
+                        if ind == 0:
+                            break
+                        sleep(0.1)
+
+                    code_lines = code_lines[1:]
+                    g_path.append(child.match.group(1))
                 if display:
-                    self.kernel.send_image(child.match.group(1))
+                    self.kernel.send_image(g_path)
             if match_index == 3:
-                self.send_break(child=child)
+                self.send_break(child=child, md5=md5[2:])
+                child.expect_exact(md5, timeout=None)
+                if display:
+                    self.kernel.send_response(
+                        self.kernel.iopub_socket, 'stream', {
+                            'text': '--more--\n',
+                            'name': 'stdout'})
                 break
             if match_index == 4:
                 code_lines, res = self.clean_log_eol(child, code_lines, res)
@@ -320,11 +367,8 @@ class StataSession():
             - List of code lines not yet matched in output after this
             - Result to be displayed
         """
-        cache_dir_str = str(self.config.get('cache_dir'))
-        if platform.system() == 'Windows':
-            cache_dir_str = re.sub(r'\\', '/', cache_dir_str)
-        regex = r'^\(note: file {}/graph\d+\.(svg|png) not found\)'.format(
-            cache_dir_str)
+        regex = r'^\(note: file {}/graph\d+\.({}) not found\)'.format(
+            self.cache_dir_str, self.kernel.graph_formats)
         if re.search(regex, res):
             return code_lines, None
 
@@ -356,34 +400,28 @@ class StataSession():
 
         return code_lines[1:], None
 
-    def send_break(self, child):
+    def send_break(self, child, md5):
         """Send break to Stata
 
         Tell Stata to stop current execution. This is used when `expect` hits
         more and for a KeyboardInterrupt. I've found that ctrl-C, ctrl-D is the
         most consistent way for the console version to stop execution.
 
+        Often, the first characters after sending ctrl-C, ctrl-D get removed.
+        Thus, I send the md5 an extra time so that the full md5 can be matched
+        without issues.
+
         Args:
-            child (pexpect.spawn): pexpect instance to watch for successful
-                break.
+            child (pexpect.spawn): pexpect instance to send break to
+            md5 (str): The md5 to send a second time
         """
         if self.config.get('execution_mode') == 'console':
             child.sendcontrol('c')
             child.sendcontrol('d')
+            self.child.sendline(md5)
         else:
             self.automate('UtilSetStataBreak')
-
-        child.expect('--Break--')
-        child.expect(r'r\(1\);')
-        # When sent inside `include`, two sets of --Break-- are shown
-        try:
-            child.expect('--Break--', timeout=0.3)
-            child.expect(r'r\(1\);', timeout=0.3)
-        except pexpect.TIMEOUT:
-            pass
-
-        # There are two newlines before the next period. Remove one of them
-        child.expect('\r?\n')
+            self.automate('DoCommandAsync', md5)
 
     def automate(self, cmd_name, value=None, **kwargs):
         """Execute `cmd_name` through Automation in a cross-platform manner

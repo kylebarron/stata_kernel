@@ -128,37 +128,15 @@ class MagicParsers():
         #                                                                     #
         #######################################################################
 
-        self.set = StataParser(prog='%set', kernel=kernel)
+        self.set = StataParser(prog='%set', kernel=kernel, description='Set configuration value.')
+        self.set.add_argument('key', type=str, help='Configuration key name.')
+        self.set.add_argument('value', type=str, help='Value to set.')
         self.set.add_argument(
             '--permanently', dest='perm', action='store_true',
             help="Store settings permanently", required=False)
         self.set.add_argument(
             '--reset', dest='reset', action='store_true',
             help="Restore default settings.", required=False)
-        subparsers = self.set.add_subparsers(
-            dest="setting", help=None, title="settings", description=None,
-            parser_class=StataParser)
-
-        self.set_graph = subparsers.add_parser(
-            "graph", kernel=kernel, help="Graph settings")
-        self.set_graph.add_argument(
-            '--scale', dest='scale', type=float, metavar='SCALE', default=None,
-            help="Scale width and height. Default: 1", required=False)
-        self.set_graph.add_argument(
-            '--width', dest='width', type=int, metavar='WIDTH', default=None,
-            help="Graph width (pixels). Default: 600", required=False)
-        self.set_graph.add_argument(
-            '--height', dest='height', type=int, metavar='HEIGHT', default=None,
-            help="Graph height (pixels). Default: Set by Stata.", required=False)
-        self.set_graph.add_argument(
-            '--format', dest='format', type=str, default=None,
-            choices=kernel.graph_formats, required=False,
-            metavar='{{{0}}}'.format('|'.join(kernel.graph_formats)),
-            help="Internal graph display format (default: svg).")
-
-        self.set_settings = list(subparsers.choices.keys())
-        self.set__all = subparsers.add_parser(
-            "_all", kernel=kernel, help="all settings")
 
 
 class StataMagics():
@@ -447,42 +425,24 @@ class StataMagics():
         try:
             settings = code.strip().split(' ')
             args = vars(self.parse.set.parse_args(settings))
+            key = args['key']
+            value = args['value']
             perm = args['perm']
             reset = args['reset']
-            setting = args['setting']
-            args.pop('reset', None)
-            args.pop('perm', None)
-            args.pop('setting', None)
 
-            if setting == 'graph':
-                if reset:
-                    for k, v in args.items():
-                        if v is not None:
-                            msg = 'Cannot set values with --reset.'
-                            self.parse.set.error(msg)
+            if reset:
+                if value is not None:
+                    msg = 'Cannot set values with --reset.'
+                    self.parse.set.error(msg)
 
-                    # reset graph settings
-                    kernel.conf.set('graph_format', 'svg', permanent=perm)
-                    kernel.conf.set('graph_scale', '1', permanent=perm)
-                    kernel.conf._remove_unsafe('graph_width', permanent=perm)
-                    kernel.conf._remove_unsafe('graph_height', permanent=perm)
-                else:
-                    for k, v in args.items():
-                        if v is not None:
-                            if k in ['width', 'height', 'scale'] and v <= 0:
-                                msg = '{0} should be positive; value: {1}'
-                                self.parse.set_graph.error(msg.format(k, v))
-
-                            kernel.conf.set('graph_' + k, v, permanent=perm)
-            elif setting == '_all':
-                if reset:
-                    # reset graph settings
-                    kernel.conf.set('graph_format', 'svg', permanent=perm)
-                    kernel.conf.set('graph_scale', '1', permanent=perm)
-                    kernel.conf._remove_unsafe('graph_width', permanent=perm)
-                    kernel.conf._remove_unsafe('graph_height', permanent=perm)
+                # reset graph settings
+                kernel.conf.set('graph_format', 'svg', permanent=perm)
+                kernel.conf.set('graph_scale', '1', permanent=perm)
+                kernel.conf._remove_unsafe('graph_width', permanent=perm)
+                kernel.conf._remove_unsafe('graph_height', permanent=perm)
             else:
-                self.parse.set.error('malformed %set call')
+                kernel.conf.set(key, value, permanent=perm)
+
         except:
             pass
 
@@ -573,6 +533,7 @@ class StataMagics():
                     a['href'] = href[hrelative:]
                 elif not href.startswith('http'):
                     a['href'] = urllib.parse.urljoin(self.html_base, href)
+                    a['target'] = '_blank'
 
             # Remove header 'Stata 15 help for ...'
             soup.find('h2').decompose()

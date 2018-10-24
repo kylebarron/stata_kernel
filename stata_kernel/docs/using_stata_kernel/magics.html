@@ -201,6 +201,7 @@ optional arguments:
 <h2 id="browse"><code>%browse</code></h2>
 <p><strong>Interactively view your dataset</strong></p>
 <p>For now, this displays the first 200 rows of your data. This will be expanded in the future to allow for a <code>varlist</code>, <code>if</code>, and <code>in</code> options.</p>
+<p>If you’re using Windows or macOS with Automation mode, you can also run <code>browse</code> (without the <code>%</code>) and it will open the usual Stata data explorer.</p>
 <table>
 <tbody>
 <tr class="odd">
@@ -280,13 +281,20 @@ S_FLAVOR:  Intercooled
 S_OS:      Unix
 S_MACH:    PC (64-bit x86-64)</code></pre>
 <h2 id="set"><code>%set</code></h2>
-<p><strong>Set configuration settings</strong></p>
+<p><strong>Set configuration value</strong></p>
 <p>Usage:</p>
-<pre><code>%set [-h] [--permanently] [--reset] {graph,_all} ...</code></pre>
-<pre><code>%set graph --format svg
-%set graph --scale 1
-%set graph --width 500
-%set graph --width 400 --height 300</code></pre>
+<pre><code>%set [-h] [--permanently] [--reset] key value</code></pre>
+<ul>
+<li><code>key</code>: Configuration key name. The full list of configuration options is shown on the <a href="https://kylebarron.github.io/stata_kernel/getting_started#configuration">Getting Started</a> page.</li>
+<li><code>value</code>: Value to set.</li>
+<li><code>--permanently</code>: Store settings permanently.</li>
+<li><code>--reset</code>: Restore default settings.</li>
+</ul>
+<p>As an example, you can change the graph settings like so:</p>
+<pre><code>%set graph_format svg --permanently
+%set graph_scale 1
+%set graph_width 500
+%set graph_height 300</code></pre>
 <!-- ## `%time`
 
 **Time Execution of a Command**

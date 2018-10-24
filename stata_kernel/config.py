@@ -1,3 +1,4 @@
+import re
 import platform
 
 from pathlib import Path
@@ -6,10 +7,24 @@ from configparser import ConfigParser
 
 
 class Config(object):
+    all_settings = [
+        'autocomplete_closing_symbol',
+        'cache_directory',
+        'execution_mode',
+        'graph_format',
+        'graph_height',
+        'graph_png_redundancy',
+        'graph_redundancy_warning',
+        'graph_scale',
+        'graph_svg_redundancy',
+        'graph_width',
+        'stata_path',
+        'user_graph_keywords', ]  # yapf: ignore
+
     def __init__(self):
         self.config_path = Path('~/.stata_kernel.conf').expanduser()
         self.config = ConfigParser()
-        self.config.read(self.config_path)
+        self.config.read(str(self.config_path))
 
         self.env = dict(self.config.items('stata_kernel'))
         self.env['cache_dir'] = Path(
@@ -21,6 +36,11 @@ class Config(object):
             self.set('stata_path', self.get_mac_stata_path_variant())
             if not self.get('execution_mode') in ['console', 'automation']:
                 self.raise_config_error('execution_mode')
+        elif platform.system() == 'Linux':
+            self.set(
+                'stata_path',
+                self.get_linux_stata_path_variant(),
+                permanent=True)
 
         if not self.get('stata_path'):
             self.raise_config_error('stata_path')
@@ -60,6 +80,20 @@ class Config(object):
 
         bin_name = d.get(path.name, path.name)
         return str(path.parent / bin_name)
+
+    def get_linux_stata_path_variant(self):
+        stata_path = self.get('stata_path')
+
+        d = {
+            'xstata': 'stata',
+            'xstata-se': 'stata-se',
+            'xstata-mp': 'stata-mp'}
+        for xname, name in d.items():
+            if stata_path.endswith(xname):
+                stata_path = re.sub(r'{}$'.format(xname), name, stata_path)
+                break
+
+        return stata_path
 
     def raise_config_error(self, option):
         msg = """\

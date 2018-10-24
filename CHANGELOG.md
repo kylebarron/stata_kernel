@@ -1,5 +1,77 @@
 # Changelog
 
+## [1.6.0] - 2018-10-24
+
+- File path autocompletions. Currently only works when files have no spaces in them. #195
+- Only export graph after successful command. #210
+- Display `--more--` in frontend when it stops the display. #198
+- Fix `scatter` in graph regex. Only `sc` and `scatter` produce plots when not
+  preceded by `twoway`. #205
+- Give matrix and scalar autocompletions when using shortened command names.
+  #206
+
+## [1.5.9] - 2018-10-16
+
+- Fix bugs with Python 3.5. #203
+
+## [1.5.8] - 2018-10-11
+
+- Fix incorrect regex escaping. #201
+
+## [1.5.7] - 2018-10-11
+
+- Fix bug that parsed multiple `///` on a single line incorrectly. #200
+
+## [1.5.6] - 2018-10-09
+
+- Fix bug that prevented `set rmsg on` from working. #199
+
+## [1.5.5] - 2018-10-05
+
+- Add `user_graph_keywords` setting to allow graphs to be displayed for third-party commands.
+
+## [1.5.4] - 2018-09-21
+
+- Force utf-8 encoding when writing `include` code to file. #196
+- Catch `EOF` when waiting for the PDF copy of graph. #192
+
+## [1.5.3] - 2018-09-20
+
+- Set pexpect terminal size to 255 columns. #190
+
+## [1.5.2] - 2018-09-19
+
+- Add pywin32 as a pip dependency on Windows, thus making installation easier.
+- Add jupyter 1.0.0 metapackage as a dependency, so that installs from Miniconda also install all of Jupyter.
+
+## [1.5.1] - 2018-09-17
+
+- Fix issues with `--more--`. #103
+- PDF Graph redundancy. This improves ease of export to PDF via LaTeX.
+- Catch PermissionsError when copying syntax highlighting files
+- Add Stata logo for Jupyter Notebook
+- Autoclose local macro quotes in Jupyter Notebook
+- Highlight /// as comments in Jupyter Notebook
+- Highlight macros in Jupyter Notebook
+- Check latest PyPi package version and add alert to banner if newer
+- Simplify `%set` magic
+- Set default linesize to 255 for now to improve image handling. #177
+
+## [1.5.0] - 2018-09-14
+
+- Add CodeMirror syntax highlighting for Jupyter Notebook
+- Improve Pygments syntax highlighting for highlighting of Jupyter QtConsole, Jupyter Console, and Notebook outputs in HTML and PDF format.
+- Restore PDF graph support. Although it doesn't display within the Jupyter Notebook for security (or maybe just practical) reasons, it's helpful when exporting a Notebook to a PDF via LaTeX.
+- Temporarily fix encoding error from CJK characters being split by a line break. #167
+
+## [1.4.8] - 2018-09-12
+
+- Fix use of `which` in install script
+- Redirect `xstata` to `stata` on Linux. #149
+- Fix hiding code lines when there are hard tab characters (`\t`). #153
+- Make HTML help links open in new tab. #158
+- Open log files with utf-8 encoding. https://github.com/kylebarron/language-stata/issues/98
+
 ## [1.4.7] - 2018-09-08
 
 - Fix pypi upload. Need to use `python setup.py sdist bdist_wheel` and not `python setup.py sdist bdist`. The latter creates two source packages, and only one source package can ever be uploaded to Pypi per release.
