@@ -1,7 +1,5 @@
 import os
 import re
-# NOTE: Using regex for (?r) flag
-import regex
 import platform
 
 from .code_manager import CodeManager
@@ -50,23 +48,23 @@ class CompletionsManager(object):
             r'\b(cap(t|tu|tur|ture)?'
             r'|qui(e|et|etl|etly)?'
             r'|n(o|oi|ois|oisi|oisil|oisily)?)\b')
-        kwargs = {'flags': regex.MULTILINE}
+        kwargs = {'flags': re.MULTILINE}
         self.context = {
             'function':
-                regex.compile(
-                    r"(?r)(\s+|(?<equals>\=))(?<context>\S+?)"
+                re.compile(
+                    r"(\s+|(?P<equals>\=))(?P<context>\S+?)"
                     r"\([^\)\s]*?\Z", **kwargs).search,
             'lfunction':
-                regex.compile(
-                    r"(?r)\s(?<fluff>.*?)`\=(?<context>\S+?)"
+                re.compile(
+                    r"\s(?P<fluff>.*?)`\=(?P<context>\S+?)"
                     r"\([^\)\s]*?\Z", **kwargs).search,
             'line':
-                regex.compile(
-                    r"(?r)^(\s*{0})*(?<context>\S+)".format(pre), **kwargs)
+                re.compile(
+                    r"^(\s*{0})*(?P<context>\S+)".format(pre), **kwargs)
                 .search,
             'delimit_line':
-                regex.compile(
-                    r"\A(\s*{0})*(?<context>\S+)".format(pre), **kwargs).search}
+                re.compile(
+                    r"\A(\s*{0})*(?P<context>\S+)".format(pre), **kwargs).search}
 
         self.suggestions = self.get_suggestions(kernel)
         self.suggestions['magics'] = kernel.magics.available_magics

@@ -9,5 +9,4 @@ pillow>=5.2.0
 pexpect>=4.6.0
 pygments>=2.2.0
 pywin32>=223;platform_system=="Windows"
-regex>=2018.7.11
 requests>=2.19.1
