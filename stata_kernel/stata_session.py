@@ -368,7 +368,7 @@ class StataSession():
             - Result to be displayed
         """
         regex = r'^\(note: file {}/graph\d+\.({}) not found\)'.format(
-            self.cache_dir_str, self.kernel.graph_formats)
+            self.cache_dir_str, '|'.join(self.kernel.graph_formats))
         if re.search(regex, res):
             return code_lines, None
 
