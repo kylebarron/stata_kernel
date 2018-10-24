@@ -20,7 +20,7 @@ from .stata_magics import StataMagics
 
 class StataKernel(Kernel):
     implementation = 'stata_kernel'
-    implementation_version = '1.5.9'
+    implementation_version = '1.6.0'
     language = 'stata'
     language_info = {
         'name': 'stata',
