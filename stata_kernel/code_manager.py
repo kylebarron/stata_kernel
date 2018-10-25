@@ -268,7 +268,7 @@ class CodeManager(object):
         graph_keywords = r'^\s*\b({})\b'.format(
             '|'.join([*base_graph_keywords, *user_graph_keywords]))
         lines = [
-            'cap noi ' + x + g_exp if re.match(graph_keywords, x) else x
+            x + g_exp if re.match(graph_keywords, x) else x
             for x in lines]
 
         text = '\n'.join(lines)
