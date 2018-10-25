@@ -14,6 +14,9 @@ class CompletionsManager(object):
         self.config = config
         self.kernel = kernel
 
+        # Path completion
+        self.path_search = re.compile(r'^(?P<fluff>.*")(?P<path>[^"]*)\Z').search
+
         # Magic completion
         self.magic_completion = re.compile(
             r'\A%(?P<magic>\S*)\Z', flags=re.DOTALL + re.MULTILINE).match
@@ -141,7 +144,7 @@ class CompletionsManager(object):
             rcomp = ""
             return env, pos, code[pos:], rcomp
         elif self.set_magic_completion(lcode):
-            pos = code.rfind(" ") + 1
+            pos = max(code.rfind(' '), code.rfind('"')) + 1
             env = -2
             rcomp = ""
             return env, pos, code[pos:], rcomp
@@ -149,7 +152,7 @@ class CompletionsManager(object):
         # Detect space-delimited word.
         env = 0
         env_add = 0
-        pos = code.rfind(' ')
+        pos = max(code.rfind(' '), code.rfind('"'))
         rcomp = ''
         if pos >= 0:
             pos += 1
@@ -274,12 +277,12 @@ class CompletionsManager(object):
                 ]
 
                 posextra = 0
-                if st:
-                    posextra += len(st)
-                if context:
-                    posextra += len(context)
-                if quote:
-                    posextra += len(quote) + 1
+                # if st:
+                #     posextra += len(st)
+                # if context:
+                #     posextra += len(context)
+                # if quote:
+                #     posextra += len(quote) + 1
 
                 if context in varlist:
                     env = 0
@@ -370,9 +373,14 @@ class CompletionsManager(object):
             else:
                 builtins = []
 
+            if re.search(r'[/\\]', starts):
+                paths = self.get_file_paths(starts)
+            else:
+                paths = []
+
             return [
                 var for var in self.suggestions['mata']
-                if var.startswith(starts)] + builtins
+                if var.startswith(starts)] + builtins + paths
 
     def get_file_paths(self, chunk):
         """Get file paths based on chunk
