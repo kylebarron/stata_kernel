@@ -3,7 +3,7 @@ import re
 import platform
 
 from .code_manager import CodeManager
-from ._mata_builtins import mata_builtins
+from .pygments._mata_builtins import mata_builtins
 
 
 # NOTE: Add command completion (e.g. r<tab>; mata: st_<tab>)
