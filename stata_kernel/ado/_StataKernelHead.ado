@@ -1,6 +1,6 @@
 capture program drop _StataKernelHead
 program _StataKernelHead
-    syntax [anything] [if] using, [*]
+    syntax [anything] [if] using, [N_default(int 10) *]
     set more off
     set trace off
     if ( !`=_N > 0' ) error 2000
@@ -15,7 +15,7 @@ program _StataKernelHead
         if ( _rc ) error 198
         local n = `n1'
     }
-    else local n = 10
+    else local n = `N_default'
 
     * Number of rows must be positive
     if ( `n' <= 0 ) {
