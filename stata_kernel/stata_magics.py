@@ -265,7 +265,7 @@ class StataMagics():
         hasif = re.search(r"\bif\b", code) is not None
         using = kernel.conf.get('cache_dir') / 'data_head.csv'
         cmd = '_StataKernelHead ' + code.strip() + ' using ' + str(using)
-        cmd += ' , N_default({})'.format(N)
+        cmd += ' , n_default({})'.format(N)
         cm = CodeManager(cmd)
         text_to_run, md5, text_to_exclude = cm.get_text(kernel.conf)
         rc, res = kernel.stata.do(text_to_run, md5, text_to_exclude=text_to_exclude, display=False)
