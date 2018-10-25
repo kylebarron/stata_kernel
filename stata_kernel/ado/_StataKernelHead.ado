@@ -1,6 +1,6 @@
 capture program drop _StataKernelHead
 program _StataKernelHead
-    syntax [anything] [if] using, [*]
+    syntax [anything] [if] using, [n_default(int 10) *]
     set more off
     set trace off
     if ( !`=_N > 0' ) error 2000
@@ -15,7 +15,7 @@ program _StataKernelHead
         if ( _rc ) error 198
         local n = `n1'
     }
-    else local n = 10
+    else local n = `n_default'
 
     * Number of rows must be positive
     if ( `n' <= 0 ) {
@@ -43,7 +43,7 @@ program _StataKernelHead
         }
     }
     else {
-        local ifin in 1 / `n'
+        local ifin in 1 / `=min(`n', _N)'
     }
 
     qui export delimited `index' `varlist' `using' `ifin', replace `options'
