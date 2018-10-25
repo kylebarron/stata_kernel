@@ -125,10 +125,11 @@ class StataSession():
         there's a `more` stopping it, and presses `q` until the more has
         gone away.
         """
+        os.environ['COLUMNS'] = '256'
         self.child = pexpect.spawn(
             self.config.get('stata_path'), encoding='utf-8',
             codec_errors='replace')
-        self.child.setwinsize(100, 255)
+        # self.child.setwinsize(100, 255)
         self.child.delaybeforesend = None
         self.child.logfile = (
             self.config.get('cache_dir') / 'console_debug.log').open(
