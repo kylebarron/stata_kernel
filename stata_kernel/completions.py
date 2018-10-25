@@ -1,9 +1,9 @@
+import os
 import re
-import regex
-
-# NOTE: Using regex for (?r) flag
+import platform
 
 from .code_manager import CodeManager
+from ._mata_builtins import mata_builtins
 
 
 # NOTE: Add command completion (e.g. r<tab>; mata: st_<tab>)
@@ -12,6 +12,7 @@ from .code_manager import CodeManager
 class CompletionsManager(object):
     def __init__(self, kernel, config):
         self.config = config
+        self.kernel = kernel
 
         # Magic completion
         self.magic_completion = re.compile(
@@ -20,7 +21,7 @@ class CompletionsManager(object):
         self.set_magic_completion = re.compile(
             r'\A%set (?P<setting>\S*)\Z', flags=re.DOTALL + re.MULTILINE).match
 
-        # NOTE(mauricio): Locals have to be listed sepparately because
+        # NOTE(mauricio): Locals have to be listed separately because
         # inside a Stata program they would only list the locals for
         # that program. Further, we need to match the output until the
         # end of the string OR until '---+\s*end' (the latter in case
@@ -35,21 +36,22 @@ class CompletionsManager(object):
             flags=re.DOTALL + re.MULTILINE).match
 
         # Match output from mata mata desc
-        self.matadesc = regex.compile(
-            r"(\A.*?---+|---+[\r\n]*\Z)", flags=regex.MULTILINE + regex.DOTALL)
+        self.matadesc = re.compile(
+            r"(\A.*?---+|---+[\r\n]*\Z)", flags=re.MULTILINE + re.DOTALL)
 
         self.matalist = re.compile(
             r"(?:.*?)\s(\S+)\s*$", flags=re.MULTILINE + re.DOTALL)
 
-        self.mataclean = regex.compile(r"\W.*?(\b|$)")
+        self.mataclean = re.compile(r"\W.*?(\b|$)")
+        self.matasearch = re.compile(r"(?P<kw>\w.*?(?=\W|\b|$))").search
 
-        self.matainline = regex.compile(r"^m(ata)?\b").search
+        self.matainline = re.compile(r"^m(ata)?\b").search
 
-        self.matacontext = regex.compile(
-            r'(?r)(^|\s+)(?<st>_?st_)'
-            r'(?<context>\S+?)\('
-            r'(?<quote>[^\)]*?")'
-            r'(?<pre>[^\)]*?)\Z', flags=regex.MULTILINE + regex.DOTALL).search
+        self.matacontext = re.compile(
+            r'(^|\s+)(?P<st>_?st_)'
+            r'(?P<context>\S+?)\('
+            r'(?P<quote>[^\)]*?")'
+            r'(?P<pre>[^\)]*?)\Z', flags=re.MULTILINE + re.DOTALL).search
 
         # Varlist-style matching; applies to all
         self.varlist = re.compile(r"(?:\s+)(\S+)", flags=re.MULTILINE)
@@ -64,35 +66,36 @@ class CompletionsManager(object):
         #     (`=)?scalar(
 
         pre = (
-            r'\b(cap(t|tu|tur|ture)?'
+            r'(cap(t|tu|tur|ture)?'
             r'|qui(e|et|etl|etly)?'
-            r'|n(o|oi|ois|oisi|oisil|oisily)?)\b')
-        kwargs = {'flags': regex.MULTILINE}
+            r'|n(o|oi|ois|oisi|oisil|oisily)?)')
+        kwargs = {'flags': re.MULTILINE}
         self.context = {
             'function':
-                regex.compile(
-                    r"(?r)(\s+|(?<equals>\=))(?<context>\S+?)"
+                re.compile(
+                    r"(\s+|(?P<equals>\=))(?P<context>\S+?)"
                     r"\([^\)\s]*?\Z", **kwargs).search,
             'lfunction':
-                regex.compile(
-                    r"(?r)\s(?<fluff>.*?)`\=(?<context>\S+?)"
+                re.compile(
+                    r"\s(?P<fluff>.*?)`\=(?P<context>\S+?)"
                     r"\([^\)\s]*?\Z", **kwargs).search,
             'line':
-                regex.compile(
-                    r"(?r)^(\s*{0})*(?<context>\S+)".format(pre), **kwargs)
+                re.compile(r"^\s*({0}\s+)*(?P<context>\S+)".format(pre), **kwargs)
                 .search,
             'delimit_line':
-                regex.compile(
-                    r"\A(\s*{0})*(?<context>\S+)".format(pre), **kwargs).search}
+                re.compile(
+                    r"\A\s*({0}\s+)*(?P<context>\S+)".format(pre), **kwargs)
+                .search}
 
         self.suggestions = self.get_suggestions(kernel)
         self.suggestions['magics'] = kernel.magics.available_magics
-        self.suggestions['magics_set'] = kernel.magics.parse.set_settings
+        self.suggestions['magics_set'] = kernel.conf.all_settings
 
     def refresh(self, kernel):
         self.suggestions = self.get_suggestions(kernel)
         self.suggestions['magics'] = kernel.magics.available_magics
-        self.suggestions['magics_set'] = kernel.magics.parse.set_settings
+        self.suggestions['magics_set'] = kernel.conf.all_settings
+        self.globals = self.get_globals(kernel)
 
     def get_env(self, code, rdelimit, sc_delimit_mode, mata_mode):
         """Returns completions environment
@@ -108,7 +111,7 @@ class CompletionsManager(object):
             env (int):
                 -2: %set magic, %set x*
                 -1: magics, %x*
-                0: varlist
+                0: varlist and/or file path
                 1: locals, `x* completed with `x*'
                 2: globals, $x* completed with $x*
                 3: globals, ${x* completed with ${x*}
@@ -116,7 +119,7 @@ class CompletionsManager(object):
                 5: scalars, scalar(x* completed with scalar(x*
                 6: matrices, matrix .* x* completed with x*
                 7: scalars and varlist, scalar .* = x* completed with x*
-                8: matrices and varlsit, matrix .* = x* completed with x*
+                8: matrices and varlist, matrix .* = x* completed with x*
                 9: mata, inline or in mata environment
             pos (int):
                 Where the completions start. This is set to the start
@@ -160,12 +163,13 @@ class CompletionsManager(object):
                     linecontext = self.context['delimit_line'](code)
                 else:
                     linecontext = self.context['line'](code)
+
                 if linecontext:
                     context = linecontext.groupdict()['context']
                     equals = (code.find('=') > 0)
-                    if context.strip() == 'scalar':
+                    if re.match(r'^sca(lar|la|l)?$', context.strip()):
                         env_add = 7 if equals else 4
-                    elif context.strip() == 'matrix':
+                    elif re.match(r'^mat(rix|ri|r)?$', context.strip()):
                         env_add = 8 if equals else 6
                     elif self.matainline(context.strip()):
                         env_add = 9
@@ -208,11 +212,14 @@ class CompletionsManager(object):
         chunk = code[pos:]
         lfind = chunk.rfind('`')
         gfind = chunk.rfind('$')
-        if lfind >= 0 and (lfind > gfind):
+        path_chars = any(x in chunk for x in ['/', '\\', '~'])
+        chunk_quoted = chunk[lfind:].startswith('`"')
+
+        if lfind >= 0 and (lfind > gfind) and not chunk_quoted:
             pos += lfind + 1
             env = 1
             rcomp = "" if rdelimit[0:1] == "'" else "'"
-        elif gfind >= 0:
+        elif gfind >= 0 and not path_chars:
             bfind = chunk.rfind('{')
             if bfind >= 0 and (bfind > gfind):
                 pos += bfind + 1
@@ -221,6 +228,10 @@ class CompletionsManager(object):
             else:
                 env = 2
                 pos += gfind + 1
+        elif chunk.startswith('"'):
+            pos += 1
+        elif chunk.startswith('`"'):
+            pos += 2
         else:
             # Set to matrix or scalar environment, if applicable. Note
             # that matrices and scalars can be set to variable values,
@@ -289,6 +300,11 @@ class CompletionsManager(object):
 
                 pos += posextra
 
+        closing_symbol = self.config.get('autocomplete_closing_symbol', 'False')
+        closing_symbol = closing_symbol.lower() == 'true'
+        if not closing_symbol:
+            rcomp = ''
+
         return env, pos, code[pos:], rcomp
 
     # NOTE: Simplify this
@@ -304,7 +320,8 @@ class CompletionsManager(object):
                 var for var in self.suggestions['magics']
                 if var.startswith(starts)]
         elif env == 0:
-            return [
+            paths = self.get_file_paths(starts)
+            return paths + [
                 var for var in self.suggestions['varlist']
                 if var.startswith(starts)]
         elif env == 1:
@@ -347,14 +364,82 @@ class CompletionsManager(object):
                     var for var in self.suggestions['varlist']
                     if var.startswith(starts)]
         elif env == 9:
+            if len(starts) > 1:
+                builtins = [
+                    var for var in mata_builtins if var.startswith(starts)]
+            else:
+                builtins = []
+
             return [
                 var for var in self.suggestions['mata']
-                if var.startswith(starts)]
+                if var.startswith(starts)] + builtins
+
+    def get_file_paths(self, chunk):
+        """Get file paths based on chunk
+
+        Args:
+            chunk (str): chunk of text after last space. Doesn't include string
+                punctuation characters
+
+        Returns:
+            (List[str]): folders and files at that location
+        """
+
+        # If local exists, return empty list
+        if re.search(r'[`\']', chunk):
+            return []
+
+        # Define directory separator
+        dir_sep = '/'
+        if platform.system() == 'Windows':
+            if '/' not in chunk:
+                dir_sep = '\\'
+
+        # Get directory without ending file, and without / or \
+        if any(x in chunk for x in ['/', '\\']):
+            ind = max(chunk.rfind('/'), chunk.rfind('\\'))
+            user_folder = chunk[:ind + 1]
+            user_starts = chunk[ind + 1:]
+
+            # Replace multiple consecutive / with a single /
+            user_folder = re.sub(r'/+', '/', user_folder)
+            user_folder = re.sub(r'\\+', r'\\', user_folder)
+
+        else:
+            user_folder = ''
+            user_starts = chunk
+
+        # Replace globals with their values
+        globals_re = r'\$\{?(?![0-9_])\w{1,32}\}?'
+        try:
+            folder = re.sub(
+                globals_re, lambda x: self.globals[x.group(0)[1:]], user_folder)
+        except KeyError:
+            # If the global doesn't exist in self.globals (aka it hasn't been
+            # defined in the Stata environment yet), then there are no paths to
+            # check
+            return []
+
+        # Use Stata's relative path
+        abspath = re.search(r'^([/~]|[a-zA-Z]:)', folder)
+        if not abspath:
+            folder = self.kernel.stata.cwd + '/' + folder
+
+        try:
+            top_dir, dirs, files = next(os.walk(os.path.expanduser(folder)))
+            results = [x + dir_sep for x in dirs] + files
+            results = [
+                user_folder + x for x in results if not x.startswith('.')
+                and re.match(re.escape(user_starts), x, re.I)]
+
+        except StopIteration:
+            results = []
+
+        return sorted(results)
 
     def get_suggestions(self, kernel):
         match = self.matchall(
-            self.quickdo(
-                kernel.stata._mata_escape('_StataKernelCompletions'), kernel))
+            self.quickdo('_StataKernelCompletions', kernel))
         if match:
             suggestions = match.groupdict()
             suggestions['mata'] = self._parse_mata_desc(suggestions['mata'])
@@ -363,8 +448,7 @@ class CompletionsManager(object):
                     continue
                 suggestions[k] = self.varlist.findall(self.varclean('', v))
 
-            all_locals = kernel.stata._mata_escape(
-                """mata : invtokens(st_dir("local", "macro", "*")')""")
+            all_locals = """mata : invtokens(st_dir("local", "macro", "*")')"""
             res = '\r\n'.join(
                 re.split(r'[\r\n]{1,2}', self.quickdo(all_locals, kernel)))
             if res.strip():
@@ -380,10 +464,23 @@ class CompletionsManager(object):
                 'globals': [],
                 'locals': []}
 
+        suggestions['globals'] = [
+            x for x in suggestions['globals']
+            if x != 'stata_kernel_graph_counter']
+
         return suggestions
 
-    def quickdo(self, code, kernel):
+    def get_globals(self, kernel):
+        res = self.quickdo("macro list `:all globals'", kernel)
+        vals = re.split(r'^(\w+):', res, flags=re.MULTILINE)
+        # TODO: Check if leading line in output
+        if not vals[0].strip():
+            vals = vals[1:]
+        vals = [x.strip() for x in vals]
+        return {x: y for x, y in zip(vals[::2], vals[1::2])}
 
+    def quickdo(self, code, kernel):
+        code = kernel.stata._mata_escape(code)
         cm = CodeManager(code)
         text_to_run, md5, text_to_exclude = cm.get_text(kernel.conf)
         rc, res = kernel.stata.do(
@@ -396,13 +493,16 @@ class CompletionsManager(object):
         mata_objects = self.matalist.findall(
             self.matadesc.sub('', self.varclean('', desc)))
 
+        mata_class = ''
         mata_suggestions = []
         for x in mata_objects:
+            kw = self.matasearch(x).groupdict()['kw']
             if x.startswith('::'):
-                # NOTE: Class-aware method suggestions
                 continue
-                mata_suggestions.append('.' + self.mataclean.sub('', x))
+                # NOTE(mauricio): Class-aware completions?
+                mata_suggestions.append(mata_class + '.' + kw)
             else:
-                mata_suggestions.append(self.mataclean.sub('', x))
+                mata_suggestions.append(kw)
+                mata_class = kw
 
         return mata_suggestions

@@ -1,3 +1,5 @@
+import platform
+from subprocess import run
 from setuptools import setup
 
 with open('README.md') as f:
@@ -17,6 +19,10 @@ with open('requirements_dev.txt') as test_requirements_file:
 setup_requirements = [
     'setuptools >= 38.6.0',
     'twine >= 1.11.0']
+
+# Recompile included docs
+if platform.system() != 'Windows':
+    run(['bash', 'make.sh'], cwd='./stata_kernel/docs/')
 
 setup(
     author='Kyle Barron',
@@ -48,6 +54,6 @@ setup(
     test_suite='tests',
     tests_require=test_requirements,
     url='https://github.com/kylebarron/stata_kernel',
-    version='1.4.2',
+    version='1.6.1',
     include_package_data=True
 )

@@ -2,6 +2,7 @@ import sys
 import re
 import urllib
 import pandas as pd
+from textwrap import dedent
 from argparse import ArgumentParser, SUPPRESS
 
 from bs4 import BeautifulSoup as bs
@@ -65,7 +66,47 @@ class MagicParsers():
             prog='%help', kernel=kernel, description="Display HTML help.",
             usage='%(prog)s [-h] command_or_topic_name')
         self.help.add_argument(
-            'command_or_topic_name', nargs='+', type=str, help=SUPPRESS)
+            'command_or_topic_name', nargs='*', type=str, help=SUPPRESS)
+
+        info = (
+            kernel.implementation, kernel.implementation_version,
+            kernel.language.title(), kernel.language_version)
+        self.help._msg_html = dedent("""
+        <p style="font-family:Monospace;">
+        {0} {1} for {2} {3}. Type<br><br>
+
+            <span style='margin-left:1em;font-weight:bold;'>
+            %help kernel</span><br><br>
+
+        for help on using the kernel and<br><br>
+
+            <span style='margin-left:1em;font-weight:bold;'>
+            %help magics</span><br><br>
+
+        for info on magics. To see the help menu for a Stata command type<br><br>
+
+            <span style='margin-left:1em;font-weight:bold;'>
+            %help command_or_topic</span>
+        </p>
+        """.format(*info))
+        self.help._msg_plain = dedent("""\
+        {0} {1} for {2} {3}.
+
+        Note: This front end cannot display rich HTML help. See the online
+        documentation at
+
+                https://kylebarron.github.io/stata_kernel/
+
+        For kernel help in plain text, type
+
+            %help kernel
+
+        for help on using the kernel and
+
+            %help magics
+
+        for info on magics.
+        """.format(*info))
 
         self.head = StataParser(
             prog='%head', kernel=kernel,
@@ -87,37 +128,15 @@ class MagicParsers():
         #                                                                     #
         #######################################################################
 
-        self.set = StataParser(prog='%set', kernel=kernel)
+        self.set = StataParser(prog='%set', kernel=kernel, description='Set configuration value.')
+        self.set.add_argument('key', type=str, help='Configuration key name.')
+        self.set.add_argument('value', type=str, help='Value to set.')
         self.set.add_argument(
             '--permanently', dest='perm', action='store_true',
             help="Store settings permanently", required=False)
         self.set.add_argument(
             '--reset', dest='reset', action='store_true',
             help="Restore default settings.", required=False)
-        subparsers = self.set.add_subparsers(
-            dest="setting", help=None, title="settings", description=None,
-            parser_class=StataParser)
-
-        self.set_graph = subparsers.add_parser(
-            "graph", kernel=kernel, help="Graph settings")
-        self.set_graph.add_argument(
-            '--scale', dest='scale', type=float, metavar='SCALE', default=None,
-            help="Scale width and height. Default: 1", required=False)
-        self.set_graph.add_argument(
-            '--width', dest='width', type=int, metavar='WIDTH', default=None,
-            help="Graph width (pixels). Default: 600", required=False)
-        self.set_graph.add_argument(
-            '--height', dest='height', type=int, metavar='HEIGHT', default=None,
-            help="Graph height (pixels). Default: Set by Stata.", required=False)
-        self.set_graph.add_argument(
-            '--format', dest='format', type=str, default=None,
-            choices=kernel.graph_formats, required=False,
-            metavar='{{{0}}}'.format('|'.join(kernel.graph_formats)),
-            help="Internal graph display format (default: svg).")
-
-        self.set_settings = list(subparsers.choices.keys())
-        self.set__all = subparsers.add_parser(
-            "_all", kernel=kernel, help="all settings")
 
 
 class StataMagics():
@@ -144,6 +163,14 @@ class StataMagics():
 
     csshelp_default = resource_filename(
         'stata_kernel', 'css/_StataKernelHelpDefault.css')
+    help_kernel_html = resource_filename(
+        'stata_kernel', 'docs/index.html')
+    help_kernel_plain = resource_filename(
+        'stata_kernel', 'docs/index.txt')
+    help_magics_html = resource_filename(
+        'stata_kernel', 'docs/using_stata_kernel/magics.html')
+    help_magics_plain = resource_filename(
+        'stata_kernel', 'docs/using_stata_kernel/magics.txt')
 
     def __init__(self, kernel):
         self.quit_early = None
@@ -409,42 +436,24 @@ class StataMagics():
         try:
             settings = code.strip().split(' ')
             args = vars(self.parse.set.parse_args(settings))
+            key = args['key']
+            value = args['value']
             perm = args['perm']
             reset = args['reset']
-            setting = args['setting']
-            args.pop('reset', None)
-            args.pop('perm', None)
-            args.pop('setting', None)
 
-            if setting == 'graph':
-                if reset:
-                    for k, v in args.items():
-                        if v is not None:
-                            msg = 'Cannot set values with --reset.'
-                            self.parse.set.error(msg)
+            if reset:
+                if value is not None:
+                    msg = 'Cannot set values with --reset.'
+                    self.parse.set.error(msg)
 
-                    # reset graph settings
-                    kernel.conf.set('graph_format', 'svg', permanent=perm)
-                    kernel.conf.set('graph_scale', '1', permanent=perm)
-                    kernel.conf._remove_unsafe('graph_width', permanent=perm)
-                    kernel.conf._remove_unsafe('graph_height', permanent=perm)
-                else:
-                    for k, v in args.items():
-                        if v is not None:
-                            if k in ['width', 'height', 'scale'] and v <= 0:
-                                msg = '{0} should be positive; value: {1}'
-                                self.parse.set_graph.error(msg.format(k, v))
-
-                            kernel.conf.set('graph_' + k, v, permanent=perm)
-            elif setting == '_all':
-                if reset:
-                    # reset graph settings
-                    kernel.conf.set('graph_format', 'svg', permanent=perm)
-                    kernel.conf.set('graph_scale', '1', permanent=perm)
-                    kernel.conf._remove_unsafe('graph_width', permanent=perm)
-                    kernel.conf._remove_unsafe('graph_height', permanent=perm)
+                # reset graph settings
+                kernel.conf.set('graph_format', 'svg', permanent=perm)
+                kernel.conf.set('graph_scale', '1', permanent=perm)
+                kernel.conf._remove_unsafe('graph_width', permanent=perm)
+                kernel.conf._remove_unsafe('graph_height', permanent=perm)
             else:
-                self.parse.set.error('malformed %set call')
+                kernel.conf.set(key, value, permanent=perm)
+
         except:
             pass
 
@@ -475,15 +484,51 @@ class StataMagics():
     def magic_help(self, code, kernel):
         self.status = -1
         self.graphs = 0
+        scode = code.strip()
         try:
-            self.parse.help.parse_args(code.split(' '))
+            self.parse.help.parse_args(scode.split(' '))
         except:
             return ''
 
-        if not code.strip():
+        if not scode:
+            resp = {
+                'data': {
+                    'text/html': self.parse.help._msg_html,
+                    'text/plain': self.parse.help._msg_plain},
+                'metadata': {}}
+            kernel.send_response(kernel.iopub_socket, 'display_data', resp)
             return ''
 
-        cmd = code.strip().replace(" ", "_")
+        if scode == 'kernel':
+            with open(self.help_kernel_html, 'r') as f:
+                help_html = f.read()
+
+            with open(self.help_kernel_plain, 'r') as f:
+                help_plain = f.read()
+
+            resp = {
+                'data': {
+                    'text/html': help_html,
+                    'text/plain': help_plain},
+                'metadata': {}}
+            kernel.send_response(kernel.iopub_socket, 'display_data', resp)
+            return ''
+        elif scode == 'magics':
+            with open(self.help_magics_html, 'r') as f:
+                help_html = f.read()
+
+            with open(self.help_magics_plain, 'r') as f:
+                help_plain = f.read()
+
+            resp = {
+                'data': {
+                    'text/html': help_html,
+                    'text/plain': help_plain},
+                'metadata': {}}
+            kernel.send_response(kernel.iopub_socket, 'display_data', resp)
+            return ''
+
+        cmd = scode.replace(" ", "_")
         try:
             reply = urllib.request.urlopen(
                 self.html_help.format(cmd))
@@ -499,6 +544,7 @@ class StataMagics():
                     a['href'] = href[hrelative:]
                 elif not href.startswith('http'):
                     a['href'] = urllib.parse.urljoin(self.html_base, href)
+                    a['target'] = '_blank'
 
             # Remove header 'Stata 15 help for ...'
             soup.find('h2').decompose()

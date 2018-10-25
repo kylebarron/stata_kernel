@@ -114,7 +114,7 @@ class TestCommentsFromStataList(object):
         expected = [
             (Token.Comment.Single, '*'),
             (Token.Comment.Single, ' '),
-            (Token.Comment.Single, '///\n'),
+            (Token.Comment.Special, '///\n'),
             (Token.Comment.Special, 'a'),
             (Token.Comment.Special, '\n'),
             (Token.Text, 'a'),
@@ -196,7 +196,7 @@ class TestCommentsFromStataList(object):
             (Token.Comment.Single, ' '),
             (Token.Comment.Single, 'a'),
             (Token.Comment.Single, ' '),
-            (Token.Comment.Single, '///\n'),
+            (Token.Comment.Special, '///\n'),
             (Token.Comment.Single, '// a ///'),
             (Token.Text, '\n'),
             (Token.Text, 'a'),
@@ -303,6 +303,42 @@ class TestLineContinuationComments(object):
             (Token.Text, '\n')]
         assert tokens == expected
 
+    def test4(self):
+        code = 'a ///\n/// a ///'
+        tokens = CodeManager(code).tokens_fp_all
+        expected = [
+            (Token.Text, 'a'),
+            (Token.Text, ' '),
+            (Token.Comment.Special, '///'),
+            (Token.Comment.Special, '\n'),
+            (Token.Comment.Special, '///'),
+            (Token.Comment.Special, ' '),
+            (Token.Comment.Special, 'a'),
+            (Token.Comment.Special, ' '),
+            (Token.Comment.Special, '/'),
+            (Token.Comment.Special, '/'),
+            (Token.Comment.Special, '/'),
+            (Token.Comment.Special, '\n')]
+        assert tokens == expected
+
+    def test5(self):
+        code = 'a ///\n// a ///'
+        tokens = CodeManager(code).tokens_fp_all
+        expected = [
+            (Token.Text, 'a'),
+            (Token.Text, ' '),
+            (Token.Comment.Special, '///'),
+            (Token.Comment.Special, '\n'),
+            (Token.Comment.Single, '//'),
+            (Token.Comment.Single, ' '),
+            (Token.Comment.Single, 'a'),
+            (Token.Comment.Single, ' '),
+            (Token.Comment.Single, '/'),
+            (Token.Comment.Single, '/'),
+            (Token.Comment.Single, '/'),
+            (Token.Text, '\n')]
+        assert tokens == expected
+
 class TestSingleLineComments(object):
     def test1(self):
         code = 'di//*\n*/1'
@@ -372,7 +408,11 @@ class TestBlocks(object):
         code = 'cap {\n a\n}'
         tokens = CodeManager(code).tokens_final
         expected = [
-            (Token.TextBlock, 'cap {'),
+            (Token.Text, 'c'),
+            (Token.Text, 'a'),
+            (Token.Text, 'p'),
+            (Token.Text, ' '),
+            (Token.TextBlock, '{'),
             (Token.TextBlock, '\n'),
             (Token.TextBlock, ' '),
             (Token.TextBlock, 'a'),
@@ -385,7 +425,11 @@ class TestBlocks(object):
         code = 'cap {\n{\n a\n}\n}'
         tokens = CodeManager(code).tokens_final
         expected = [
-            (Token.TextBlock, 'cap {'),
+            (Token.Text, 'c'),
+            (Token.Text, 'a'),
+            (Token.Text, 'p'),
+            (Token.Text, ' '),
+            (Token.TextBlock, '{'),
             (Token.TextBlock, '\n'),
             (Token.TextBlock, '{'),
             (Token.TextBlock, '\n'),
@@ -402,7 +446,11 @@ class TestBlocks(object):
         code = 'cap {\n*{\n a\n}'
         tokens = CodeManager(code).tokens_final
         expected = [
-            (Token.TextBlock, 'cap {'),
+            (Token.Text, 'c'),
+            (Token.Text, 'a'),
+            (Token.Text, 'p'),
+            (Token.Text, ' '),
+            (Token.TextBlock, '{'),
             (Token.TextBlock, '\n'),
             (Token.TextBlock, '\n'),
             (Token.TextBlock, ' '),
@@ -416,7 +464,11 @@ class TestBlocks(object):
         code = 'cap {\n/*{*/\n a\n}'
         tokens = CodeManager(code).tokens_final
         expected = [
-            (Token.TextBlock, 'cap {'),
+            (Token.Text, 'c'),
+            (Token.Text, 'a'),
+            (Token.Text, 'p'),
+            (Token.Text, ' '),
+            (Token.TextBlock, '{'),
             (Token.TextBlock, '\n'),
             (Token.TextBlock, '\n'),
             (Token.TextBlock, ' '),
@@ -435,12 +487,38 @@ class TestBlocks(object):
             (Token.Text, ' '),
             (Token.Text, '1'),
             (Token.Text, '\n'),
-            (Token.TextBlock, 'if {'),
+            (Token.Text, 'i'),
+            (Token.Text, 'f'),
+            (Token.Text, ' '),
+            (Token.TextBlock, '{'),
             (Token.TextBlock, '\n'),
             (Token.TextBlock, 'a'),
             (Token.TextBlock, '\n'),
             (Token.TextBlock, '}'),
             (Token.Text, '\n')]
+        assert tokens == expected
+
+    def test_if_block_with_preceding_string(self):
+        """ GH issue 139 """
+        code = 'if "0" == "1" {'
+        tokens = CodeManager(code).tokens_final
+        expected = [
+            (Token.Text, 'i'),
+            (Token.Text, 'f'),
+            (Token.Text, ' '),
+            (Token.Text, '"'),
+            (Token.Text, '0'),
+            (Token.Text, '"'),
+            (Token.Text, ' '),
+            (Token.Text, '='),
+            (Token.Text, '='),
+            (Token.Text, ' '),
+            (Token.Text, '"'),
+            (Token.Text, '1'),
+            (Token.Text, '"'),
+            (Token.Text, ' '),
+            (Token.TextBlock, '{'),
+            (Token.TextBlock, '\n')]
         assert tokens == expected
 
 class TestSemicolonDelimitComments(object):
@@ -686,7 +764,9 @@ class TestIsComplete(object):
      ('foreach i in 1 {', False),
      ('foreach i in 1 2 {\nif {\n }', False),
      ('disp "hi"; // also hangs', True),
-     ('disp "hi" // also hangs', True)
+     ('disp "hi" // also hangs', True),
+     ('if "0" == "1" {', False), # issue 139
+     ('if "0" == "1" {\ndi "hi"\n}', True), # issue 139
      ]) # yapf: disable
     def test_is_block_complete(self, code, complete):
         assert CodeManager(code, False).is_complete == complete
@@ -705,8 +785,12 @@ class TestIsComplete(object):
      ('foreach i in 1 2 {;\nif {\n }', False),
      ('foreach i in 1 2 {;\nif {;\n };', False),
      ('foreach i in 1 2 {;\nif {;\n };\n};', True),
+     ('foreach i in 1 2 {;if {; };};', True),
      ('disp "hi"; // also hangs', True),
-     ('disp "hi" // also hangs', False)
+     ('disp "hi" // also hangs', False),
+     ('if "0" == "1" {;', False), # issue 139
+     ('if "0" == "1" {;\ndi "hi";\n};', True), # issue 139
+     ('if "0" == "1" {;di "hi";};', True), # issue 139
      ]) # yapf: disable
     def test_is_block_complete_in_sc_delimit_block(self, code, complete):
         assert CodeManager(code, True).is_complete == complete

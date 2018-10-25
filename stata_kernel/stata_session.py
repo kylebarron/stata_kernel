@@ -3,13 +3,15 @@ import re
 import pexpect
 import pexpect.fdpexpect
 import platform
+import requests
 import subprocess
-from pkg_resources import resource_filename
 
 from time import sleep
 # from timeit import default_timer
 from pathlib import Path
 from textwrap import dedent
+from packaging import version
+from pkg_resources import resource_filename
 
 if platform.system() == 'Windows':
     import win32com.client
@@ -43,7 +45,10 @@ class StataSession():
 
         self.config = config
         self.kernel = kernel
-        self.banner = 'stata_kernel: A Jupyter kernel for Stata.'
+        self.banner = 'stata_kernel {}\n'.format(kernel.implementation_version)
+
+        # Mata switches
+        # -------------
 
         self.mata_mode = False
         self.mata_open = False
@@ -65,6 +70,28 @@ class StataSession():
         self.prompt_dot = self.stata_prompt_dot
         self.prompt_regex = self.stata_prompt_regex
 
+        # New version
+        # -----------
+
+        try:
+            r = requests.get('https://pypi.org/pypi/stata-kernel/json')
+            pypi_v = r.json()['info']['version']
+            if version.parse(pypi_v) > version.parse(
+                    kernel.implementation_version):
+                msg = '\nNOTE: A newer version of stata_kernel exists. Run\n'
+                msg += '    pip install stata_kernel --upgrade\n'
+                msg += 'to install the latest version.\n'
+                self.banner += msg
+        except requests.exceptions.RequestException:
+            pass
+
+        # See https://github.com/kylebarron/stata_kernel/issues/177
+        self.linesize = 255
+        self.cwd = os.getcwd()
+
+        # Platform
+        # --------
+
         if platform.system() == 'Windows':
             self.init_windows()
         elif platform.system() == 'Darwin':
@@ -76,10 +103,12 @@ class StataSession():
             self.init_console()
             self.config.set('execution_mode', 'console', permanent=True)
 
+        # Stata
+        # -----
+
         adofile = resource_filename(
             'stata_kernel', 'ado/_StataKernelCompletions.ado')
         adodir = Path(adofile).resolve().parent
-        self.linesize = 80
         init_cmd = """\
             adopath + `"{0}"\'
             cd `"{1}"\'
@@ -88,6 +117,10 @@ class StataSession():
             set linesize {2}
             clear all
             global stata_kernel_graph_counter = 0
+
+            di "$S_DATE, $S_TIME"
+            di "Stata version: `c(version)'"
+            di "OS: $S_OS"
             `finished_init_cmd'
             """.format(adodir, os.getcwd(), self.linesize).rstrip()
         self.do(dedent(init_cmd), md5='finished_init_cmd', display=False)
@@ -107,7 +140,7 @@ class StataSession():
         WinExec(self.config.get('stata_path'))
         sleep(0.25)
         self.stata = win32com.client.Dispatch("stata.StataOLEApp")
-        self.automate(cmd_name='UtilShowStata', value=2)
+        self.automate(cmd_name='UtilShowStata', value=1)
         self.config.set('execution_mode', 'automation', permanent=True)
         self.start_log_aut()
 
@@ -126,10 +159,13 @@ class StataSession():
         gone away.
         """
         self.child = pexpect.spawn(
-            self.config.get('stata_path'), encoding='utf-8')
+            self.config.get('stata_path'), encoding='utf-8',
+            codec_errors='replace')
+        self.child.setwinsize(100, 255)
         self.child.delaybeforesend = None
-        self.child.logfile = open(
-            self.config.get('cache_dir') / 'console_debug.log', 'w')
+        self.child.logfile = (
+            self.config.get('cache_dir') / 'console_debug.log').open(
+                'w', encoding='utf-8')
         banner = []
         try:
             self.child.expect(self.prompt, timeout=0.2)
@@ -145,7 +181,7 @@ class StataSession():
                 banner.append(self.child.before)
 
         # Set banner to Stata's shell header
-        self.banner = ansi_escape.sub('', '\n'.join(banner))
+        self.banner += ansi_escape.sub('', '\n'.join(banner))
 
     def start_log_aut(self):
         """Start log and watch file
@@ -172,12 +208,18 @@ class StataSession():
         if rc:
             return rc
 
-        self.fd = open(log_path)
+        self.fd = Path(log_path).open()
         if platform.system() == 'Windows':
-            self.log_fd = pexpect.fdpexpect.fdspawn(self.fd, encoding='utf-8')
+            self.log_fd = pexpect.fdpexpect.fdspawn(
+                self.fd, encoding='utf-8', codec_errors='replace')
         else:
             self.log_fd = pexpect.fdpexpect.fdspawn(
-                self.fd, encoding='utf-8', maxread=1)
+                self.fd, encoding='utf-8', maxread=1, codec_errors='replace')
+
+        self.log_fd.logfile = (
+            self.config.get('cache_dir') / 'console_debug.log').open(
+                'w', encoding='utf-8')
+
         return 0
 
     def do(self, text, md5, **kwargs):
@@ -195,6 +237,10 @@ class StataSession():
             display (bool): Whether to send results to front-end
         """
 
+        self.cache_dir_str = str(self.config.get('cache_dir'))
+        if platform.system() == 'Windows':
+            self.cache_dir_str = re.sub(r'\\', '/', self.cache_dir_str)
+
         if self.config.get('execution_mode') == 'console':
             self.child.sendline(text)
             child = self.child
@@ -205,7 +251,7 @@ class StataSession():
         try:
             rc, res = self.expect(text=text, child=child, md5=md5, **kwargs)
         except KeyboardInterrupt:
-            self.send_break(child=child)
+            self.send_break(child=child, md5="`{}'".format(md5))
             rc, res = 1, ''
 
         return rc, res
@@ -214,10 +260,7 @@ class StataSession():
         """Watch for end of command from file descriptor or pty
 
         Args:
-            text (str): string of text to exclude from output. It is expected
-                that this string include many lines. It will be split on \\n in
-                `expect`. This is sent in case text_to_exclude is None. (Will
-                probably be consolidated in the future.)
+            text (str): Text sent to Stata.
             child (pexpect.spawn or fdpexpect.spawn): pty or log file to watch
             md5 (str): current value of md5 to watch for
             text_to_exclude (str): string of text to exclude from output. It is
@@ -231,14 +274,15 @@ class StataSession():
         else:
             code_lines = text.split('\n')
 
-        md5 = self.prompt_dot + ' `' + md5 + "'"
+        md5 = "{} `{}'".format(self.prompt_dot, md5)
         error_re = r'^r\((\d+)\);'
-        cache_dir_str = str(self.config.get('cache_dir'))
-        if platform.system() == 'Windows':
-            cache_dir_str = re.sub(r'\\', '/', cache_dir_str)
 
-        g_exp = r'\(file ({}'.format(cache_dir_str)
-        g_exp += r'/graph\d+\.(svg|png)) written in (?i:(svg|png)) format\)'
+        g_exp = r'\(file ({}'.format(self.cache_dir_str)
+        g_fmts = '|'.join(self.kernel.graph_formats)
+        g_exp += r'/graph\d+\.({0})) written in ({0}) format\)'.format(g_fmts)
+        # Ignore case for SVG/PDF/PNG
+        # This is not a `(?i:)` flag to support Python 3.5
+        g_exp = re.compile(g_exp, re.IGNORECASE)
 
         more = r'^--more--'
         eol = r'\r?\n'
@@ -246,6 +290,8 @@ class StataSession():
 
         match_index = -1
         res_list = []
+        res_disp = ''
+        any_disp = False
         rc = 0
         while match_index != 0:
             match_index = child.expect(expect_list, timeout=None)
@@ -261,33 +307,73 @@ class StataSession():
                             'name': 'stderr'})
                 continue
             if match_index == 2:
+                g_path = [child.match.group(1)]
+                g_fmt = child.match.group(2).lower()
+                if g_fmt == 'svg':
+                    pdf_dup = self.config.get('graph_svg_redundancy', 'True')
+                elif g_fmt == 'png':
+                    pdf_dup = self.config.get('graph_png_redundancy', 'False')
+                pdf_dup = pdf_dup.lower() == 'true'
+
+                if pdf_dup:
+                    while True:
+                        ind = child.expect([g_exp, pexpect.EOF], timeout=None)
+                        if ind == 0:
+                            break
+                        sleep(0.1)
+
+                    code_lines = code_lines[1:]
+                    g_path.append(child.match.group(1))
                 if display:
-                    self.kernel.send_image(child.match.group(1))
+                    self.kernel.send_image(g_path)
             if match_index == 3:
-                self.send_break(child=child)
+                self.send_break(child=child, md5=md5[2:])
+                child.expect_exact(md5, timeout=None)
+                if display:
+                    self.kernel.send_response(
+                        self.kernel.iopub_socket, 'stream', {
+                            'text': '--more--\n',
+                            'name': 'stdout'})
                 break
             if match_index == 4:
                 code_lines, res = self.clean_log_eol(child, code_lines, res)
-                if res:
-                    res_list.append(res)
-                if display and res:
-                    res = ansi_escape.sub('', res)
+                if res is None:
+                    continue
+                res += '\n'
+                res = ansi_escape.sub('', res)
+                res_disp += res
+                res_list.append(res)
+                if not ''.join(res_list).strip():
+                    continue
+                if not res_disp.strip():
+                    continue
+                else:
+                    any_disp = True
+                if display:
                     self.kernel.send_response(
                         self.kernel.iopub_socket, 'stream', {
-                            'text': res + '\n',
+                            'text': res_disp,
                             'name': 'stdout'})
+                    res_disp = ''
                 continue
             if match_index == 5:
                 sleep(0.05)
 
         self._mata_break(match_index, child)
+        res_disp = re.sub(r'\n\Z', '', res_disp, re.M)
+        if display and res_disp and any_disp:
+            self.kernel.send_response(
+                self.kernel.iopub_socket, 'stream', {
+                    'text': res_disp,
+                    'name': 'stdout'})
+            res_disp = ''
 
         # Then scroll to next newline, but not including period to make it
         # easier to remove code lines later
         child.expect('\r?\n')
 
         # Remove line continuation markers in output returned internally
-        res = '\n'.join(res_list)
+        res = ''.join(res_list)
         res = res.replace('\n> ', '')
 
         return rc, res
@@ -315,11 +401,8 @@ class StataSession():
             - List of code lines not yet matched in output after this
             - Result to be displayed
         """
-        cache_dir_str = str(self.config.get('cache_dir'))
-        if platform.system() == 'Windows':
-            cache_dir_str = re.sub(r'\\', '/', cache_dir_str)
-        regex = r'^\(note: file {}/graph\d+\.(svg|png) not found\)'.format(
-            cache_dir_str)
+        regex = r'^\(note: file {}/graph\d+\.({}) not found\)'.format(
+            self.cache_dir_str, '|'.join(self.kernel.graph_formats))
         if re.search(regex, res):
             return code_lines, None
 
@@ -351,34 +434,28 @@ class StataSession():
 
         return code_lines[1:], None
 
-    def send_break(self, child):
+    def send_break(self, child, md5):
         """Send break to Stata
 
         Tell Stata to stop current execution. This is used when `expect` hits
         more and for a KeyboardInterrupt. I've found that ctrl-C, ctrl-D is the
         most consistent way for the console version to stop execution.
 
+        Often, the first characters after sending ctrl-C, ctrl-D get removed.
+        Thus, I send the md5 an extra time so that the full md5 can be matched
+        without issues.
+
         Args:
-            child (pexpect.spawn): pexpect instance to watch for successful
-                break.
+            child (pexpect.spawn): pexpect instance to send break to
+            md5 (str): The md5 to send a second time
         """
         if self.config.get('execution_mode') == 'console':
             child.sendcontrol('c')
             child.sendcontrol('d')
+            self.child.sendline(md5)
         else:
             self.automate('UtilSetStataBreak')
-
-        child.expect('--Break--')
-        child.expect(r'r\(1\);')
-        # When sent inside `include`, two sets of --Break-- are shown
-        try:
-            child.expect('--Break--', timeout=0.3)
-            child.expect(r'r\(1\);', timeout=0.3)
-        except pexpect.TIMEOUT:
-            pass
-
-        # There are two newlines before the next period. Remove one of them
-        child.expect('\r?\n')
+            self.automate('DoCommandAsync', md5)
 
     def automate(self, cmd_name, value=None, **kwargs):
         """Execute `cmd_name` through Automation in a cross-platform manner
@@ -474,7 +551,11 @@ class StataSession():
         return res
 
     def _mata_escape(self, line):
-        return 'stata(`"{0}"\')'.format(line) if self.mata_open else line
+        if self.mata_open:
+            strfmt = 'stata(`"{0}"\')'
+            return '\n'.join([strfmt.format(l) if l else l for l in line.split('\n')])
+        else:
+            return line
 
     def _mata_break(self, match_index, child):
         # Only full input allowed in mata: If command ended in line

@@ -1,0 +1,308 @@
+<!DOCTYPE html>
+
+<html lang="" xml:lang="" xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<meta charset="utf-8"/>
+<meta content="pandoc" name="generator"/>
+<meta content="width=device-width, initial-scale=1.0, user-scalable=yes" name="viewport"/>
+<title>magics</title>
+<style type="text/css">
+      code{white-space: pre-wrap;}
+      span.smallcaps{font-variant: small-caps;}
+      span.underline{text-decoration: underline;}
+      div.column{display: inline-block; vertical-align: top; width: 50%;}
+  </style>
+<!--[if lt IE 9]>
+    <script src="//cdnjs.cloudflare.com/ajax/libs/html5shiv/3.7.3/html5shiv-printshiv.min.js"></script>
+  <![endif]-->
+<style type="text/css">
+  body {
+    font-family: 'Monospace';
+  }
+  
+  blockquote {
+    /* color: #666666; */
+    margin: 0;
+    padding-left: 3em;
+    border-left: 0.5em solid /*#EEE*/;
+  }
+  
+  hr {
+    display: block;
+    height: 2px;
+    border: 0;
+    border-top: 1px solid /* #aaa */;
+    border-bottom: 1px solid /* #eee */;
+    margin: 1em 0;
+    padding: 0;
+  }
+  
+  p {
+    margin: 1em 0;
+  }
+  
+  img {
+    max-width: 75%;
+  }
+  
+  h1, h2, h3, h4, h5, h6 {
+    /* color: #111; */
+    line-height: 125%;
+    margin-top: 0em;
+    font-weight: normal;
+  }
+  
+  h4, h5, h6 {
+    font-weight: bold;
+  }
+  
+  h1 {
+    font-size: 2.5em;
+  }
+  
+  h2 {
+    font-size: 2em;
+  }
+  
+  h3 {
+    font-size: 1.5em;
+  }
+  
+  h4 {
+    font-size: 1.2em;
+  }
+  
+  h5 {
+    font-size: 1em;
+  }
+  
+  h6 {
+    font-size: 0.9em;
+  }
+  
+  pre, code, kbd, samp {
+    /* color: #000; */
+    font-family: monospace, monospace;
+    _font-family: 'courier new', monospace;
+    font-size: 0.91em;
+  }
+  
+  pre {
+    white-space: pre;
+    white-space: pre-wrap;
+    word-wrap: break-word;
+  }
+  
+  b, strong {
+    font-weight: bold;
+  }
+  
+  dfn {
+    font-style: italic;
+  }
+  
+  ins {
+    /* background: #ff9; */
+    color: #000;
+    text-decoration: none;
+  }
+  
+  mark {
+    /* background: #ff0; */
+    /* color: #000; */
+    font-style: italic;
+    font-weight: bold;
+  }
+  
+  sub, sup {
+    font-size: 75%;
+    line-height: 0;
+    position: relative;
+    vertical-align: baseline;
+  }
+  
+  sup {
+    top: -0.5em;
+  }
+  
+  sub {
+    bottom: -0.25em;
+  }
+  
+  ul, ol {
+    margin: 1em 0;
+    padding: 0 0 0 2em;
+  }
+  
+  li p:last-child {
+    margin-bottom: 0;
+  }
+  
+  ul ul, ol ol {
+    margin: .3em 0;
+  }
+  
+  dl {
+    margin-bottom: 1em;
+  }
+  
+  dt {
+    font-weight: bold;
+    margin-bottom: .8em;
+  }
+  
+  dd {
+    margin: 0 0 .8em 2em;
+  }
+  
+  dd:last-child {
+    margin-bottom: 0;
+  }
+  
+  img {
+    border: 0;
+    -ms-interpolation-mode: bicubic;
+    vertical-align: middle;
+  }
+  
+  figure {
+    display: block;
+    text-align: center;
+    margin: 1em 0;
+  }
+  
+  figure img {
+    border: none;
+    margin: 0 auto;
+  }
+  
+  figcaption {
+    font-size: 0.8em;
+    font-style: italic;
+    margin: 0 0 .8em;
+  }
+  </style>
+</head>
+<body>
+<h1 id="magics">Magics</h1>
+<p><strong>Magics</strong> are programs provided by <code>stata_kernel</code> that enhance the experience of working with Stata in Jupyter.</p>
+<p>All magics are special commands that start with <code>%</code>. They must be the first word of the cell or selection, otherwise they won’t be intercepted and will be sent to Stata.</p>
+<p>For most of the magics listed, you can add <code>--help</code> to see a help menu in the kernel. For example,</p>
+<pre><code>In [1]: %locals --help
+usage: %locals [-h] [-v] [REGEX [REGEX ...]]
+
+positional arguments:
+  REGEX          regex to match
+
+optional arguments:
+  -h, --help     show this help message and exit
+  -v, --verbose  Verbose output (print full contents of matched locals).</code></pre>
+<p>The magics that respond with richly formatted text, namely <code>%browse</code> and <code>%help</code>, will not work with Jupyter Console or Jupyter QtConsole, since they don’t support displaying HTML.</p>
+<h2 id="browse"><code>%browse</code></h2>
+<p><strong>Interactively view your dataset</strong></p>
+<p>For now, this displays the first 200 rows of your data. This will be expanded in the future to allow for a <code>varlist</code>, <code>if</code>, and <code>in</code> options.</p>
+<p>If you’re using Windows or macOS with Automation mode, you can also run <code>browse</code> (without the <code>%</code>) and it will open the usual Stata data explorer.</p>
+<table>
+<tbody>
+<tr class="odd">
+<td style="text-align: center;"><strong>Atom</strong></td>
+<td style="text-align: center;"><img alt="Atom" src="https://kylebarron.github.io/stata_kernel/img/browse_atom.png"/></td>
+</tr>
+<tr class="even">
+<td style="text-align: center;"><strong>Jupyter Notebook</strong></td>
+<td style="text-align: center;"><img alt="Jupyter Notebook" src="https://kylebarron.github.io/stata_kernel/img/browse_notebook.png"/></td>
+</tr>
+</tbody>
+</table>
+<h2 id="delimit"><code>%delimit</code></h2>
+<p><strong>Print the current delimiter</strong></p>
+<p>This takes no arguments; it prints the delimiter currently set: either <code>cr</code> or <code>;</code>. If you want to change the delimiter, use <code>#delimit ;</code> or <code>#delimit cr</code>. The delimiter will remain set until changed.</p>
+<pre><code>In [1]: %delimit
+The delimiter is currently: cr
+
+In [2]: #delimit ;
+delimiter now ;
+In [3]: %delimit
+The delimiter is currently: ;
+
+In [4]: #delimit cr
+delimiter now cr</code></pre>
+<h2 id="head-tail"><code>%head</code>, <code>%tail</code></h2>
+<p><strong>View the first or last observations of the data</strong></p>
+<p>This can optionally be provided with a <code>varlist</code>, <code>N</code>, or <code>if</code>:</p>
+<pre><code>%head [-h] [N] [varlist] [if]
+%tail [-h] [N] [varlist] [if]</code></pre>
+<p>For example,</p>
+<pre><code>sysuse auto
+%head 5 make price mpg if mpg &lt; 20</code></pre>
+<h2 id="help"><code>%help</code></h2>
+<p><strong>Display a help file in rich text</strong></p>
+<pre><code>%help [-h] command_or_topic_name</code></pre>
+<p>Add the term you want to search for after <code>%help</code>:</p>
+<pre><code>In [1]: %help histogram</code></pre>
+<p>The terms in italics (Atom) or underlined (Jupyter Notebook) are <em>links</em>. Click on them to see another help menu.</p>
+<table>
+<tbody>
+<tr class="odd">
+<td style="text-align: center;"><strong>Atom</strong></td>
+<td style="text-align: center;"><img alt="Atom" src="https://kylebarron.github.io/stata_kernel/img/atom_help_magic.png"/></td>
+</tr>
+<tr class="even">
+<td style="text-align: center;"><strong>Jupyter Notebook</strong></td>
+<td style="text-align: center;"><img alt="Jupyter Notebook" src="https://kylebarron.github.io/stata_kernel/img/notebook_help_magic.png"/></td>
+</tr>
+</tbody>
+</table>
+<h2 id="locals-globals"><code>%locals</code>, <code>%globals</code></h2>
+<p><strong>List local or global macros</strong></p>
+<pre><code>%locals [-h] [-v] [REGEX [REGEX ...]]
+%globals [-h] [-v] [REGEX [REGEX ...]]</code></pre>
+<p>These take two optional arguments:</p>
+<ol type="1">
+<li>a regular expression for filtering the locals or globals displayed</li>
+<li>a <code>--verbose</code> flag</li>
+</ol>
+<pre><code>In [1]: %globals S_
+(note: showing first line of global values; run with --verbose)
+
+S_ADO:     BASE;SITE;.;PERSONAL;PLUS;OLDPLACE;`"/home/kyle/github/stata/sta
+S_level:   95
+S_CONSOLE: console
+S_FLAVOR:  Intercooled
+S_OS:      Unix
+S_MACH:    PC (64-bit x86-64)
+
+In [2]: %globals S_ --verbose
+S_ADO:     BASE;SITE;.;PERSONAL;PLUS;OLDPLACE;`"/home/kyle/github/stata/sta
+           &gt; ta_kernel/stata_kernel/ado"'
+S_level:   95
+S_CONSOLE: console
+S_FLAVOR:  Intercooled
+S_OS:      Unix
+S_MACH:    PC (64-bit x86-64)</code></pre>
+<h2 id="set"><code>%set</code></h2>
+<p><strong>Set configuration value</strong></p>
+<p>Usage:</p>
+<pre><code>%set [-h] [--permanently] [--reset] key value</code></pre>
+<ul>
+<li><code>key</code>: Configuration key name. The full list of configuration options is shown on the <a href="https://kylebarron.github.io/stata_kernel/getting_started#configuration">Getting Started</a> page.</li>
+<li><code>value</code>: Value to set.</li>
+<li><code>--permanently</code>: Store settings permanently.</li>
+<li><code>--reset</code>: Restore default settings.</li>
+</ul>
+<p>As an example, you can change the graph settings like so:</p>
+<pre><code>%set graph_format svg --permanently
+%set graph_scale 1
+%set graph_width 500
+%set graph_height 300</code></pre>
+<!-- ## `%time`
+
+**Time Execution of a Command**
+
+This timing is currently most exact on macOS and Linux using the console method of speaking to Stata. It may be redeveloped in the future to use Stata's `rmsg` option.
+
+```stata
+%time sleep 100
+``` -->
+</body>
+</html>

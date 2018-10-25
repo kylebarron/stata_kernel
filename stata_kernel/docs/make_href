@@ -1,0 +1,64 @@
+#!/usr/bin/env python
+# -*- coding: utf-8 -*-
+
+from bs4 import BeautifulSoup as bs
+import urllib
+import re
+import os
+
+help_msg_html = """\
+<p>
+Online documentation is available at
+<a href="https://kylebarron.github.io/stata_kernel/">
+    kylebarron.github.io/stata_kernel
+</a><br>
+</p>
+"""
+
+# (file, include help message)
+files = [
+    ('index.html', True),
+    ('using_stata_kernel/magics.html', False)
+]
+html_root = "https://kylebarron.github.io/stata_kernel/"
+
+
+def main():
+    for (fpath, fmsg) in files:
+        cleanHTML(fpath, fmsg)
+
+
+def cleanHTML(html_path, help_msg):
+    html_relpath = os.path.dirname(html_path)
+    html_base = urllib.parse.urljoin(
+        html_root,
+        '{0}/'.format(html_relpath)
+    ) if html_relpath != '' else html_root
+
+    with open(html_path, 'r') as f:
+        soup = bs(f.read(), 'html.parser')
+
+    if help_msg:
+        p = soup.find("body").find("p")
+        p.insert(3, bs(help_msg_html, 'lxml').html.body.p)
+
+    for a in soup.find_all('a', href=True):
+        href = a.get('href')
+        if not href.startswith('http'):
+            href = re.subn(r'\.md(?=\b)', '', href, 1)[0]
+            print(urllib.parse.urljoin(html_base, href))
+            a['href'] = urllib.parse.urljoin(html_base, href)
+
+    for img in soup.find_all('img', src=True):
+        src = img.get('src')
+        if not src.startswith('http'):
+            src = re.subn(r'\.md(?=\b)', '', src, 1)[0]
+            print(urllib.parse.urljoin(html_base, src))
+            img['src'] = urllib.parse.urljoin(html_base, src)
+
+    with open(html_path, 'w') as f:
+        f.write(str(soup))
+
+
+if __name__ == "__main__":
+    main()

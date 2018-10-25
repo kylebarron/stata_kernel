@@ -1,9 +1,12 @@
 beautifulsoup4>=4.6.3
+jupyter>=1.0.0
 jupyter_client>=5.2.3
 IPython>=6.5.0
 ipykernel>=4.8.2
 pandas>=0.23.4
+packaging>=17.1
 pillow>=5.2.0
 pexpect>=4.6.0
 pygments>=2.2.0
-regex>=2018.7.11
+pywin32>=223;platform_system=="Windows"
+requests>=2.19.1
