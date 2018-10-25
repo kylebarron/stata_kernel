@@ -246,7 +246,8 @@ class StataMagics():
             try:
                 self.parse.browse.error(res)
             except:
-                return ''
+                pass
+        return ''
 
     def magic_head(self, code, kernel, N=None):
         self.status = -1
@@ -259,7 +260,8 @@ class StataMagics():
             try:
                 self.parse.head.error(res)
             except:
-                return ''
+                pass
+        return ''
 
     def show_data_head(self, code, kernel, N=10):
         hasif = re.search(r"\bif\b", code) is not None
