@@ -44,6 +44,12 @@ class MagicParsers():
             required=False)
 
         self.browse = StataParser(prog='%browse', kernel=kernel)
+        self.browse = StataParser(
+            prog='%browse', kernel=kernel,
+            usage='%(prog)s [-h] [N] [varlist] [if]',
+            description="Display the first N rows of the dataset in memory.")
+        self.browse.add_argument(
+            'code', nargs='*', type=str, help=SUPPRESS)
 
         self.time = StataParser(prog='%time', kernel=kernel)
         self.time.add_argument(
@@ -230,45 +236,43 @@ class StataMagics():
                     print_kernel(fmt.format(t, l), kernel)
 
     def magic_browse(self, code, kernel):
-        cmd = """\
-            if _N <= 200 {{
-                export delim `"{0}/data.csv"', replace datafmt
-            }}
-            else {{
-                export delim `"{0}/data.csv"' in 1/200, replace datafmt
-
-            }}
-            """.format(kernel.conf.get('cache_dir'))
-        cm = CodeManager(cmd)
-        text_to_run, md5, text_to_exclude = cm.get_text(kernel.conf)
-        rc, res = kernel.stata.do(
-            text_to_run, md5, text_to_exclude=text_to_exclude, display=False)
-        df = pd.read_csv(kernel.conf.get('cache_dir') / 'data.csv')
-        df.index += 1
-        html = df.to_html(na_rep='.', notebook=True)
-        content = {'data': {'text/html': html}, 'metadata': {}}
-        kernel.send_response(kernel.iopub_socket, 'display_data', content)
         self.status = -1
+        try:
+            self.parse.browse.parse_args(code.split(' '))
+        except:
+            return ''
+        res = self.show_data_head(code, kernel, N=200)
+        if res:
+            try:
+                self.parse.browse.error(res)
+            except:
+                pass
         return ''
 
-    def magic_head(self, code, kernel):
+    def magic_head(self, code, kernel, N=None):
         self.status = -1
         try:
             self.parse.head.parse_args(code.split(' '))
         except:
             return ''
+        res = self.show_data_head(code, kernel, N=10)
+        if res:
+            try:
+                self.parse.head.error(res)
+            except:
+                pass
+        return ''
 
+    def show_data_head(self, code, kernel, N=10):
         hasif = re.search(r"\bif\b", code) is not None
         using = kernel.conf.get('cache_dir') / 'data_head.csv'
         cmd = '_StataKernelHead ' + code.strip() + ' using ' + str(using)
+        cmd += ' , n_default({})'.format(N)
         cm = CodeManager(cmd)
         text_to_run, md5, text_to_exclude = cm.get_text(kernel.conf)
         rc, res = kernel.stata.do(text_to_run, md5, text_to_exclude=text_to_exclude, display=False)
         if rc:
-            try:
-                self.parse.head.error(res)
-            except:
-                return ''
+            return res
         else:
             if hasif:
                 df = pd.read_csv(using, index_col = 0)
