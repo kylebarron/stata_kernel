@@ -7,8 +7,11 @@ It doesn't take much to get `stata_kernel` up and running. Here's how:
 - **Python**. In order to install the kernel, Python 3.5, 3.6, or 3.7 needs to be installed on the computer on which Stata is running.
 
     I suggest installing the [Anaconda
-    distribution](https://www.anaconda.com/download/), which doesn't require
-    administrator privileges and is simple to install.
+    distribution](https://www.anaconda.com/download/). This doesn't require
+    administrator privileges, and is the simplest way to install Python.
+
+    If you don't install Python through Anaconda, you may need to install some
+    dependencies manually, like [Cython](https://cython.org/#download).
 
     The Anaconda installer includes many third party libraries for Python that
     `stata_kernel` doesn't use. If you don't plan to use Python and want to use
