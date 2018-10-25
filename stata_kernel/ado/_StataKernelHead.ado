@@ -43,7 +43,7 @@ program _StataKernelHead
         }
     }
     else {
-        local ifin in 1 / `n'
+        local ifin in 1 / `=min(`n', _N)'
     }
 
     qui export delimited `index' `varlist' `using' `ifin', replace `options'
