@@ -65,6 +65,8 @@ class StataSession():
 
         self.mata_trim = re.compile(
             r'((\r\n|\r|\n)\s+?)?(\r\n|\r|\n)\Z', flags=re.MULTILINE)
+        self.mata_enter = re.compile(
+            r'^[^\r\n\S]*\.  ??m(ata)?[^\r\n\S]*(:[^\r\n\S]*)?$').match
 
         self.prompt = self.stata_prompt
         self.prompt_dot = self.stata_prompt_dot
@@ -417,7 +419,11 @@ class StataSession():
         if not code_lines[0][:self.linesize - 5].lstrip() in res[1:].lstrip():
             return code_lines, res
 
-        res_match = re.search(self.prompt_regex, res)
+        if self.mata_enter(res) and self.mata_mode:
+            res_match = re.search(self.stata_prompt_regex, res)
+        else:
+            res_match = re.search(self.prompt_regex, res)
+
         if not res_match:
             return code_lines, ''
         res = res_match.group(2)
