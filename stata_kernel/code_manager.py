@@ -247,16 +247,16 @@ class CodeManager(object):
         # yapf: disable
         if not pdf_dup:
             g_exp = dedent("""
-            if _rc == 0 noi gr export {0}/graph${1}.{2},{3} replace
-            if _rc == 0 global {1} = ${1} + 1
-            if _rc == 0 graph close\
+            cap noi gr export {0}/graph${1}.{2},{3} replace
+            global {1} = ${1} + 1
+            cap graph close\
             """.format(cache_dir_str, gph_cnt, graph_fmt, dim_str))
         else:
             g_exp = dedent("""
-            if _rc == 0 noi gr export {0}/graph${1}.{2},{3} replace
-            if _rc == 0 noi gr export {0}/graph${1}.pdf, replace
-            if _rc == 0 global {1} = ${1} + 1
-            if _rc == 0 graph close\
+            cap noi gr export {0}/graph${1}.{2},{3} replace
+            cap noi gr export {0}/graph${1}.pdf, replace
+            global {1} = ${1} + 1
+            cap graph close\
             """.format(cache_dir_str, gph_cnt, graph_fmt, dim_str))
         # yapf: enable
 
