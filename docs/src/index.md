@@ -26,24 +26,25 @@ elements in the ecosystem.
 
 - [x] Supports Windows, macOS, and Linux.
 - [x] Use any type of comments in your code, not just `*`.
-- [x] Autocompletions as you type based on the variables, macros, scalars, and matrices currently in memory. As of version 1.6.0 it also suggests file paths for autocompletion.
+- [x] [Autocompletions](using_stata_kernel/intro#autocompletion) as you type based on the variables, macros, scalars, and matrices currently in memory. As of version 1.6.0 it also suggests file paths for autocompletion.
 - [x] [Display graphs](using_stata_kernel/intro/#displaying-graphs).
 - [x] Receive results as they appear, not after the entire command finishes.
-- [x] [Pull up interactive help files within the kernel.](using_stata_kernel/magics#help)
-- [x] [Browse data interactively](using_stata_kernel/magics#browse)
-- [x] [`#delimit ;` interactive support.](using_stata_kernel/intro#delimit-mode)
-- [x] Work with a remote session of Stata
+- [x] [Pull up interactive help files within the kernel](using_stata_kernel/magics#help).
+- [x] [Browse data interactively](using_stata_kernel/magics#browse).
+- [x] [`#delimit ;` interactive support](using_stata_kernel/intro#delimit-mode)
+- [x] Work with a [remote session of Stata](using_jupyter/remote).
 - [ ] Mata interactive support
 - [ ] Cross-session history file
 
-If you find bugs, please [submit a bug report here](https://github.com/kylebarron/stata_kernel/issues/new?template=bug_report.md).
+If you find a bug or want to suggest a new feature, please
+[submit an issue on Github here](https://github.com/kylebarron/stata_kernel/issues/new/choose).
 
 ## Screenshots
-
-**Jupyter Notebook**
-
-![Jupyter Notebook](img/jupyter_notebook.png)
 
 **Atom**
 
 ![Atom](img/stata_kernel_example.gif)
+
+**Jupyter Notebook**
+
+![Jupyter Notebook](img/jupyter_notebook.png)

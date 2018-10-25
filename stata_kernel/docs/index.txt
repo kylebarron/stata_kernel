@@ -53,21 +53,22 @@ stata_kernel Features
 -   [x] Receive results as they appear, not after the entire command
     finishes.
 -   [x] Pull up interactive help files within the kernel.
--   [x] Browse data interactively
--   [x] #delimit ; interactive support.
--   [x] Work with a remote session of Stata
+-   [x] Browse data interactively.
+-   [x] #delimit ; interactive support
+-   [x] Work with a remote session of Stata.
 -   [ ] Mata interactive support
 -   [ ] Cross-session history file
 
-If you find bugs, please submit a bug report here.
+If you find a bug or want to suggest a new feature, please submit an
+issue on Github here.
 
 
 Screenshots
 
-JUPYTER NOTEBOOK
-
-[Jupyter Notebook]
-
 ATOM
 
 [Atom]
+
+JUPYTER NOTEBOOK
+
+[Jupyter Notebook]

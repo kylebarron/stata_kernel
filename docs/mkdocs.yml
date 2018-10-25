@@ -17,6 +17,8 @@ extra:
   social:
     - type: 'github'
       link: 'https://github.com/kylebarron'
+    - type: 'twitter'
+      link: 'https://twitter.com/kylebarron2'
     - type: 'key'
       link: 'https://keybase.io/kylebarron'
 
@@ -27,7 +29,7 @@ nav:
     - Using Jupyter:
         - Introduction: 'using_jupyter/intro.md'
         - Jupyter Notebook: 'using_jupyter/notebook.md'
-        - Atom: 'using_jupyter/atom.md'
+        - Hydrogen in Atom: 'using_jupyter/atom.md'
         - JupyterLab: 'using_jupyter/lab.md'
         - Nteract: 'using_jupyter/nteract.md'
         - Jupyter QtConsole: 'using_jupyter/qtconsole.md'
@@ -38,7 +40,7 @@ nav:
         - Magics: 'using_stata_kernel/magics.md'
         - Limitations: 'using_stata_kernel/limitations.md'
         - Troubleshooting: 'using_stata_kernel/troubleshooting.md'
-    - Comparison with ipystata: 'comparison_with_ipystata.md'
+    - Comparison with IPyStata: 'comparison_with_ipystata.md'
     - Addendum: 'addendum.md'
     - License: 'license.md'
 
@@ -61,9 +63,10 @@ theme:
         text: 'Nunito Sans'
         code: 'Fira Code'
 
-extra_javascript:
-    - helpers/helpers.js
-    - https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.4/MathJax.js?config=TeX-AMS-MML_HTMLorMML
+# Uncomment if I use math in the docs in the future
+# extra_javascript:
+#     - helpers/helpers.js
+#     - https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.4/MathJax.js?config=TeX-AMS-MML_HTMLorMML
 
 # These extensions are chosen to be a superset of Pandoc's Markdown.
 # This way, I can write in Pandoc's Markdown and have it be supported here.
