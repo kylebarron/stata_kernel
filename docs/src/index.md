@@ -18,6 +18,8 @@ elements in the ecosystem.
     - Jupyter Notebooks can be exported as PDFs or HTML, and are as good for teaching new students as they are for displaying research results.
     - Use Stata in the same document with R, Python, or Julia code.
 
+    ![Jupyter Notebook](img/jupyter_notebook_example.gif)
+
 - [**Hydrogen**](using_jupyter/atom.md) is a package for the [Atom text editor](https://atom.io) that connects with Jupyter kernels to display results interactively in your text editor.
 - The [**Jupyter console**](using_jupyter/console.md) is an enhanced interactive console. Its features include enhanced autocompletion, better searching of history, syntax highlighting, among others. The similar [QtConsole](using_jupyter/qtconsole.md) even allows displaying plots within the terminal.
 - [Enhanced remote work](using_jupyter/remote.md). You can set up Jupyter to run computations remotely but to show results locally. Since the only data passing over the network are the text inputs and outputs from Stata, communcation happens much faster than loading `xstata`, especially on slower networks. Being able to use Jupyter Notebook or Hydrogen vastly enhances productivity compared to working with the Stata console through a remote terminal.
@@ -44,7 +46,3 @@ If you find a bug or want to suggest a new feature, please
 **Atom**
 
 ![Atom](img/stata_kernel_example.gif)
-
-**Jupyter Notebook**
-
-![Jupyter Notebook](img/jupyter_notebook_example.gif)
