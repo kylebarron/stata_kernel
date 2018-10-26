@@ -47,4 +47,4 @@ If you find a bug or want to suggest a new feature, please
 
 **Jupyter Notebook**
 
-![Jupyter Notebook](img/jupyter_notebook.png)
+![Jupyter Notebook](img/jupyter_notebook_example.gif)

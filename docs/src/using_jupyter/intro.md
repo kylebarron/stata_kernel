@@ -2,6 +2,8 @@
 
 There are many different ways to use Jupyter. I'll briefly explain several ways of using Jupyter and provide links to more documentation. The information in this section is common to all languages Jupyter supports. [Using the Stata Kernel](../using_stata_kernel/magics.md) has information specific to using Stata with Jupyter.
 
+If you're unsure which to use, [Jupyter Notebook](notebook.md) is probably easiest.
+
 - [Jupyter Notebook](notebook.md): This is the classic interactive web-based editor and core of the Jupyter project.
 - [Hydrogen for Atom](atom.md): This is a plugin for the Atom text editor that displays results in line with your code. It's my personal favorite.
 - [JupyterLab](lab.md): This is a new element of the Jupyter ecosystem that affords more IDE-like properties. It makes it easy to work with several Jupyter kernels, consoles, and documents among several programming languages. It has an RStudio-like feel.
