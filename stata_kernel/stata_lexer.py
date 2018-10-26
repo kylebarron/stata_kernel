@@ -160,7 +160,7 @@ class CommentAndDelimitLexer(RegexLexer):
         ],
         'mata-delimit': [
             # Just exclude linestar
-            (r'((^\s+//)|(?<=;\s)\s*//)(?!/)', Comment.Single, 'delimit;-comments-double-slash'),
+            (r'((^\s+//)|(?<=\s)\s*//)(?!/)', Comment.Single, 'delimit;-comments-double-slash'),
             (r'/\*', Comment.Multiline, 'delimit;-comments-block'),
             (r'(^///|(?<=\s)///)', Comment.Special, 'delimit;-comments-triple-slash'),
             include('delimit;-strings'),
