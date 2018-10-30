@@ -6,7 +6,7 @@ from textwrap import dedent
 from configparser import ConfigParser
 
 
-class Config(object):
+class Config():
     all_settings = [
         'autocomplete_closing_symbol',
         'cache_directory',

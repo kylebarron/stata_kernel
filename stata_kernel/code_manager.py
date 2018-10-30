@@ -30,7 +30,7 @@ base_graph_keywords = [
     r'tabodds', r'teffects\s+overlap', r'npgraph', r'grmap', r'pkexamine']
 
 
-class CodeManager(object):
+class CodeManager():
     """Class to deal with text before sending to Stata
     """
 

@@ -7,7 +7,7 @@ from .code_manager import CodeManager
 
 # NOTE: Add extended_fcn completions, `:<tab>
 # NOTE: Add sub-command completions for scalars and matrices?
-class CompletionsManager(object):
+class CompletionsManager():
     def __init__(self, kernel, config):
         self.config = config
         self.kernel = kernel
