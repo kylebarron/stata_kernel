@@ -176,13 +176,8 @@ class StataSession():
             return rc
 
         self.fd = Path(log_path).open()
-        if platform.system() == 'Windows':
-            self.log_fd = pexpect.fdpexpect.fdspawn(
-                self.fd, encoding='utf-8', codec_errors='replace')
-        else:
-            self.log_fd = pexpect.fdpexpect.fdspawn(
-                self.fd, encoding='utf-8', maxread=1, codec_errors='replace')
-
+        self.log_fd = pexpect.fdpexpect.fdspawn(
+            self.fd, encoding='utf-8', codec_errors='replace')
         self.log_fd.logfile = (
             self.config.get('cache_dir') / 'console_debug.log').open(
                 'w', encoding='utf-8')
