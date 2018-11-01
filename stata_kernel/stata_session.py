@@ -214,6 +214,9 @@ class StataSession():
             rc, res = self.expect(text=text, child=child, md5=md5, **kwargs)
         except KeyboardInterrupt:
             self.send_break(child=child, md5="`{}'".format(md5))
+            # expect twice because the md5 was sent to the log twice
+            self.expect(text=text, child=child, md5=md5, **kwargs)
+            self.expect(text=text, child=child, md5=md5, **kwargs)
             rc, res = 1, ''
 
         return rc, res
