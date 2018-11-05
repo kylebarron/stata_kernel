@@ -211,13 +211,8 @@ class StataSession():
             return rc
 
         self.fd = Path(log_path).open()
-        if platform.system() == 'Windows':
-            self.log_fd = pexpect.fdpexpect.fdspawn(
-                self.fd, encoding='utf-8', codec_errors='replace')
-        else:
-            self.log_fd = pexpect.fdpexpect.fdspawn(
-                self.fd, encoding='utf-8', maxread=1, codec_errors='replace')
-
+        self.log_fd = pexpect.fdpexpect.fdspawn(
+            self.fd, encoding='utf-8', codec_errors='replace')
         self.log_fd.logfile = (
             self.config.get('cache_dir') / 'console_debug.log').open(
                 'w', encoding='utf-8')
@@ -254,6 +249,10 @@ class StataSession():
             rc, res = self.expect(text=text, child=child, md5=md5, **kwargs)
         except KeyboardInterrupt:
             self.send_break(child=child, md5="`{}'".format(md5))
+            # expect twice because the md5 was sent to the log twice
+            kwargs.update({'display': False})
+            self.expect(text=text, child=child, md5=md5, **kwargs)
+            self.expect(text=text, child=child, md5=md5, **kwargs)
             rc, res = 1, ''
 
         return rc, res

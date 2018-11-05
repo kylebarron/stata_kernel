@@ -1,10 +1,23 @@
-# Comparison with [ipystata](https://github.com/TiesdeKok/ipystata)
+# Comparison with [IPyStata](https://github.com/TiesdeKok/ipystata)
 
-Except for Windows, this package takes a different approach to communication
-with Stata. On macOS and Linux, this controls the Stata console directly, which
-prevents speed degradation with larger data sets. In contrast, `ipystata` saves
-the data set to disk after each code cell, slowing execution.
+## `stata_kernel` is faster with larger datasets
 
-This is also a pure Jupyter kernel, whereas `ipystata` is a Jupyter "magic" within the Python kernel. This means that you don't need to have any knowledge of Python* and don't need to have packages like Pandas installed.
+`stata_kernel` takes a different approach to communication with Stata. With `IPyStata` on macOS and Linux, to run each segment of code
 
-\* Python is amazing language, and if you want to move on to bigger data, I highly recommend learning Python.
+1. Your data has to be moved from Python to Stata
+2. Run the commands in Stata
+3. Return the data to Python to save it for the next command
+
+This process is prohibitive with larger amounts of data. In contrast, `stata_kernel` controls Stata directly, so it generally is no slower than using the Stata program itself.
+
+## `stata_kernel` provides more features
+
+`stata_kernel` is a pure Jupyter kernel, whereas IPyStata is a Jupyter _magic_ within the Python kernel. This means that with `stata_kernel`
+
+- You don't have to include `%%stata` at the beginning of every cell.
+- You get features like autocompletion and being able to use `;` as a delimiter.
+- You see intermediate results of long-running commands without waiting for the entire command to have finished.
+- You can create multiple graphs in the same cell without having to name each of them individually. (Order of the graphs is also guaranteed).
+- You don't have to have any knowledge whatsoever of Python [^1].
+
+[^1]: Python is amazing language, and if you want to move on to bigger data, I highly recommend learning Python. Now that `stata_kernel` is installed, if you want to start a Python notebook instead of a Stata notebook, just choose New > Python 3 in the dropdown menu.

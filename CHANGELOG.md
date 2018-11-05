@@ -1,5 +1,10 @@
 # Changelog
 
+## [1.6.2] - 2018-10-25
+
+- Revert closing graph window automatically. #219
+- Refactor `%browse` to use the same code as `%head` internally. #217
+
 ## [1.6.1] - 2018-10-24
 
 - Remove `regex` package as a dependency. #212

@@ -9,7 +9,7 @@ from .pygments._mata_builtins import mata_builtins
 # NOTE: Add command completion (e.g. r<tab>; mata: st_<tab>)
 # NOTE: Add extended_fcn completions, `:<tab>
 # NOTE: Add sub-command completions for scalars and matrices?
-class CompletionsManager(object):
+class CompletionsManager():
     def __init__(self, kernel, config):
         self.config = config
         self.kernel = kernel

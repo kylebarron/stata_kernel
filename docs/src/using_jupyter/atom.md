@@ -2,16 +2,33 @@
 
 Hydrogen is a package for the Atom text editor that connects with Jupyter kernels, such as `stata_kernel`, to display results interactively inside the text editor.
 
+I'll go over how to install Atom and Hydrogen, and then provide a quick overview of Hydrogen's capabilities. For more information on how to use Hydrogen, see [Hydrogen's documentation](https://nteract.gitbooks.io/hydrogen/docs/Usage/GettingStarted.html).
+
 ## Installation
 
-Download the [Atom text editor](https://atom.io) and install two add-on packages (go to Preferences > Settings or type <kbd>Ctrl</kbd>+<kbd>,</kbd> (<kbd>Cmd</kbd>-<kbd>,</kbd> on macOS), then click Install):
+Atom and Hydrogen are both free and open source software, just like `stata_kernel`. The download and install is free and easy.
+
+### Atom
+
+Go to [atom.io](https://atom.io), choose the installer for your operating system, then double click the downloaded file.
+
+### Hydrogen
+
+Next you'll need to install a couple add-on packages:
 
 - [Hydrogen](https://atom.io/packages/hydrogen): this connects to Jupyter kernels and allows you to view results in-line next to your code. You can use it with Python, R, and Julia, as well as Stata.
-- [language-stata](https://atom.io/packages/language-stata): this provides syntax highlighting for Stata code and is necessary so that Hydrogen knows to connect to Stata, and not to something else.
+- [language-stata](https://atom.io/packages/language-stata): this provides syntax highlighting for Stata code and is necessary so that Hydrogen knows that a file with extension `.do` is a Stata file.
+
+To install these, go to the Atom Settings. You can get there by clicking Preferences > Settings in the menus or by using the keyboard shortcut <kbd>Ctrl</kbd>+<kbd>,</kbd> (<kbd>Cmd</kbd>-<kbd>,</kbd> on macOS). Then click _Install_ on the menu in the left, and type in `Hydrogen`, and `language-stata`, and click `Install`.
 
 Once those are installed, open a do-file and run <kbd>Ctrl</kbd>-<kbd>Enter</kbd> (<kbd>Cmd</kbd>-<kbd>Enter</kbd> on macOS) to start the Stata kernel.
 
-Below is a quick rundown of Hydrogen's capabilities. For more information, see [Hydrogen's documentation](https://nteract.gitbooks.io/hydrogen/docs/Usage/GettingStarted.html).
+## Using Atom
+
+If you've never used Atom before, you're in luck, because it's quite simple and intuitive to use.
+[Read here](https://flight-manual.atom.io/getting-started/sections/atom-basics/) for some basics about how to use Atom.
+
+The most important thing to know is that you can access every command available to you in Atom by using the keyboard shortcut <kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>P</kbd> (<kbd>Cmd</kbd>+<kbd>Shift</kbd>+<kbd>P</kbd> on macOS). This brings up a menu, called the _Command Palette_, where you can find any command that any package provides.
 
 ## Running code
 
@@ -41,11 +58,13 @@ Using watch expressions to browse data:
 
 ## Indentation and for loops
 
-Stata `foreach` loops and programs must be sent as a whole to the kernel. The
-easiest way to make sure that this happens is to indent all code pertaining to
-the block. Starting in version 1.6.4 of `language-stata`, this will
-automatically include the last line of a for loop or program even if that last
-line has the same indentation as the initial line.
+Stata `foreach` loops and programs must be sent as a whole to the kernel. If you
+send only part of a loop, you'll receive a reply that insufficient input was
+provided.
+
+The easiest way to make sure that this happens is to indent all code pertaining
+to a block. This will ensure all lines of the block are sent to `stata_kernel`,
+even if the ending `}` has the same indentation as the initial line.
 
 If the cursor is anywhere on the first line in the segment below, and you run
 <kbd>Ctrl</kbd>-<kbd>Enter</kbd> or <kbd>Shift</kbd>-<kbd>Enter</kbd> (which
