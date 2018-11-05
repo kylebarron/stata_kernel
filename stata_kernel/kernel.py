@@ -137,17 +137,20 @@ class StataKernel(Kernel):
         """Things to do after running commands in Stata
         """
 
+        _rc, _res = self.cleanLogs("off")
+
         self.stata.linesize = int(self.quickdo("di `c(linesize)'"))
         self.stata.cwd = self.quickdo("pwd")
-
-        # Refresh completions
         self.completions.refresh(self)
+
+        _rc, _res = self.cleanLogs("on")
 
     def quickdo(self, code):
         cm = CodeManager(code)
         text_to_run, md5, text_to_exclude = cm.get_text(self.conf)
         rc, res = self.stata.do(
             text_to_run, md5, text_to_exclude=text_to_exclude, display=False)
+
         if not rc:
             # Remove rmsg lines when rmsg is on
             rmsg_regex = r'r(\(\d+\))?;\s+t=\d*\.\d*\s*\d*:\d*:\d*'
@@ -156,6 +159,13 @@ class StataKernel(Kernel):
                 if not re.search(rmsg_regex, x.strip())]
             res = '\n'.join(res).strip()
             return res
+
+    def cleanLogs(self, what):
+        cm = CodeManager("_StataKernelLog {0}".format(what))
+        text_to_run, md5, text_to_exclude = cm.get_text(self.conf)
+        rc, res = self.stata.do(
+            text_to_run, md5, text_to_exclude=text_to_exclude, display=False)
+        return rc, res
 
     def send_image(self, graph_paths):
         """Load graph and send to frontend
