@@ -29,7 +29,7 @@ class StataKernel(Kernel):
     help_links = [
         {'text': 'stata_kernel Help', 'url': 'https://kylebarron.github.io/stata_kernel/'},
         {'text': 'Stata Help', 'url': 'https://www.stata.com/features/documentation/'}
-    ] # yapf: disable
+    ]  # yapf: disable
 
     def __init__(self, *args, **kwargs):
         # Copy syntax highlighting files
@@ -104,10 +104,14 @@ class StataKernel(Kernel):
             return self.magics.quit_early
 
         # Tokenize code and return code chunks
-        cm = CodeManager(code, self.sc_delimit_mode)
-        text_to_run, md5, text_to_exclude = cm.get_text(self.conf)
+        cm = CodeManager(code, self.sc_delimit_mode, self.stata.mata_mode)
+        self.stata._mata_refresh(cm)
+        text_to_run, md5, text_to_exclude = cm.get_text(self.conf, self.stata)
+
+        # Execute code chunk
         rc, res = self.stata.do(
             text_to_run, md5, text_to_exclude=text_to_exclude)
+        res = self.stata._mata_restart(rc, res)
 
         # Post magic results, if applicable
         self.magics.post(self)
@@ -144,10 +148,12 @@ class StataKernel(Kernel):
         self.completions.refresh(self)
 
     def quickdo(self, code):
+        code = self.stata._mata_escape(code)
         cm = CodeManager(code)
         text_to_run, md5, text_to_exclude = cm.get_text(self.conf)
         rc, res = self.stata.do(
             text_to_run, md5, text_to_exclude=text_to_exclude, display=False)
+
         if not rc:
             # Remove rmsg lines when rmsg is on
             rmsg_regex = r'r(\(\d+\))?;\s+t=\d*\.\d*\s*\d*:\d*:\d*'
@@ -155,6 +161,9 @@ class StataKernel(Kernel):
                 x for x in res.split('\n')
                 if not re.search(rmsg_regex, x.strip())]
             res = '\n'.join(res).strip()
+            if self.stata.mata_open:
+                res = re.sub(r'^([:\>])  ??(\{\})?$', '', res, flags=re.MULTILINE).strip()
+
             return res
 
     def send_image(self, graph_paths):
@@ -262,7 +271,7 @@ class StataKernel(Kernel):
         """
         env, pos, chunk, rcomp = self.completions.get_env(
             code[:cursor_pos], code[cursor_pos:(cursor_pos + 2)],
-            self.sc_delimit_mode)
+            self.sc_delimit_mode, self.stata.mata_mode)
 
         return {
             'status': 'ok',
@@ -271,4 +280,5 @@ class StataKernel(Kernel):
             'matches': self.completions.get(chunk, env, rcomp)}
 
     def is_complete(self, code):
-        return CodeManager(code, self.sc_delimit_mode).is_complete
+        return CodeManager(
+            code, self.sc_delimit_mode, self.stata.mata_mode).is_complete

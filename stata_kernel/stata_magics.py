@@ -164,6 +164,7 @@ class StataMagics():
         'delimit',
         'time',
         'timeit',
+        'status',
         'set']
 
     csshelp_default = resource_filename(
@@ -351,7 +352,7 @@ class StataMagics():
         if self.status == -1:
             return code
 
-        cm = CodeManager("macro dir")
+        cm = CodeManager(kernel.stata._mata_escape("macro dir"))
         text_to_run, md5, text_to_exclude = cm.get_text(kernel.conf)
         rc, res = kernel.stata.do(
             text_to_run, md5, text_to_exclude=text_to_exclude, display=False)
@@ -592,6 +593,18 @@ class StataMagics():
         self.status = -1
         print_kernel("Magic restart has not been implemented.", kernel)
         return code
+
+    def magic_status(self, code, kernel):
+        self.status = -1
+        delim = ';' if kernel.sc_delimit_mode else 'cr'
+        env = 'mata' if kernel.stata.mata_mode else 'stata'
+        info = (
+            kernel.implementation, kernel.implementation_version,
+            kernel.language, kernel.language_version)
+        print_kernel('{0} {1} for {2} {3}'.format(*info), kernel)
+        print_kernel('\tDelimiter:   {}'.format(delim), kernel)
+        print_kernel('\tEnvironment: {}'.format(env), kernel)
+        return ''
 
 
 def print_kernel(msg, kernel):
