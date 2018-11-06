@@ -152,7 +152,9 @@ class CompletionsManager():
         # Detect space-delimited word.
         env = 0
         env_add = 0
-        pos = max(code.rfind(' '), code.rfind('"'))
+        search = re.search(r"\b\w+\Z", code, flags=re.MULTILINE)
+        searchpos = -1 if search is None else search.start() - 1
+        pos = max(code.rfind(' '), code.rfind('"'), searchpos)
         rcomp = ''
         if pos >= 0:
             pos += 1
