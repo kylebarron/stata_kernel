@@ -113,7 +113,7 @@ class StataKernel(Kernel):
         rc, res = self.stata.do(
             text_to_run, md5, text_to_exclude=text_to_exclude)
         res = self.stata._mata_restart(rc, res)
-        self.cleanTail(r"{0} `{1}'".format(self.stata.prompt_dot, md5))
+        self.cleanTail("`{0}'".format(md5), self.stata.prompt_dot)
 
         # Post magic results, if applicable
         self.magics.post(self)
@@ -157,7 +157,7 @@ class StataKernel(Kernel):
         text_to_run, md5, text_to_exclude = cm.get_text(self.conf)
         rc, res = self.stata.do(
             text_to_run, md5, text_to_exclude=text_to_exclude, display=False)
-        self.cleanTail(r"{0} `{1}'".format(self.stata.prompt_dot, md5))
+        self.cleanTail("`{0}'".format(md5), self.stata.prompt_dot)
 
         if not rc:
             # Remove rmsg lines when rmsg is on
@@ -167,19 +167,22 @@ class StataKernel(Kernel):
                 if not re.search(rmsg_regex, x.strip())]
             res = '\n'.join(res).strip()
             if self.stata.mata_open:
-                res = re.sub(r'^([:\>])  ??(\{\})?$', '', res, flags=re.MULTILINE).strip()
+                res = re.sub(
+                    r'^([:\>])  ??(\{\})?$', '', res,
+                    flags=re.MULTILINE).strip()
 
             return res
 
     def cleanLogs(self, what):
-        cm = CodeManager("_StataKernelLog {0}".format(what))
+        code = self.stata._mata_escape("_StataKernelLog {0}".format(what))
+        cm = CodeManager(code)
         text_to_run, md5, text_to_exclude = cm.get_text(self.conf)
         rc, res = self.stata.do(
             text_to_run, md5, text_to_exclude=text_to_exclude, display=False)
-        self.cleanTail(r"{0} `{1}'".format(self.stata.prompt_dot, md5))
+        self.cleanTail("`{0}'".format(md5), self.stata.prompt_dot)
         if what == 'off':
-            self.cleanTail(
-                r"{0} _StataKernelLog {1}".format(self.stata.prompt_dot, what))
+            code = self.stata._mata_escape('_StataKernelLog {0}'.format(what))
+            self.cleanTail(code, self.stata.prompt_dot)
         return rc, res
 
     def send_image(self, graph_paths):
@@ -299,17 +302,34 @@ class StataKernel(Kernel):
         return CodeManager(
             code, self.sc_delimit_mode, self.stata.mata_mode).is_complete
 
-    def cleanTail(self, tail):
+    def cleanTail(self, tail, rprompt):
+        """
+        Search from the end of all open log files for a kernel marker
+        specified by tail, typically
+
+            . `md5 hash'
+
+        rprompt is a regex for the prompt, typically a dot but it could
+        be a `>` or a `:` (e.g. in mata). We only search up to 10 chars
+        past the length of the marker for log files (unless it is a smcl
+        file, in which case we search up to 100 chars back).
+        """
         ltail = len(tail)
-        rtail = tail[::-1]
+        rtail = re.escape(tail[::-1]) + ' {0,2}'
         for logfile in self.completions.suggestions['logfiles']:
             lcmp = ''
+            fname, fext = os.path.splitext(logfile)
             with open(logfile, "r+", encoding = "utf-8") as fh:
                 fh.seek(0, os.SEEK_END)
                 pos = fh.tell() - 1
-                # maxread = 0
-                maxread = pos - ltail - 2
-                while (pos > maxread) and (re.search(rtail, lcmp) is None):
+                # Note the search is inverted because we read from the end
+                if fext == '.smcl':
+                    maxread = pos - ltail - 100
+                    rfind = rtail + '({0}|}}moc{{|[\\r\\n])'.format(rprompt)
+                else:
+                    rfind = rtail + rprompt
+                    maxread = pos - ltail - 10
+                while (pos > maxread) and (re.search(rfind, lcmp) is None):
                     lcmp += fh.read(1)
                     pos -= 1
                     fh.seek(pos, os.SEEK_SET)

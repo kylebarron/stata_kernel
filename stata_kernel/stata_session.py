@@ -57,7 +57,7 @@ class StataSession():
         self.stata_prompt = '\r\n\. '
         self.mata_prompt = '\r\n: '
 
-        self.stata_prompt_dot = '.'
+        self.stata_prompt_dot = '\.'
         self.mata_prompt_dot = '[\.:\>]'
 
         self.stata_prompt_regex = r'^(  \d+)?\.  ??(.+)$'
