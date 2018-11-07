@@ -1,3 +1,4 @@
+import os
 import re
 import base64
 import shutil
@@ -108,6 +109,7 @@ class StataKernel(Kernel):
         text_to_run, md5, text_to_exclude = cm.get_text(self.conf)
         rc, res = self.stata.do(
             text_to_run, md5, text_to_exclude=text_to_exclude)
+        self.cleanTail(". `{0}'".format(md5))
 
         # Post magic results, if applicable
         self.magics.post(self)
@@ -150,6 +152,7 @@ class StataKernel(Kernel):
         text_to_run, md5, text_to_exclude = cm.get_text(self.conf)
         rc, res = self.stata.do(
             text_to_run, md5, text_to_exclude=text_to_exclude, display=False)
+        self.cleanTail(". `{0}'".format(md5))
 
         if not rc:
             # Remove rmsg lines when rmsg is on
@@ -165,6 +168,9 @@ class StataKernel(Kernel):
         text_to_run, md5, text_to_exclude = cm.get_text(self.conf)
         rc, res = self.stata.do(
             text_to_run, md5, text_to_exclude=text_to_exclude, display=False)
+        self.cleanTail(". `{0}'".format(md5))
+        if what == 'off':
+            self.cleanTail(". _StataKernelLog {0}".format(what))
         return rc, res
 
     def send_image(self, graph_paths):
@@ -282,3 +288,22 @@ class StataKernel(Kernel):
 
     def is_complete(self, code):
         return CodeManager(code, self.sc_delimit_mode).is_complete
+
+    def cleanTail(self, tail):
+        ltail = len(tail)
+        rtail = tail[::-1]
+        for logfile in self.completions.suggestions['logfiles']:
+            lcmp = ''
+            with open(logfile, "r+", encoding = "utf-8") as fh:
+                fh.seek(0, os.SEEK_END)
+                pos = fh.tell() - 1
+                # maxread = 0
+                maxread = pos - ltail - 2
+                while (pos > maxread) and (lcmp.find(rtail) < 0):
+                    lcmp += fh.read(1)
+                    pos -= 1
+                    fh.seek(pos, os.SEEK_SET)
+
+                if pos > maxread:
+                    fh.seek(pos + 1, os.SEEK_SET)
+                    fh.truncate()

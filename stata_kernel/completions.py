@@ -28,6 +28,7 @@ class CompletionsManager(object):
             r"\A.*?%varlist%(?P<varlist>.*?)"
             r"%globals%(?P<globals>.*?)"
             # r"%locals%(?P<locals>.*?)"
+            r"%logfiles%(?P<logfiles>.*?)"
             r"%scalars%(?P<scalars>.*?)"
             r"%matrices%(?P<matrices>.*?)(\Z|---+\s*end)",
             flags=re.DOTALL + re.MULTILINE).match
@@ -353,6 +354,7 @@ class CompletionsManager(object):
                 'varlist': [],
                 'scalars': [],
                 'matrices': [],
+                'logfiles': [],
                 'globals': [],
                 'locals': []}
 
