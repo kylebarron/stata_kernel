@@ -113,7 +113,6 @@ class StataKernel(Kernel):
         rc, res = self.stata.do(
             text_to_run, md5, text_to_exclude=text_to_exclude)
         res = self.stata._mata_restart(rc, res)
-        self.cleanTail("`{0}'".format(md5), self.stata.prompt_dot)
 
         # Post magic results, if applicable
         self.magics.post(self)
@@ -157,7 +156,6 @@ class StataKernel(Kernel):
         text_to_run, md5, text_to_exclude = cm.get_text(self.conf)
         rc, res = self.stata.do(
             text_to_run, md5, text_to_exclude=text_to_exclude, display=False)
-        self.cleanTail("`{0}'".format(md5), self.stata.prompt_dot)
 
         if not rc:
             # Remove rmsg lines when rmsg is on
@@ -179,7 +177,7 @@ class StataKernel(Kernel):
         text_to_run, md5, text_to_exclude = cm.get_text(self.conf)
         rc, res = self.stata.do(
             text_to_run, md5, text_to_exclude=text_to_exclude, display=False)
-        self.cleanTail("`{0}'".format(md5), self.stata.prompt_dot)
+
         if what == 'off':
             code = self.stata._mata_escape('_StataKernelLog {0}'.format(what))
             self.cleanTail(code, self.stata.prompt_dot)
