@@ -3,6 +3,8 @@ program _StataKernelCompletions
     set more off
     set trace off
     syntax [varlist]
+    disp "%mata%"
+    mata mata desc
     disp "%varlist%"
     disp `"`varlist'"'
     disp "%globals%"

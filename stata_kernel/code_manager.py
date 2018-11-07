@@ -9,7 +9,7 @@ from .stata_lexer import StataLexer
 from .stata_lexer import CommentAndDelimitLexer
 
 base_graph_keywords = [
-    r'gr(a|ap|aph)?' + r'(?!\s+' + r'(save|replay|print|export|dir|set|' +
+    r'gr(a|ap|aph)?' r'(?!\s+' r'(save|replay|print|export|dir|set|'
     r'des(c|cr|cri|crib|cribe)?|rename|copy|drop|close|q(u|ue|uer|uery)?))',
     r'tw(o|ow|owa|oway)?', r'sc(atter)?', r'line',
     r'hist(o|og|ogr|ogra|ogram)?', r'kdensity', r'lowess', r'lpoly',
@@ -30,17 +30,22 @@ base_graph_keywords = [
     r'tabodds', r'teffects\s+overlap', r'npgraph', r'grmap', r'pkexamine']
 
 
-class CodeManager(object):
+class CodeManager():
     """Class to deal with text before sending to Stata
     """
 
-    def __init__(self, code, semicolon_delimit=False):
+    def __init__(self, code, semicolon_delimit=False, mata_mode=False):
         code = re.sub(r'\r\n', r'\n', code)
         # Hard tabs in input are not shown in output and mess up removing lines
         code = re.sub(r'\t', ' ', code)
         self.input = code
         if semicolon_delimit:
+            if mata_mode:
+                code = 'mata;\n' + code
+
             code = '#delimit ;\n' + code
+        elif mata_mode:
+            code = 'mata\n' + code
 
         # First use the Comment and Delimiting lexer
         self.tokens_fp_all = self.tokenize_first_pass(code)
@@ -55,6 +60,30 @@ class CodeManager(object):
         tokens_nl_delim = self.convert_delimiter(self.tokens_fp_no_comments)
         text = ''.join([x[1] for x in tokens_nl_delim])
         self.tokens_final = self.tokenize_second_pass(text)
+
+        # NOTE: Consider wrapping mata call for include in mata and
+        # end. Do not include end in the include file if the result of
+        # this loop is.  False Instead, send end before the include file
+        # is done.
+
+        self.mata_mode = False
+        self.mata_open = False
+        self.mata_error = False
+        if mata_mode:
+            self.mata_open = True
+            self.mata_mode = True
+            self.tokens_final = self.tokens_final[1:]
+
+        self.mata_closed = False
+        for token, chunk in self.tokens_final:
+            if str(token) == 'Token.Mata.Close':
+                self.mata_closed = True
+                self.mata_mode = False
+            elif str(token).startswith('Token.Mata.Open'):
+                self.mata_closed = False
+                self.mata_mode = True
+                if str(token) == 'Token.Mata.OpenError':
+                    self.mata_error = True
 
         self.is_complete = self._is_complete()
 
@@ -97,7 +126,7 @@ class CodeManager(object):
         """
 
         # If all tokens are newline-delimited, return
-        if not 'Token.TextInSemicolonBlock' in [str(x[0]) for x in tokens]:
+        if 'Token.TextInSemicolonBlock' not in [str(x[0]) for x in tokens]:
             return tokens
 
         # Replace newlines in `;`-delimited blocks with spaces
@@ -154,7 +183,7 @@ class CodeManager(object):
             return True
 
         # block constructs
-        if str(self.tokens_final[-1][0]) == 'Token.TextBlock':
+        if str(self.tokens_final[-1][0]).startswith('Token.TextBlock'):
             return False
 
         # last token a line-continuation comment
@@ -181,7 +210,7 @@ class CodeManager(object):
 
         return True
 
-    def get_text(self, config):
+    def get_text(self, config, stata=None):
         """Get valid, executable text
 
         For any text longer than one line, I save the text to a do file and send
@@ -219,6 +248,10 @@ class CodeManager(object):
 
         if len(lines) > 1:
             use_include = True
+
+        if stata:
+            use_include = use_include and not stata.mata_open
+            use_include = use_include and not stata.mata_mode
 
         # Insert `graph export`
         graph_fmt = config.get('graph_format', 'svg')
@@ -260,6 +293,9 @@ class CodeManager(object):
                 global {1} = ${1} + 1
             }}\
             """.format(cache_dir_str, gph_cnt, graph_fmt, dim_str))
+
+        if stata:
+            g_exp = stata._mata_escape(g_exp)
         # yapf: enable
 
         user_graph_keywords = config.get(
