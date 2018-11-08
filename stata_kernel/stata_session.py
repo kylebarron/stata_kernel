@@ -54,11 +54,11 @@ class StataSession():
         self.mata_open = False
         self.mata_error = False
         self.mata_restart = False
-        self.stata_prompt = '\r\n\. '
+        self.stata_prompt = r'\r\n\. '
         self.mata_prompt = '\r\n: '
 
-        self.stata_prompt_dot = '.'
-        self.mata_prompt_dot = '[\.:\>]'
+        self.stata_prompt_dot = r'\.'
+        self.mata_prompt_dot = r'[\.:\>]'
 
         self.stata_prompt_regex = r'^(  \d+)?\.  ??(.+)$'
         self.mata_prompt_regex = r'^([:\>])  ??(.+)$'
@@ -275,7 +275,8 @@ class StataSession():
         else:
             code_lines = text.split('\n')
 
-        md5 = "{} `{}'".format(self.prompt_dot, md5)
+        md5 = "`{}'".format(md5)
+        md5Prompt = self.prompt_dot + " " + md5
         error_re = r'^r\((\d+)\);'
 
         g_exp = r'\(file ({}'.format(self.cache_dir_str)
@@ -287,7 +288,7 @@ class StataSession():
 
         more = r'^--more--'
         eol = r'\r?\n'
-        expect_list = [md5, error_re, g_exp, more, eol, pexpect.EOF]
+        expect_list = [md5Prompt, error_re, g_exp, more, eol, pexpect.EOF]
 
         match_index = -1
         res_list = []
@@ -328,8 +329,8 @@ class StataSession():
                 if display:
                     self.kernel.send_image(g_path)
             if match_index == 3:
-                self.send_break(child=child, md5=md5[2:])
-                child.expect_exact(md5, timeout=None)
+                self.send_break(child=child, md5=md5)
+                child.expect(md5Prompt, timeout=None)
                 if display:
                     self.kernel.send_response(
                         self.kernel.iopub_socket, 'stream', {
@@ -571,13 +572,13 @@ class StataSession():
             mata_index = -1
             child.sendline('{}\n')
             while mata_index == -1:
-                mata_index = child.expect(['\r\n\.', '\r\n:', '\r\n>', pexpect.EOF])
+                mata_index = child.expect([r'\r\n\.', '\r\n:', '\r\n>', pexpect.EOF])
                 sleep(0.01)
 
             mata_index = -1
             child.sendline('{}\n')
             while mata_index == -1:
-                mata_index = child.expect(['\r\n\.', '\r\n:', '\r\n>', pexpect.EOF])
+                mata_index = child.expect([r'\r\n\.', '\r\n:', '\r\n>', pexpect.EOF])
                 sleep(0.01)
 
             res = re.sub(r'^ *{}(\r\n)?', '', child.before)
