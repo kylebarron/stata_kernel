@@ -311,6 +311,7 @@ class StataMagics():
                 df = pd.read_csv(using, index_col = 0)
                 df.index.name = None
             else:
+                res = res.rstrip()
                 lastn = res.rfind('\n')
                 nobs = int(res[lastn:].strip())
                 res = res[:lastn]
