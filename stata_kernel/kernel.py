@@ -196,8 +196,8 @@ class StataKernel(Kernel):
                 height = int(root.attrib['height'][:-2])
                 # Wrapped with iframe
                 iframe = """
-                <iframe frameborder="0" scrolling="no" height="{0}" width="{1}" srcdoc="<html><body>{2}</body></html>">
-                """.format(height, width, html.escape(img)) + "</iframe>"
+                <iframe frameborder="0" scrolling="no" height="{0}" width="{1}" srcdoc="<html><body>{2}</body></html>"></iframe>
+                """.format(height, width, html.escape(img))
                 content['data']['text/html'] = iframe
                 content['metadata']['text/html'] = {
                     'width': width,
