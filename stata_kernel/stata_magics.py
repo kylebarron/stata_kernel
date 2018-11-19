@@ -276,10 +276,10 @@ class StataMagics():
             return res
         else:
             if hasif:
-                df = pd.read_csv(using, index_col = 0)
+                df = pd.read_csv(using, index_col = 0, dtype=str)
                 df.index.name = None
             else:
-                df = pd.read_csv(using)
+                df = pd.read_csv(using, dtype=str)
                 df.index += 1
 
             html = df.to_html(na_rep = '.', notebook=True)
@@ -308,14 +308,14 @@ class StataMagics():
                 return ''
         else:
             if hasif:
-                df = pd.read_csv(using, index_col = 0)
+                df = pd.read_csv(using, index_col = 0, dtype=str)
                 df.index.name = None
             else:
                 res = res.rstrip()
                 lastn = res.rfind('\n')
                 nobs = int(res[lastn:].strip())
                 res = res[:lastn]
-                df = pd.read_csv(using)
+                df = pd.read_csv(using, dtype=str)
                 nread = df.shape[0]
                 df.index = list(range(nobs - nread + 1, nobs + 1))
 
