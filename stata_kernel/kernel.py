@@ -2,6 +2,7 @@ import re
 import base64
 import shutil
 import platform
+import html
 
 from PIL import Image
 from pathlib import Path
@@ -191,10 +192,16 @@ class StataKernel(Kernel):
                 e = ET.ElementTree(ET.fromstring(img))
                 root = e.getroot()
 
-                content['data']['image/svg+xml'] = img
-                content['metadata']['image/svg+xml'] = {
-                    'width': int(root.attrib['width'][:-2]),
-                    'height': int(root.attrib['height'][:-2])}
+                width = int(root.attrib['width'][:-2])
+                height = int(root.attrib['height'][:-2])
+                # Wrapped with iframe
+                iframe = """
+                <iframe frameborder="0" scrolling="no" height="{0}" width="{1}" srcdoc="<html><body>{2}</body></html>"></iframe>
+                """.format(height, width, html.escape(img))
+                content['data']['text/html'] = iframe
+                content['metadata']['text/html'] = {
+                    'width': width,
+                    'height': height}
 
             elif graph_path.endswith('.png'):
                 im = Image.open(graph_path)
