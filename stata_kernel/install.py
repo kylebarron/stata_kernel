@@ -83,8 +83,10 @@ def install_conf():
     user_graph_keywords = coefplot,vioplot
     """.format(stata_path, execution_mode))
 
-    with Path('~/.stata_kernel.conf').expanduser().open('w') as f:
-        f.write(conf_default)
+    conf_file = Path('~/.stata_kernel.conf').expanduser()
+    if not conf_file.is_file():
+        with conf_file.open('w') as f:
+            f.write(conf_default)
 
 
 def _is_root():
