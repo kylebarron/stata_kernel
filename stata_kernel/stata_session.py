@@ -255,6 +255,8 @@ class StataSession():
             self.expect(text=text, child=child, md5=md5, **kwargs)
             rc, res = 1, ''
 
+        if hasattr(self.kernel, 'completions'):
+            self.kernel.cleanTail("`{0}'".format(md5), self.prompt_dot)
         return rc, res
 
     def expect(self, text, child, md5, text_to_exclude=None, display=True):
