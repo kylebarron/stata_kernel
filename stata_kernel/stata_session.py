@@ -55,7 +55,7 @@ class StataSession():
         self.mata_error = False
         self.mata_restart = False
         self.stata_prompt = r'\r\n\. '
-        self.mata_prompt = '\r\n: '
+        self.mata_prompt = r'\r\n: '
 
         self.stata_prompt_dot = r'\.'
         self.mata_prompt_dot = r'[\.:\>]'
