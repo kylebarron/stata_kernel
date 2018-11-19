@@ -1,5 +1,9 @@
 # Changelog
 
+## [1.7.1] - 2018-11-19
+
+- Fix `%browse`, `%head`, `%tail` display issues. #237
+
 ## [1.7.0] - 2018-11-19
 
 - Add Mata mode. #116
