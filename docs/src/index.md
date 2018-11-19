@@ -35,7 +35,7 @@ elements in the ecosystem.
 - [x] [Browse data interactively](using_stata_kernel/magics#browse).
 - [x] [`#delimit ;` interactive support](using_stata_kernel/intro#delimit-mode)
 - [x] Work with a [remote session of Stata](using_jupyter/remote).
-- [ ] Mata interactive support
+- [x] Mata interactive support
 - [ ] Cross-session history file
 
 If you find a bug or want to suggest a new feature, please
