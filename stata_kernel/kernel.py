@@ -1,3 +1,4 @@
+import os
 import re
 import base64
 import shutil
@@ -142,11 +143,13 @@ class StataKernel(Kernel):
         """Things to do after running commands in Stata
         """
 
+        _rc, _res = self.cleanLogs("off")
+
         self.stata.linesize = int(self.quickdo("di `c(linesize)'"))
         self.stata.cwd = self.quickdo("pwd")
-
-        # Refresh completions
         self.completions.refresh(self)
+
+        _rc, _res = self.cleanLogs("on")
 
     def quickdo(self, code):
         code = self.stata._mata_escape(code)
@@ -163,9 +166,23 @@ class StataKernel(Kernel):
                 if not re.search(rmsg_regex, x.strip())]
             res = '\n'.join(res).strip()
             if self.stata.mata_open:
-                res = re.sub(r'^([:\>])  ??(\{\})?$', '', res, flags=re.MULTILINE).strip()
+                res = re.sub(
+                    r'^([:\>])  ??(\{\})?$', '', res,
+                    flags=re.MULTILINE).strip()
 
             return res
+
+    def cleanLogs(self, what):
+        code = self.stata._mata_escape("_StataKernelLog {0}".format(what))
+        cm = CodeManager(code)
+        text_to_run, md5, text_to_exclude = cm.get_text(self.conf)
+        rc, res = self.stata.do(
+            text_to_run, md5, text_to_exclude=text_to_exclude, display=False)
+
+        if what == 'off':
+            code = self.stata._mata_escape('_StataKernelLog {0}'.format(what))
+            self.cleanTail(code, self.stata.prompt_dot)
+        return rc, res
 
     def send_image(self, graph_paths):
         """Load graph and send to frontend
@@ -290,3 +307,39 @@ class StataKernel(Kernel):
     def is_complete(self, code):
         return CodeManager(
             code, self.sc_delimit_mode, self.stata.mata_mode).is_complete
+
+    def cleanTail(self, tail, rprompt):
+        """
+        Search from the end of all open log files for a kernel marker
+        specified by tail, typically
+
+            . `md5 hash'
+
+        rprompt is a regex for the prompt, typically a dot but it could
+        be a `>` or a `:` (e.g. in mata). We only search up to 10 chars
+        past the length of the marker for log files (unless it is a smcl
+        file, in which case we search up to 100 chars back).
+        """
+        ltail = len(tail)
+        rtail = re.escape(tail[::-1]) + ' {0,2}'
+        for logfile in self.completions.suggestions['logfiles']:
+            lcmp = ''
+            fname, fext = os.path.splitext(logfile)
+            with open(logfile, "r+", encoding = "utf-8") as fh:
+                fh.seek(0, os.SEEK_END)
+                pos = fh.tell() - 1
+                # Note the search is inverted because we read from the end
+                if fext == '.smcl':
+                    maxread = pos - ltail - 100
+                    rfind = rtail + '({0}|}}moc{{|[\\r\\n])'.format(rprompt)
+                else:
+                    rfind = rtail + rprompt
+                    maxread = pos - ltail - 10
+                while (pos > maxread) and (re.search(rfind, lcmp) is None):
+                    lcmp += fh.read(1)
+                    pos -= 1
+                    fh.seek(pos, os.SEEK_SET)
+
+                if pos > maxread:
+                    fh.seek(pos + 1, os.SEEK_SET)
+                    fh.truncate()
