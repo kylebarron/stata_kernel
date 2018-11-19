@@ -194,11 +194,12 @@ class StataKernel(Kernel):
 
                 width = int(root.attrib['width'][:-2])
                 height = int(root.attrib['height'][:-2])
-                # Wrapped with iframe
-                iframe = """
-                <iframe frameborder="0" scrolling="no" height="{0}" width="{1}" srcdoc="<html><body>{2}</body></html>"></iframe>
+                # Wrap SVG in iframe. See #234.
+                iframe = """\
+                <iframe frameborder="0" scrolling="no" height="{0}" width="{1}"\
+                srcdoc="<html><body>{2}</body></html>"></iframe>
                 """.format(height, width, html.escape(img))
-                content['data']['text/html'] = iframe
+                content['data']['text/html'] = dedent(iframe)
                 content['metadata']['text/html'] = {
                     'width': width,
                     'height': height}
