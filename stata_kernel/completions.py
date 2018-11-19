@@ -15,7 +15,8 @@ class CompletionsManager():
         self.kernel = kernel
 
         # Path completion
-        self.path_search = re.compile(r'^(?P<fluff>.*")(?P<path>[^"]*)\Z').search
+        self.path_search = re.compile(
+            r'^(?P<fluff>.*")(?P<path>[^"]*)\Z').search
 
         # Magic completion
         self.magic_completion = re.compile(
@@ -84,7 +85,8 @@ class CompletionsManager():
                     r"\s(?P<fluff>.*?)`\=(?P<context>\S+?)"
                     r"\([^\)\s]*?\Z", **kwargs).search,
             'line':
-                re.compile(r"^\s*({0}\s+)*(?P<context>\S+)".format(pre), **kwargs)
+                re.compile(
+                    r"^\s*({0}\s+)*(?P<context>\S+)".format(pre), **kwargs)
                 .search,
             'delimit_line':
                 re.compile(
@@ -250,34 +252,16 @@ class CompletionsManager():
             if matacontext:
                 st, context, quote, pre = matacontext.groupdict().values()
                 varlist = [
-                    'data',
-                    'sdata',
-                    'store',
-                    'sstore',
-                    'view',
-                    'sview',
-                    'varindex',
-                    'varrename',
-                    'vartype',
-                    'isnumvar',
-                    'isstrvar',
-                    'vartype',
-                    'varformat',
-                    'varlabel',
-                    'varvaluelabel',
-                    'dropvar',
-                    'keepvar'
-                ]
+                    'data', 'sdata', 'store', 'sstore', 'view', 'sview',
+                    'varindex', 'varrename', 'vartype', 'isnumvar', 'isstrvar',
+                    'vartype', 'varformat', 'varlabel', 'varvaluelabel',
+                    'dropvar', 'keepvar']
                 _globals = ['global', 'global_hcat']
                 _locals = ['local']
                 scalars = ['numscalar', 'strscalar', 'numscalar_hcat']
                 matrices = [
-                    'matrix',
-                    'matrix_hcat',
-                    'matrixrowstripe',
-                    'matrixcolstripe',
-                    'replacematrix'
-                ]
+                    'matrix', 'matrix_hcat', 'matrixrowstripe',
+                    'matrixcolstripe', 'replacematrix']
 
                 posextra = 0
                 # if st:
@@ -449,8 +433,7 @@ class CompletionsManager():
         return sorted(results)
 
     def get_suggestions(self, kernel):
-        match = self.matchall(
-            self.quickdo('_StataKernelCompletions', kernel))
+        match = self.matchall(self.quickdo('_StataKernelCompletions', kernel))
         if match:
             suggestions = match.groupdict()
             suggestions['mata'] = self._parse_mata_desc(suggestions['mata'])

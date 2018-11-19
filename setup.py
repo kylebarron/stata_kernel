@@ -16,14 +16,13 @@ with open('requirements_dev.txt') as test_requirements_file:
     test_requirements = test_requirements_file.readlines()
     test_requirements = [x[:-1] for x in test_requirements]
 
-setup_requirements = [
-    'setuptools >= 38.6.0',
-    'twine >= 1.11.0']
+setup_requirements = ['setuptools >= 38.6.0', 'twine >= 1.11.0']
 
 # Recompile included docs
 if platform.system() != 'Windows':
     run(['bash', 'make.sh'], cwd='./stata_kernel/docs/')
 
+# yapf: disable
 setup(
     author='Kyle Barron',
     author_email='barronk@mit.edu',

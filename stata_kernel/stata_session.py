@@ -561,7 +561,8 @@ class StataSession():
     def _mata_escape(self, line):
         if self.mata_open:
             strfmt = 'stata(`"{0}"\')'
-            return '\n'.join([strfmt.format(l) if l else l for l in line.split('\n')])
+            return '\n'.join([
+                strfmt.format(l) if l else l for l in line.split('\n')])
         else:
             return line
 

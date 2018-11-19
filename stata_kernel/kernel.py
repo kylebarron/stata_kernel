@@ -325,7 +325,7 @@ class StataKernel(Kernel):
         for logfile in self.completions.suggestions['logfiles']:
             lcmp = ''
             fname, fext = os.path.splitext(logfile)
-            with open(logfile, "r+", encoding = "utf-8") as fh:
+            with open(logfile, 'r+', encoding='utf-8') as fh:
                 fh.seek(0, os.SEEK_END)
                 pos = fh.tell() - 1
                 # Note the search is inverted because we read from the end

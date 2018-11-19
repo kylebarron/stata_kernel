@@ -1,3 +1,4 @@
+# yapf: disable
 mata_builtins = (
     'AsArray_char',
     'AsArray_dup',

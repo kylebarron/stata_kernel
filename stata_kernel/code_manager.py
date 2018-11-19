@@ -9,7 +9,7 @@ from .stata_lexer import StataLexer
 from .stata_lexer import CommentAndDelimitLexer
 
 base_graph_keywords = [
-    r'gr(a|ap|aph)?' r'(?!\s+' r'(save|replay|print|export|dir|set|'
+    r'gr(a|ap|aph)?' + r'(?!\s+' + r'(save|replay|print|export|dir|set|' +
     r'des(c|cr|cri|crib|cribe)?|rename|copy|drop|close|q(u|ue|uer|uery)?))',
     r'tw(o|ow|owa|oway)?', r'sc(atter)?', r'line',
     r'hist(o|og|ogr|ogra|ogram)?', r'kdensity', r'lowess', r'lpoly',

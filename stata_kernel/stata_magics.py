@@ -48,8 +48,7 @@ class MagicParsers():
             prog='%browse', kernel=kernel,
             usage='%(prog)s [-h] [N] [varlist] [if]',
             description="Display the first N rows of the dataset in memory.")
-        self.browse.add_argument(
-            'code', nargs='*', type=str, help=SUPPRESS)
+        self.browse.add_argument('code', nargs='*', type=str, help=SUPPRESS)
 
         self.time = StataParser(prog='%time', kernel=kernel)
         self.time.add_argument(
@@ -77,7 +76,8 @@ class MagicParsers():
         info = (
             kernel.implementation, kernel.implementation_version,
             kernel.language.title(), kernel.language_version)
-        self.help._msg_html = dedent("""
+        self.help._msg_html = dedent(
+            """
         <p style="font-family:Monospace;">
         {0} {1} for {2} {3}. Type<br><br>
 
@@ -95,7 +95,8 @@ class MagicParsers():
             %help command_or_topic</span>
         </p>
         """.format(*info))
-        self.help._msg_plain = dedent("""\
+        self.help._msg_plain = dedent(
+            """\
         {0} {1} for {2} {3}.
 
         Note: This front end cannot display rich HTML help. See the online
@@ -118,15 +119,13 @@ class MagicParsers():
             prog='%head', kernel=kernel,
             usage='%(prog)s [-h] [N] [varlist] [if]',
             description="Display the first N rows of the dataset in memory.")
-        self.head.add_argument(
-            'code', nargs='*', type=str, help=SUPPRESS)
+        self.head.add_argument('code', nargs='*', type=str, help=SUPPRESS)
 
         self.tail = StataParser(
             prog='%tail', kernel=kernel,
             usage='%(prog)s [-h] [N] [varlist] [if]',
             description="Display the last N rows of the dataset in memory.")
-        self.tail.add_argument(
-            'code', nargs='*', type=str, help=SUPPRESS)
+        self.tail.add_argument('code', nargs='*', type=str, help=SUPPRESS)
 
         #######################################################################
         #                                                                     #
@@ -134,7 +133,8 @@ class MagicParsers():
         #                                                                     #
         #######################################################################
 
-        self.set = StataParser(prog='%set', kernel=kernel, description='Set configuration value.')
+        self.set = StataParser(
+            prog='%set', kernel=kernel, description='Set configuration value.')
         self.set.add_argument('key', type=str, help='Configuration key name.')
         self.set.add_argument('value', type=str, help='Value to set.')
         self.set.add_argument(
@@ -169,10 +169,8 @@ class StataMagics():
 
     csshelp_default = resource_filename(
         'stata_kernel', 'css/_StataKernelHelpDefault.css')
-    help_kernel_html = resource_filename(
-        'stata_kernel', 'docs/index.html')
-    help_kernel_plain = resource_filename(
-        'stata_kernel', 'docs/index.txt')
+    help_kernel_html = resource_filename('stata_kernel', 'docs/index.html')
+    help_kernel_plain = resource_filename('stata_kernel', 'docs/index.txt')
     help_magics_html = resource_filename(
         'stata_kernel', 'docs/using_stata_kernel/magics.html')
     help_magics_plain = resource_filename(
@@ -271,19 +269,24 @@ class StataMagics():
         cmd += ' , n_default({})'.format(N)
         cm = CodeManager(cmd)
         text_to_run, md5, text_to_exclude = cm.get_text(kernel.conf)
-        rc, res = kernel.stata.do(text_to_run, md5, text_to_exclude=text_to_exclude, display=False)
+        rc, res = kernel.stata.do(
+            text_to_run, md5, text_to_exclude=text_to_exclude, display=False)
         if rc:
             return res
         else:
             if hasif:
-                df = pd.read_csv(using, index_col = 0, dtype=str)
+                df = pd.read_csv(using, index_col=0, dtype=str)
                 df.index.name = None
             else:
                 df = pd.read_csv(using, dtype=str)
                 df.index += 1
 
-            html = df.to_html(na_rep = '.', notebook=True)
-            content = {'data': {'text/plain': res, 'text/html': html}, 'metadata': {}}
+            html = df.to_html(na_rep='.', notebook=True)
+            content = {
+                'data': {
+                    'text/plain': res,
+                    'text/html': html},
+                'metadata': {}}
             kernel.send_response(kernel.iopub_socket, 'display_data', content)
 
         return ''
@@ -300,7 +303,8 @@ class StataMagics():
         cmd = '_StataKernelTail ' + code.strip() + ' using ' + str(using)
         cm = CodeManager(cmd)
         text_to_run, md5, text_to_exclude = cm.get_text(kernel.conf)
-        rc, res = kernel.stata.do(text_to_run, md5, text_to_exclude=text_to_exclude, display=False)
+        rc, res = kernel.stata.do(
+            text_to_run, md5, text_to_exclude=text_to_exclude, display=False)
         if rc:
             try:
                 self.parse.tail.error(res)
@@ -308,7 +312,7 @@ class StataMagics():
                 return ''
         else:
             if hasif:
-                df = pd.read_csv(using, index_col = 0, dtype=str)
+                df = pd.read_csv(using, index_col=0, dtype=str)
                 df.index.name = None
             else:
                 res = res.rstrip()
@@ -319,8 +323,12 @@ class StataMagics():
                 nread = df.shape[0]
                 df.index = list(range(nobs - nread + 1, nobs + 1))
 
-            html = df.to_html(na_rep = '.', notebook=True)
-            content = {'data': {'text/plain': res, 'text/html': html}, 'metadata': {}}
+            html = df.to_html(na_rep='.', notebook=True)
+            content = {
+                'data': {
+                    'text/plain': res,
+                    'text/html': html},
+                'metadata': {}}
             kernel.send_response(kernel.iopub_socket, 'display_data', content)
 
         return ''
@@ -525,8 +533,7 @@ class StataMagics():
 
         cmd = scode.replace(" ", "_")
         try:
-            reply = urllib.request.urlopen(
-                self.html_help.format(cmd))
+            reply = urllib.request.urlopen(self.html_help.format(cmd))
             html = reply.read().decode("utf-8")
             soup = bs(html, 'html.parser')
 
