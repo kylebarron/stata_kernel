@@ -16,7 +16,10 @@ program _StataKernelCompletions
     qui log query _all
     if ( `"`r(numlogs)'"' != "" ) {
         forvalues l = 1 / `r(numlogs)' {
-            disp r(filename`l')
+            * Skip stata automation log
+            if ( `"`r(name`l')'"' != "stata_kernel_log" ) {
+                disp r(filename`l')
+            }
         }
     }
     disp "%scalars%"

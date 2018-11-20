@@ -11,7 +11,10 @@ program _StataKernelLog
     }
     if ( `"`0'"' == "off" ) {
         qui foreach logname of local lognames {
-            if ( `"`logname'"' == "<unnamed>" ) {
+            if ( `"`logname'"' == "stata_kernel_log" ) {
+                * Skip stata automation log
+            }
+            else if ( `"`logname'"' == "<unnamed>" ) {
                 log off
             }
             else {
@@ -21,7 +24,10 @@ program _StataKernelLog
     }
     else if ( `"`0'"' == "on" ) {
         qui foreach logname of local lognames {
-            if ( `"`logname'"' == "<unnamed>" ) {
+            if ( `"`logname'"' == "stata_kernel_log" ) {
+                * Skip stata automation log
+            }
+            else if ( `"`logname'"' == "<unnamed>" ) {
                 log on
             }
             else {
