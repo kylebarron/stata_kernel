@@ -561,7 +561,8 @@ class StataSession():
     def _mata_escape(self, line):
         if self.mata_open:
             strfmt = 'stata(`"{0}"\')'
-            return '\n'.join([strfmt.format(l) if l else l for l in line.split('\n')])
+            return '\n'.join([
+                strfmt.format(l) if l else l for l in line.split('\n')])
         else:
             return line
 
@@ -574,13 +575,15 @@ class StataSession():
             mata_index = -1
             child.sendline('{}\n')
             while mata_index == -1:
-                mata_index = child.expect([r'\r\n\.', '\r\n:', '\r\n>', pexpect.EOF])
+                mata_index = child.expect([
+                    r'\r\n\.', r'\r\n:', r'\r\n>', pexpect.EOF])
                 sleep(0.01)
 
             mata_index = -1
             child.sendline('{}\n')
             while mata_index == -1:
-                mata_index = child.expect([r'\r\n\.', '\r\n:', '\r\n>', pexpect.EOF])
+                mata_index = child.expect([
+                    r'\r\n\.', r'\r\n:', r'\r\n>', pexpect.EOF])
                 sleep(0.01)
 
             res = re.sub(r'^ *{}(\r\n)?', '', child.before)
@@ -598,4 +601,4 @@ class StataSession():
                 else:
                     self.automate('UtilSetStataBreak')
 
-                child.expect('\r?\n: ')
+                child.expect(r'\r?\n: ')

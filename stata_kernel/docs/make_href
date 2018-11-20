@@ -16,10 +16,7 @@ Online documentation is available at
 """
 
 # (file, include help message)
-files = [
-    ('index.html', True),
-    ('using_stata_kernel/magics.html', False)
-]
+files = [('index.html', True), ('using_stata_kernel/magics.html', False)]
 html_root = "https://kylebarron.github.io/stata_kernel/"
 
 
@@ -32,8 +29,7 @@ def cleanHTML(html_path, help_msg):
     html_relpath = os.path.dirname(html_path)
     html_base = urllib.parse.urljoin(
         html_root,
-        '{0}/'.format(html_relpath)
-    ) if html_relpath != '' else html_root
+        '{0}/'.format(html_relpath)) if html_relpath != '' else html_root
 
     with open(html_path, 'r') as f:
         soup = bs(f.read(), 'html.parser')

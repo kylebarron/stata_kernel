@@ -22,7 +22,7 @@ from .stata_magics import StataMagics
 
 class StataKernel(Kernel):
     implementation = 'stata_kernel'
-    implementation_version = '1.6.2'
+    implementation_version = '1.7.1'
     language = 'stata'
     language_info = {
         'name': 'stata',
@@ -325,7 +325,7 @@ class StataKernel(Kernel):
         for logfile in self.completions.suggestions['logfiles']:
             lcmp = ''
             fname, fext = os.path.splitext(logfile)
-            with open(logfile, "r+", encoding = "utf-8") as fh:
+            with open(logfile, 'r+', encoding='utf-8') as fh:
                 fh.seek(0, os.SEEK_END)
                 pos = fh.tell() - 1
                 # Note the search is inverted because we read from the end

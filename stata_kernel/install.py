@@ -34,7 +34,7 @@ def install_my_kernel_spec(user=True, prefix=None):
             td, 'stata', user=user, replace=True, prefix=prefix)
 
 
-def install_conf():
+def install_conf(conf_file):
     if platform.system() == 'Windows':
         execution_mode = 'automation'
     else:
@@ -83,10 +83,8 @@ def install_conf():
     user_graph_keywords = coefplot,vioplot
     """.format(stata_path, execution_mode))
 
-    conf_file = Path('~/.stata_kernel.conf').expanduser()
-    if not conf_file.is_file():
-        with conf_file.open('w') as f:
-            f.write(conf_default)
+    with conf_file.open('w') as f:
+        f.write(conf_default)
 
 
 def _is_root():
@@ -115,7 +113,9 @@ def main(argv=None):
         args.user = True
 
     install_my_kernel_spec(user=args.user, prefix=args.prefix)
-    install_conf()
+    conf_file = Path('~/.stata_kernel.conf').expanduser()
+    if not conf_file.is_file():
+        install_conf(conf_file)
 
 
 if __name__ == '__main__':

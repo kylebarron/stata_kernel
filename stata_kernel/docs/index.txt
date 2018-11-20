@@ -26,6 +26,8 @@ elements in the ecosystem.
         research results.
     -   Use Stata in the same document with R, Python, or Julia code.
 
+    [Jupyter Notebook]
+
 -   HYDROGEN is a package for the Atom text editor that connects with
     Jupyter kernels to display results interactively in your text
     editor.
@@ -56,7 +58,7 @@ stata_kernel Features
 -   [x] Browse data interactively.
 -   [x] #delimit ; interactive support
 -   [x] Work with a remote session of Stata.
--   [ ] Mata interactive support
+-   [x] Mata interactive support
 -   [ ] Cross-session history file
 
 If you find a bug or want to suggest a new feature, please submit an
@@ -68,7 +70,3 @@ Screenshots
 ATOM
 
 [Atom]
-
-JUPYTER NOTEBOOK
-
-[Jupyter Notebook]

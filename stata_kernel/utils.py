@@ -4,6 +4,7 @@ import platform
 from pathlib import Path
 from shutil import which
 
+
 def find_path():
     if platform.system() == 'Windows':
         return win_find_path()
@@ -16,6 +17,7 @@ def find_path():
                 break
 
         return stata_path
+
 
 def win_find_path():
     import winreg
@@ -35,6 +37,7 @@ def win_find_path():
             break
 
     return fpath
+
 
 def mac_find_path():
     """Attempt to find Stata path on macOS when not on user's PATH
