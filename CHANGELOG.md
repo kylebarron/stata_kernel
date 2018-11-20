@@ -1,5 +1,9 @@
 # Changelog
 
+## [1.7.2] - 2018-11-20
+
+- Fix install. Add _mata_builtins to MANIFEST.in. #239
+
 ## [1.7.1] - 2018-11-19
 
 - Fix `%browse`, `%head`, `%tail` display issues. #237
