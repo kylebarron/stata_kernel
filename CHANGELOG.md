@@ -1,5 +1,9 @@
 # Changelog
 
+## [1.7.3] - 2018-11-20
+
+- Fix log cleaning on Windows. #241
+
 ## [1.7.2] - 2018-11-20
 
 - Fix install. Add _mata_builtins to MANIFEST.in. #239
