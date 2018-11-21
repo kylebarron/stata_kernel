@@ -1,5 +1,9 @@
 # Changelog
 
+## [1.7.4] - 2018-11-21
+
+- Fix finding Stata path on Windows when key not in registry. #242
+
 ## [1.7.3] - 2018-11-20
 
 - Fix log cleaning on Windows. #241
