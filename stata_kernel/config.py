@@ -45,7 +45,7 @@ class Config():
                 self.raise_config_error('execution_mode')
         elif platform.system() == 'Windows':
             execution_mode = 'automation'
-            stata_path = find_path()
+            stata_path = self.get('stata_path', find_path())
         else:
             execution_mode = 'console'
             stata_path = self.get(
