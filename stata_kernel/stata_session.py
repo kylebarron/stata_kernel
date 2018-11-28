@@ -15,7 +15,6 @@ from pkg_resources import resource_filename
 
 if platform.system() == 'Windows':
     import win32com.client
-    from win32api import WinExec
 
 # Regex from: https://stackoverflow.com/a/45448194
 ansi_regex = r'\x1b(' \
@@ -136,11 +135,26 @@ class StataSession():
     def init_windows(self):
         """Start Stata on Windows
 
-        The WinExec step is necessary for some reason to make graphs work. Stata
-        can't be launched directly with `win32com.client.Dispatch()`.
-        """
+        Until version 1.8.0, I included
+        ```py
+        from win32api import WinExec
         WinExec(self.config.get('stata_path'))
-        sleep(0.25)
+        ```
+        _before_ calling `win32com.client.Dispatch`. When opening a new Stata
+        session using `win32com.client.Dispatch`, graph windows from the Stata
+        GUI don't persist when opened. Originally, when developing `stata-exec`,
+        I treated this as a bug, because that window was what a user looked at.
+        However, for the purposes of `stata_kernel`, that's actually a helpful
+        feature!
+
+        - Though the graph window doesn't stay open, the _content_ of the
+          graph is still in memory, so `graph export` still functions correctly!
+        - This solves the problem of annoying graph windows popping up while
+          using Jupyter Notebook. See #188
+        - But since I don't call `graph close`, it's still possible for a user
+          to call `graph export` on the most recently opened graph. See:
+          https://github.com/kylebarron/stata_kernel/commit/58c45636c4bfed24d36bf447f285f5bfb4b312da#commitcomment-31045398
+        """
         self.stata = win32com.client.Dispatch("stata.StataOLEApp")
         self.automate(cmd_name='UtilShowStata', value=1)
         self.config.set('execution_mode', 'automation', permanent=True)
