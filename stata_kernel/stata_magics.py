@@ -154,18 +154,20 @@ class StataMagics():
 
     available_magics = [
         'browse',
-        'head',
-        'tail',
-        'help',
-        # 'exit',
-        # 'restart',
-        'locals',
-        'globals',
         'delimit',
-        'time',
-        'timeit',
+        # 'exit',
+        'globals',
+        'head',
+        'help',
+        'hide_gui',
+        'locals',
+        # 'restart',
+        'set',
+        'show_gui',
         'status',
-        'set']
+        'tail']
+        # 'time',
+        # 'timeit'
 
     csshelp_default = resource_filename(
         'stata_kernel', 'css/_StataKernelHelpDefault.css')
@@ -613,6 +615,12 @@ class StataMagics():
         print_kernel('\tDelimiter:   {}'.format(delim), kernel)
         print_kernel('\tEnvironment: {}'.format(env), kernel)
         return ''
+
+    def magic_show_gui(self, code, kernel):
+        kernel.stata.show_gui()
+
+    def magic_hide_gui(self, code, kernel):
+        kernel.stata.hide_gui()
 
 
 def print_kernel(msg, kernel):

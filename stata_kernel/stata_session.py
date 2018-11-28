@@ -524,6 +524,14 @@ class StataSession():
             self.child.close(force=True)
         return
 
+    def show_gui(self):
+        if self.config.get('execution_mode', '') == 'automation':
+            self.automate(cmd_name='UtilShowStata', value=0)
+
+    def hide_gui(self):
+        if self.config.get('execution_mode', '') == 'automation':
+            self.automate(cmd_name='UtilShowStata', value=1)
+
     def _mata_refresh(self, cm):
         self.mata_mode = cm.mata_mode and not cm.mata_closed
         self.mata_open = cm.mata_open
