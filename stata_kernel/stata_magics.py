@@ -618,9 +618,11 @@ class StataMagics():
 
     def magic_show_gui(self, code, kernel):
         kernel.stata.show_gui()
+        return ''
 
     def magic_hide_gui(self, code, kernel):
         kernel.stata.hide_gui()
+        return ''
 
 
 def print_kernel(msg, kernel):
