@@ -143,7 +143,7 @@ Usage:
 %set [-h] [--permanently] [--reset] key value
 ```
 
-- `key`: Configuration key name. The full list of configuration options is shown on the [Getting Started](../getting_started.md#configuration) page.
+- `key`: Configuration key name. The full list of configuration options is shown on the [Configuration](configuration.md) page.
 - `value`: Value to set.
 - `--permanently`: Store settings permanently.
 - `--reset`: Restore default settings.

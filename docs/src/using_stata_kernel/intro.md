@@ -1,6 +1,6 @@
 # Using the Stata Kernel
 
-`stata_kernel` is the bridge between Stata and the Jupyter ecosystem. It will work with any of the tools outlined in [Using Jupyter](../using_jupyter/intro.md). After [installing](../getting_started.md) and optionally [configuring](../getting_started.md#configuration) `stata_kernel`, it should be ready for use.
+`stata_kernel` is the bridge between Stata and the Jupyter ecosystem. It will work with any of the tools outlined in [Using Jupyter](../using_jupyter/intro.md). After [installing](../getting_started.md) and optionally [configuring](configuration.md) `stata_kernel`, it should be ready for use.
 
 On the rest of this page, you can learn more about some of the features `stata_kernel` provides.
 

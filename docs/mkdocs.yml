@@ -37,6 +37,7 @@ nav:
         - Remote Servers: 'using_jupyter/remote.md'
     - Using the Stata Kernel:
         - Introduction: 'using_stata_kernel/intro.md'
+        - Configuration: 'using_stata_kernel/configuration.md'
         - Magics: 'using_stata_kernel/magics.md'
         - Limitations: 'using_stata_kernel/limitations.md'
         - Troubleshooting: 'using_stata_kernel/troubleshooting.md'
