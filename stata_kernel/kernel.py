@@ -221,6 +221,11 @@ class StataKernel(Kernel):
                     'width': width,
                     'height': height}
 
+                content['data']['image/svg+xml'] = img
+                content['metadata']['image/svg+xml'] = {
+                    'width': int(root.attrib['width'][:-2]),
+                    'height': int(root.attrib['height'][:-2])}
+
             elif graph_path.endswith('.png'):
                 im = Image.open(graph_path)
                 width = im.size[0]
