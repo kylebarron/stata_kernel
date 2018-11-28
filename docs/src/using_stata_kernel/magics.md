@@ -157,6 +157,22 @@ As an example, you can change the graph settings like so:
 %set graph_height 300
 ```
 
+## `%show_gui`
+
+Show Stata Graphical User Interface. Only works on Windows (and Mac if using automation execution mode)"
+
+## `%hide_gui`
+
+Hide Stata Graphical User Interface. Only works on Windows (and Mac if using automation execution mode)"
+
+## `%status`
+
+Print information about:
+
+- Stata kernel version
+- Whether you're in Stata/Mata
+- Current delimiter
+
 <!-- ## `%time`
 
 **Time Execution of a Command**
