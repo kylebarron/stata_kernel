@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.8.0] - 2018-11-28
+
+- Don't launch Stata with WinExec on Windows. This should have the benefit that 1) a new Stata window isn't created unless it needs to be, and 2) graphs don't show up unnecessarily. #249
+- Add magics to show and hide the Stata GUI. #251
+- Fix displaying image in QtConsole. #246
+- Fix completions bug. #247
+
 ## [1.7.4] - 2018-11-21
 
 - Fix finding Stata path on Windows when key not in registry. #242
