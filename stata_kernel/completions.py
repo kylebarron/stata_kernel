@@ -155,9 +155,12 @@ class CompletionsManager():
         # Detect space-delimited word.
         env = 0
         env_add = 0
-        search = re.search(r'(?<![`$"])\w+\Z', code, flags=re.MULTILINE)
+        search = re.search(r'(?<![`$"])\b\w+\Z', code, flags=re.MULTILINE)
+        print('debug1', search)
         searchpos = -1 if search is None else search.start() - 1
+        print('debug2', searchpos)
         pos = max(code.rfind(' '), code.rfind('"'), searchpos)
+        print('debug3', searchpos)
         rcomp = ''
         if pos >= 0:
             pos += 1
@@ -218,6 +221,7 @@ class CompletionsManager():
         # Figure out if this is a local or global; env = 0 (default)
         # will suggest variables in memory.
         chunk = code[pos:]
+        print('debug4', code, chunk)
         lfind = chunk.rfind('`')
         gfind = chunk.rfind('$')
         path_chars = any(x in chunk for x in ['/', '\\', '~'])
