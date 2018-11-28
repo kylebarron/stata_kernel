@@ -128,8 +128,8 @@ class StataSession():
         rc, res = self.do(
             'di "`c(stata_version)\'"\n`done\'', md5='done', display=False)
         self.stata_version = res
-        isold = int(self.stata_version[:2]) < 15
-        if (platform.system() == 'Windows') and isold:
+        is_old = int(self.stata_version[:2]) < 15
+        if (platform.system() == 'Windows') and is_old:
             self.config.set('graph_format', 'png', permanent=True)
 
     def init_windows(self):
@@ -155,6 +155,31 @@ class StataSession():
           to call `graph export` on the most recently opened graph. See:
           https://github.com/kylebarron/stata_kernel/commit/58c45636c4bfed24d36bf447f285f5bfb4b312da#commitcomment-31045398
         """
+        if not self.config.get('connect_to_existing_session', False):
+            import win32gui
+
+            existing_guis = []
+            def existing_guis_callback(handle, data):
+                title = win32gui.GetWindowText(handle)
+                if re.search(r'stata(?!ole)', title, re.I):
+                    existing_guis.append(title)
+
+            existing_oles = []
+            def existing_oles_callback(handle, data):
+                title = win32gui.GetWindowText(handle)
+                if re.search(r'stata(?=ole)', title, re.I):
+                    existing_oles.append(title)
+
+            win32gui.EnumWindows(existing_guis_callback, None)
+            win32gui.EnumWindows(existing_oles_callback, None)
+            num_existing_guis = len(existing_guis)
+            num_existing_oles = len(existing_oles)
+
+            ole_connections = []
+            for i in range(num_existing_guis - num_existing_oles):
+                conn = win32com.client.Dispatch("stata.StataOLEApp")
+                ole_connections.append(conn)
+
         self.stata = win32com.client.Dispatch("stata.StataOLEApp")
         self.automate(cmd_name='UtilShowStata', value=1)
         self.config.set('execution_mode', 'automation', permanent=True)
