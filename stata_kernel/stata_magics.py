@@ -144,6 +144,16 @@ class MagicParsers():
             '--reset', dest='reset', action='store_true',
             help="Restore default settings.", required=False)
 
+        self.show_gui = StataParser(
+            prog='%show_gui', kernel=kernel,
+            description="Show Stata GUI. Only works on Windows (and Mac if using automation execution mode)")
+        self.show_gui.add_argument('code', nargs='*', type=str, help=SUPPRESS)
+
+        self.hide_gui = StataParser(
+            prog='%hide_gui', kernel=kernel,
+            description="Hide Stata GUI. Only works on Windows (and Mac if using automation execution mode)")
+        self.hide_gui.add_argument('code', nargs='*', type=str, help=SUPPRESS)
+
 
 class StataMagics():
     html_base = "https://www.stata.com"
@@ -617,10 +627,18 @@ class StataMagics():
         return ''
 
     def magic_show_gui(self, code, kernel):
+        try:
+            self.parse.show_gui.parse_args(code.split(' '))
+        except:
+            return ''
         kernel.stata.show_gui()
         return ''
 
     def magic_hide_gui(self, code, kernel):
+        try:
+            self.parse.hide_gui.parse_args(code.split(' '))
+        except:
+            return ''
         kernel.stata.hide_gui()
         return ''
 
