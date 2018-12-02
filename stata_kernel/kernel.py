@@ -27,7 +27,8 @@ class StataKernel(Kernel):
     language_info = {
         'name': 'stata',
         'mimetype': 'text/x-stata',
-        'file_extension': '.do'}
+        'file_extension': '.do',
+        'version': '15.1'}
     help_links = [
         {'text': 'stata_kernel Help', 'url': 'https://kylebarron.github.io/stata_kernel/'},
         {'text': 'Stata Help', 'url': 'https://www.stata.com/features/documentation/'}
@@ -96,7 +97,12 @@ class StataKernel(Kernel):
                     'text': dedent(invalid_input_msg),
                     'name': 'stderr'})
 
-            return {'status': 'error', 'execution_count': self.execution_count}
+            return {
+                'status': 'error',
+                'ename': 'error_exception_name',
+                'evalue': 'exception_value',
+                'traceback': [''],
+                'execution_count': self.execution_count}
 
         # Search for magics in the code
         code = self.magics.magic(code, self)
@@ -133,6 +139,9 @@ class StataKernel(Kernel):
         return_obj = {'execution_count': self.execution_count}
         if rc:
             return_obj['status'] = 'error'
+            return_obj['ename'] = 'error_exception_name'
+            return_obj['evalue'] = 'exception_value'
+            return_obj['traceback'] = ['']
         else:
             return_obj['status'] = 'ok'
             return_obj['payload'] = []
