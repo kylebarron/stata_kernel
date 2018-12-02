@@ -4,21 +4,17 @@ It doesn't take much to get `stata_kernel` up and running. Here's how:
 
 ## Prerequisites
 
+- **Stata**. A currently-licensed version of Stata must already be installed. `stata_kernel` has been reported to work with at least Stata 13+, and may work with Stata 12.
 - **Python**. In order to install the kernel, Python 3.5, 3.6, or 3.7 needs to be installed on the computer on which Stata is running.
 
     I suggest installing the [Anaconda
     distribution](https://www.anaconda.com/download/). This doesn't require
-    administrator privileges, and is the simplest way to install Python.
+    administrator privileges, and is the simplest way to install Python and many of the most popular scientific packages.
 
-    If you don't install Python through Anaconda, you may need to install some
-    dependencies manually, like [Cython](https://cython.org/#download).
-
-    The Anaconda installer includes many third party libraries for Python that
+    The full Anaconda installation is quite large, and includes many libraries for Python that
     `stata_kernel` doesn't use. If you don't plan to use Python and want to use
-    less disk space, install [Miniconda](https://conda.io/miniconda.html), which
-    includes few packages other than Python. Then when [installing the package](#package-install) any other necessary dependencies will be
+    less disk space, install [Miniconda](https://conda.io/miniconda.html), a bare-bones version of Anaconda. Then when [installing the package](#package-install) any other necessary dependencies will be
     downloaded automatically.
-
 
 ???+ note "Windows-specific steps"
 
@@ -37,12 +33,6 @@ pip install stata_kernel
 python -m stata_kernel.install
 ```
 
-The second command will try to find your Stata executable, and will warn you if
-it can't. In that case, you'll have to set it yourself. Refer to the
-[configuration](using_stata_kernel/configuration.md) settings.
-
-`python -m stata_kernel.install` only needs to be run _once ever_.
-
 If Python 2 is the default version of Python on your system, you may need to use
 ```
 pip3 install stata_kernel
@@ -56,3 +46,9 @@ pip install stata_kernel --upgrade
 ```
 
 When upgrading, you don't have to run `python -m stata_kernel.install` again.
+
+## Using
+
+Next, read more about [Jupyter and its different
+interfaces](using_jupyter/intro.md) or about [how to use the Stata
+kernel](using_stata_kernel/intro.md), specifically.

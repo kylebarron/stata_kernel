@@ -46,7 +46,7 @@ def install_conf(conf_file):
             WARNING: Could not find Stata path.
             Refer to the documentation to see how to set it manually:
 
-            https://kylebarron.github.io/stata_kernel/getting_started/#configuration
+            https://kylebarron.github.io/stata_kernel/using_stata_kernel/configuration
 
             """
         print(dedent(msg))
