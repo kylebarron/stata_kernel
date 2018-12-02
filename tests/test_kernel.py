@@ -48,17 +48,35 @@ class MyKernelTests(jupyter_kernel_test.KernelTests):
         self._test_execute_stdout('di 6*7', '42')
 
     def test_stata_display_data(self):
+        self._test_display_data('scatter price mpg', 'text/html')
         self._test_display_data('scatter price mpg', 'image/svg+xml')
         self._test_display_data('scatter price mpg', 'application/pdf')
 
-    def _test_display_data(self, code, mimetype):
+    def test_stata_more(self):
+        self._test_execute_stdout('more', '--more--', exact=True)
+
+    def test_stata_display_unicode_letter(self):
+        """https://github.com/kylebarron/stata_kernel/issues/196"""
+        code = """\
+        local a "ä"
+        di "`a'"\
+        """
+        self._test_execute_stdout(code, 'ä', exact=True)
+
+    def test_stata_scatter_regex(self):
+        """https://github.com/kylebarron/stata_kernel/issues/205"""
+        self._test_display_data('sc price mpg', 'image/svg+xml')
+        self._test_display_data('scatter price mpg', 'image/svg+xml')
+
+
+    def _test_display_data(self, code, mimetype, _not=False):
         reply, output_msgs = self._run(code=code)
         self.assertEqual(reply['content']['status'], 'ok')
         self.assertGreaterEqual(len(output_msgs), 1)
         self.assertEqual(output_msgs[0]['msg_type'], 'display_data')
         self.assertIn(mimetype, output_msgs[0]['content']['data'])
 
-    def _test_execute_stdout(self, code, output):
+    def _test_execute_stdout(self, code, output, exact=False):
         """
         This strings all output sent to stdout together and then checks that
         `code` is in `output`
@@ -71,7 +89,11 @@ class MyKernelTests(jupyter_kernel_test.KernelTests):
         for msg in output_msgs:
             if (msg['msg_type'] == 'stream') and (msg['content']['name'] == 'stdout'):
                 all_output.append(msg['content']['text'])
-        self.assertIn(output, ''.join(all_output))
+        all_output = ''.join(all_output).strip()
+        if exact:
+            self.assertEqual(output, all_output)
+        else:
+            self.assertIn(output, all_output)
 
     def _run(self, code, dataset='auto', **kwargs):
         """Wrapper to run arbitrary code in the Stata kernel
