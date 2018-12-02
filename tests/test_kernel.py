@@ -37,43 +37,33 @@ class MyKernelTests(jupyter_kernel_test.KernelTests):
         },
     ]
 
-
-    # Samples of code which generate a result value (ie, some text
-    # displayed as Out[n])
-    # code_execute_result = [
-    #     {'code': 'di 6*7', 'result': '42\n\n'}
-    # ]
-
     # Samples of code which should generate a rich display output, and
     # the expected MIME type
     # code_display_data = [
     #     {'code': 'sysuse auto\nscatter price mpg', 'mime': 'image/svg+xml'}
     # ]
 
-    # You can also write extra tests. We recommend putting your kernel name
-    # in the method name, to avoid clashing with any tests that
-    # jupyter_kernel_test adds in the future.
-    def test_stata_simple_display(self):
-        self.flush_channels()
-        reply, output_msgs = self.execute_helper(code='di "hi"')
-        self.assertEqual(output_msgs[0]['header']['msg_type'], 'stream')
-        self.assertEqual(output_msgs[0]['content']['name'], 'stdout')
-        self.assertEqual(output_msgs[0]['content']['text'], 'hi\n')
-
     def test_stata_stdout(self):
         self._test_execute_stdout('di "hi"\ndi "bye"', 'hi\n\nbye')
         self._test_execute_stdout('di 6*7', '42')
 
+    def test_stata_display_data(self):
+        self._test_display_data('scatter price mpg', 'image/svg+xml')
+        self._test_display_data('scatter price mpg', 'application/pdf')
 
-    # def _test_display_data()
+    def _test_display_data(self, code, mimetype):
+        reply, output_msgs = self._run(code=code)
+        self.assertEqual(reply['content']['status'], 'ok')
+        self.assertGreaterEqual(len(output_msgs), 1)
+        self.assertEqual(output_msgs[0]['msg_type'], 'display_data')
+        self.assertIn(mimetype, output_msgs[0]['content']['data'])
 
     def _test_execute_stdout(self, code, output):
         """
         This strings all output sent to stdout together and then checks that
         `code` is in `output`
         """
-        self.flush_channels()
-        reply, output_msgs = self.execute_helper(code=code)
+        reply, output_msgs = self._run(code=code)
         self.assertEqual(reply['content']['status'], 'ok')
         self.assertGreaterEqual(len(output_msgs), 1)
 
@@ -82,6 +72,14 @@ class MyKernelTests(jupyter_kernel_test.KernelTests):
             if (msg['msg_type'] == 'stream') and (msg['content']['name'] == 'stdout'):
                 all_output.append(msg['content']['text'])
         self.assertIn(output, ''.join(all_output))
+
+    def _run(self, code, dataset='auto', **kwargs):
+        """Wrapper to run arbitrary code in the Stata kernel
+        """
+        self.flush_channels()
+        self.execute_helper(f'sysuse {dataset}, clear')
+        return self.execute_helper(code=code, **kwargs)
+
 
 
 if __name__ == '__main__':
