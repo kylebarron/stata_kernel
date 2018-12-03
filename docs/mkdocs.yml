@@ -28,9 +28,9 @@ nav:
     - Getting Started: 'getting_started.md'
     - Using Jupyter:
         - Introduction: 'using_jupyter/intro.md'
-        - Jupyter Notebook: 'using_jupyter/notebook.md'
-        - Hydrogen in Atom: 'using_jupyter/atom.md'
         - JupyterLab: 'using_jupyter/lab.md'
+        - Hydrogen in Atom: 'using_jupyter/atom.md'
+        - Jupyter Notebook: 'using_jupyter/notebook.md'
         - Nteract: 'using_jupyter/nteract.md'
         - Jupyter QtConsole: 'using_jupyter/qtconsole.md'
         - Jupyter Console: 'using_jupyter/console.md'

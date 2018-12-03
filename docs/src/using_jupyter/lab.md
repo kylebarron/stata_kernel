@@ -2,9 +2,9 @@
 
 Jupyter Lab is the successor to [Jupyter Notebook](notebook.md), and allows for having multiple documents side-by-side.
 
-As of early December 2018, there is not yet syntax highlighting for Stata in Jupyter lab.
+### Starting JupyterLab
 
-You can start this by running:
+You can start JupyterLab by running:
 
 ```
 jupyter lab
@@ -12,7 +12,20 @@ jupyter lab
 
 in your terminal or command prompt. Just like the Notebook, this should open up a page in your browser, where you can open a new Stata notebook or console.
 
+### Syntax highlighting
+
+To enable syntax highlighting for Stata with JupyterLab, you need to run (only once):
+```
+jupyter labextension install jupyterlab-stata-highlight
+```
+
+### Plugins
+
+One of the benefits of JupyterLab over the Notebook is that it was designed for extensibility. There's a growing list of plugins that can be used with JupyterLab. Here's an unofficial list: <https://github.com/mauhai/awesome-jupyterlab>
+
+### More info
+
 Project documentation website:
-https://jupyterlab.readthedocs.io/en/stable/
+<https://jupyterlab.readthedocs.io/en/stable/>
 
 ![](https://jupyterlab.readthedocs.io/en/stable/_images/jupyterlab.png)

@@ -28,16 +28,22 @@ It doesn't take much to get `stata_kernel` up and running. Here's how:
 
 To install the kernel, from a terminal or command prompt run:
 
-```
+```bash
 pip install stata_kernel
 python -m stata_kernel.install
+# Syntax highlighting in JupyterLab
+jupyter labextension install jupyterlab-stata-highlight
 ```
 
 If Python 2 is the default version of Python on your system, you may need to use
-```
+```bash
 pip3 install stata_kernel
 python3 -m stata_kernel.install
+# Syntax highlighting in JupyterLab
+jupyter labextension install jupyterlab-stata-highlight
 ```
+
+### Upgrading
 
 To upgrade from a previous version of `stata_kernel`, from a terminal or command prompt run
 
@@ -46,6 +52,15 @@ pip install stata_kernel --upgrade
 ```
 
 When upgrading, you don't have to run `python -m stata_kernel.install` again.
+
+#### Release notifications
+
+If you'd like to be notified when a new version of `stata_kernel` is released,
+you can [create a GitHub account](https://github.com/join), then go to [the
+project homepage](https://github.com/kylebarron/stata_kernel), and in the top
+right, click "Watch" and select "Releases Only".
+
+![subscribe-to-releases](../img/subscribe-to-releases.png)
 
 ## Using
 

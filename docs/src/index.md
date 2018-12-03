@@ -12,11 +12,10 @@ with dozens of programming languages.
 `stata_kernel` is the bridge that interactively connects Stata to all the
 elements in the ecosystem.
 
-- The [**Jupyter Notebook**](using_jupyter/notebook.md) is a web-based interactive editor that allows for interweaving of code, text, and results.
+- [**JupyterLab**](using_jupyter/lab.md) is a web-based interactive editor that allows for interweaving of code, text, and results.
 
     - Splice models in LaTeX math mode with the code that implements them and the graphs depicting their output.
     - Jupyter Notebooks can be exported as PDFs or HTML, and are as good for teaching new students as they are for displaying research results.
-    - Use Stata in the same document with R, Python, or Julia code.
 
     ![Jupyter Notebook](img/jupyter_notebook_example.gif)
 
@@ -37,9 +36,6 @@ elements in the ecosystem.
 - [x] Work with a [remote session of Stata](using_jupyter/remote).
 - [x] Mata interactive support
 - [ ] Cross-session history file
-
-If you find a bug or want to suggest a new feature, please
-[submit an issue on Github here](https://github.com/kylebarron/stata_kernel/issues/new/choose).
 
 ## Screenshots
 

@@ -1,8 +1,8 @@
-# Remote Servers
+# Remote Unix/Linux Servers
 
 ## Introduction
 
-There are two ways to use Jupyter on a remote server.
+There are two ways to use Jupyter on a remote Unix/Linux server.
 
 - The less-usable way, but which is simpler to get started with, is simply using [Jupyter Console](../console) within a remote terminal. This gives you many—but not all—of the features of `stata_kernel`, including syntax highlighting, free-flowing comments, autocompletions, and `#delimit ;` support. To do this, all you need to do is install `stata_kernel` on the remote server (Stata must also be installed on that remote server).
 
