@@ -60,7 +60,9 @@ you can [create a GitHub account](https://github.com/join), then go to [the
 project homepage](https://github.com/kylebarron/stata_kernel), and in the top
 right, click "Watch" and select "Releases Only".
 
-![subscribe-to-releases](../img/subscribe-to-releases.png)
+![subscribe-to-releases](img/subscribe-to-releases.png)
+
+While you're there, click "Star" as well! :blush:
 
 ## Using
 
