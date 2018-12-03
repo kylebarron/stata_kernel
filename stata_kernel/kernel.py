@@ -27,6 +27,7 @@ class StataKernel(Kernel):
     language_info = {
         'name': 'stata',
         'mimetype': 'text/x-stata',
+        'codemirror_mode': 'stata',
         'file_extension': '.do',
         'version': '15.1'}
     help_links = [
