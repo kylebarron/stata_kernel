@@ -11,6 +11,8 @@ Jupyter home screen. Click the *New*  drop down menu in the top right and choose
 `Stata` from the list to start a new notebook using Stata as your default
 kernel.
 
+Below is a gif that shows each step of this process.
+
 [Click here for more documentation.](https://jupyter-notebook.readthedocs.io/en/stable/notebook.html)
 
-![](../img/jupyter_notebook.png)
+![](../img/starting_jupyter_notebook.gif)

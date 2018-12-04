@@ -285,7 +285,7 @@ S_MACH:    PC (64-bit x86-64)</code></pre>
 <p>Usage:</p>
 <pre><code>%set [-h] [--permanently] [--reset] key value</code></pre>
 <ul>
-<li><code>key</code>: Configuration key name. The full list of configuration options is shown on the <a href="https://kylebarron.github.io/stata_kernel/getting_started#configuration">Getting Started</a> page.</li>
+<li><code>key</code>: Configuration key name. The full list of configuration options is shown on the <a href="https://kylebarron.github.io/stata_kernel/using_stata_kernel/configuration">Configuration</a> page.</li>
 <li><code>value</code>: Value to set.</li>
 <li><code>--permanently</code>: Store settings permanently.</li>
 <li><code>--reset</code>: Restore default settings.</li>
@@ -295,6 +295,17 @@ S_MACH:    PC (64-bit x86-64)</code></pre>
 %set graph_scale 1
 %set graph_width 500
 %set graph_height 300</code></pre>
+<h2 id="show_gui"><code>%show_gui</code></h2>
+<p>Show Stata Graphical User Interface. Only works on Windows (and Mac if using automation execution mode)"</p>
+<h2 id="hide_gui"><code>%hide_gui</code></h2>
+<p>Hide Stata Graphical User Interface. Only works on Windows (and Mac if using automation execution mode)"</p>
+<h2 id="status"><code>%status</code></h2>
+<p>Print information about:</p>
+<ul>
+<li>Stata kernel version</li>
+<li>Whether you’re in Stata/Mata</li>
+<li>Current delimiter</li>
+</ul>
 <!-- ## `%time`
 
 **Time Execution of a Command**

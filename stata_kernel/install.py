@@ -1,16 +1,17 @@
 import os
-import re
 import sys
 import json
 import argparse
 import platform
 
-from shutil import copyfile, which
+from shutil import copyfile
 from pathlib import Path
 from textwrap import dedent
 from pkg_resources import resource_filename
 from IPython.utils.tempdir import TemporaryDirectory
 from jupyter_client.kernelspec import KernelSpecManager
+
+from .utils import find_path
 
 kernel_json = {
     "argv": [sys.executable, "-m", "stata_kernel", "-f", "{connection_file}"],
@@ -33,27 +34,19 @@ def install_my_kernel_spec(user=True, prefix=None):
             td, 'stata', user=user, replace=True, prefix=prefix)
 
 
-def install_conf():
+def install_conf(conf_file):
     if platform.system() == 'Windows':
         execution_mode = 'automation'
-        stata_path = win_find_path()
     else:
         execution_mode = 'console'
-        for i in ['stata-mp', 'StataMP', 'stata-se', 'StataSE', 'stata',
-                  'Stata']:
-            stata_path = which(i)
-            if stata_path:
-                break
 
-        if (not stata_path) and (platform.system() == 'Darwin'):
-            stata_path = mac_find_path()
-
+    stata_path = find_path()
     if not stata_path:
         msg = """\
             WARNING: Could not find Stata path.
             Refer to the documentation to see how to set it manually:
 
-            https://kylebarron.github.io/stata_kernel/getting_started/#configuration
+            https://kylebarron.github.io/stata_kernel/using_stata_kernel/configuration
 
             """
         print(dedent(msg))
@@ -87,67 +80,11 @@ def install_conf():
 
     # List of user-created keywords that produce graphs.
     # Should be comma-delimited.
-    user_graph_keywords = vioplot
+    user_graph_keywords = coefplot,vioplot
     """.format(stata_path, execution_mode))
 
-    with Path('~/.stata_kernel.conf').expanduser().open('w') as f:
+    with conf_file.open('w') as f:
         f.write(conf_default)
-
-
-def win_find_path():
-    import winreg
-    reg = winreg.ConnectRegistry(None, winreg.HKEY_CLASSES_ROOT)
-    subkeys = [
-        r'Stata15Do\shell\do\command', r'Stata14Do\shell\do\command',
-        r'Stata13Do\shell\do\command', r'Stata12Do\shell\do\command']
-
-    fpath = ''
-    for subkey in subkeys:
-        try:
-            key = winreg.OpenKey(reg, subkey)
-            fpath = winreg.QueryValue(key, None).split('"')[1]
-        except FileNotFoundError:
-            pass
-        if fpath:
-            break
-
-    return fpath
-
-
-def mac_find_path():
-    """Attempt to find Stata path on macOS when not on user's PATH
-
-    Returns:
-        (str): Path to Stata. Empty string if not found.
-    """
-    path = Path('/Applications/Stata')
-    if not path.exists():
-        return ''
-
-    dirs = [
-        x for x in path.iterdir() if re.search(r'Stata(SE|MP)?\.app', x.name)]
-    if not dirs:
-        return ''
-
-    if len(dirs) > 1:
-        for ext in ['MP.app', 'SE.app', '.app']:
-            name = [x for x in dirs if x.name.endswith(ext)]
-            if name:
-                dirs = name
-                break
-
-    path = dirs[0] / 'Contents' / 'MacOS'
-    if not path.exists():
-        return ''
-
-    binaries = [x for x in path.iterdir()]
-    for pref in ['stata-mp', 'stata-se', 'stata']:
-        name = [x for x in binaries if x.name == pref]
-        if name:
-            binaries = name
-            break
-
-    return str(binaries[0])
 
 
 def _is_root():
@@ -176,7 +113,9 @@ def main(argv=None):
         args.user = True
 
     install_my_kernel_spec(user=args.user, prefix=args.prefix)
-    install_conf()
+    conf_file = Path('~/.stata_kernel.conf').expanduser()
+    if not conf_file.is_file():
+        install_conf(conf_file)
 
 
 if __name__ == '__main__':

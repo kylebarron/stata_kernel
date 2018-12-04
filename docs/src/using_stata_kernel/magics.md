@@ -143,7 +143,7 @@ Usage:
 %set [-h] [--permanently] [--reset] key value
 ```
 
-- `key`: Configuration key name. The full list of configuration options is shown on the [Getting Started](../getting_started.md#configuration) page.
+- `key`: Configuration key name. The full list of configuration options is shown on the [Configuration](configuration.md) page.
 - `value`: Value to set.
 - `--permanently`: Store settings permanently.
 - `--reset`: Restore default settings.
@@ -156,6 +156,22 @@ As an example, you can change the graph settings like so:
 %set graph_width 500
 %set graph_height 300
 ```
+
+## `%show_gui`
+
+Show Stata Graphical User Interface. Only works on Windows (and Mac if using automation execution mode)"
+
+## `%hide_gui`
+
+Hide Stata Graphical User Interface. Only works on Windows (and Mac if using automation execution mode)"
+
+## `%status`
+
+Print information about:
+
+- Stata kernel version
+- Whether you're in Stata/Mata
+- Current delimiter
 
 <!-- ## `%time`
 

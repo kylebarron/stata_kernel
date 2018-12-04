@@ -44,6 +44,11 @@ class MagicParsers():
             required=False)
 
         self.browse = StataParser(prog='%browse', kernel=kernel)
+        self.browse = StataParser(
+            prog='%browse', kernel=kernel,
+            usage='%(prog)s [-h] [N] [varlist] [if]',
+            description="Display the first N rows of the dataset in memory.")
+        self.browse.add_argument('code', nargs='*', type=str, help=SUPPRESS)
 
         self.time = StataParser(prog='%time', kernel=kernel)
         self.time.add_argument(
@@ -71,7 +76,8 @@ class MagicParsers():
         info = (
             kernel.implementation, kernel.implementation_version,
             kernel.language.title(), kernel.language_version)
-        self.help._msg_html = dedent("""
+        self.help._msg_html = dedent(
+            """
         <p style="font-family:Monospace;">
         {0} {1} for {2} {3}. Type<br><br>
 
@@ -89,7 +95,8 @@ class MagicParsers():
             %help command_or_topic</span>
         </p>
         """.format(*info))
-        self.help._msg_plain = dedent("""\
+        self.help._msg_plain = dedent(
+            """\
         {0} {1} for {2} {3}.
 
         Note: This front end cannot display rich HTML help. See the online
@@ -112,15 +119,13 @@ class MagicParsers():
             prog='%head', kernel=kernel,
             usage='%(prog)s [-h] [N] [varlist] [if]',
             description="Display the first N rows of the dataset in memory.")
-        self.head.add_argument(
-            'code', nargs='*', type=str, help=SUPPRESS)
+        self.head.add_argument('code', nargs='*', type=str, help=SUPPRESS)
 
         self.tail = StataParser(
             prog='%tail', kernel=kernel,
             usage='%(prog)s [-h] [N] [varlist] [if]',
             description="Display the last N rows of the dataset in memory.")
-        self.tail.add_argument(
-            'code', nargs='*', type=str, help=SUPPRESS)
+        self.tail.add_argument('code', nargs='*', type=str, help=SUPPRESS)
 
         #######################################################################
         #                                                                     #
@@ -128,7 +133,8 @@ class MagicParsers():
         #                                                                     #
         #######################################################################
 
-        self.set = StataParser(prog='%set', kernel=kernel, description='Set configuration value.')
+        self.set = StataParser(
+            prog='%set', kernel=kernel, description='Set configuration value.')
         self.set.add_argument('key', type=str, help='Configuration key name.')
         self.set.add_argument('value', type=str, help='Value to set.')
         self.set.add_argument(
@@ -137,6 +143,16 @@ class MagicParsers():
         self.set.add_argument(
             '--reset', dest='reset', action='store_true',
             help="Restore default settings.", required=False)
+
+        self.show_gui = StataParser(
+            prog='%show_gui', kernel=kernel,
+            description="Show Stata GUI. Only works on Windows (and Mac if using automation execution mode)")
+        self.show_gui.add_argument('code', nargs='*', type=str, help=SUPPRESS)
+
+        self.hide_gui = StataParser(
+            prog='%hide_gui', kernel=kernel,
+            description="Hide Stata GUI. Only works on Windows (and Mac if using automation execution mode)")
+        self.hide_gui.add_argument('code', nargs='*', type=str, help=SUPPRESS)
 
 
 class StataMagics():
@@ -148,24 +164,25 @@ class StataMagics():
 
     available_magics = [
         'browse',
-        'head',
-        'tail',
-        'help',
-        # 'exit',
-        # 'restart',
-        'locals',
-        'globals',
         'delimit',
-        'time',
-        'timeit',
-        'set']
+        # 'exit',
+        'globals',
+        'head',
+        'help',
+        'hide_gui',
+        'locals',
+        # 'restart',
+        'set',
+        'show_gui',
+        'status',
+        'tail']
+        # 'time',
+        # 'timeit'
 
     csshelp_default = resource_filename(
         'stata_kernel', 'css/_StataKernelHelpDefault.css')
-    help_kernel_html = resource_filename(
-        'stata_kernel', 'docs/index.html')
-    help_kernel_plain = resource_filename(
-        'stata_kernel', 'docs/index.txt')
+    help_kernel_html = resource_filename('stata_kernel', 'docs/index.html')
+    help_kernel_plain = resource_filename('stata_kernel', 'docs/index.txt')
     help_magics_html = resource_filename(
         'stata_kernel', 'docs/using_stata_kernel/magics.html')
     help_magics_plain = resource_filename(
@@ -230,55 +247,58 @@ class StataMagics():
                     print_kernel(fmt.format(t, l), kernel)
 
     def magic_browse(self, code, kernel):
-        cmd = """\
-            if _N <= 200 {{
-                export delim `"{0}/data.csv"', replace datafmt
-            }}
-            else {{
-                export delim `"{0}/data.csv"' in 1/200, replace datafmt
-
-            }}
-            """.format(kernel.conf.get('cache_dir'))
-        cm = CodeManager(cmd)
-        text_to_run, md5, text_to_exclude = cm.get_text(kernel.conf)
-        rc, res = kernel.stata.do(
-            text_to_run, md5, text_to_exclude=text_to_exclude, display=False)
-        df = pd.read_csv(kernel.conf.get('cache_dir') / 'data.csv')
-        df.index += 1
-        html = df.to_html(na_rep='.', notebook=True)
-        content = {'data': {'text/html': html}, 'metadata': {}}
-        kernel.send_response(kernel.iopub_socket, 'display_data', content)
         self.status = -1
+        try:
+            self.parse.browse.parse_args(code.split(' '))
+        except:
+            return ''
+        res = self.show_data_head(code, kernel, N=200)
+        if res:
+            try:
+                self.parse.browse.error(res)
+            except:
+                pass
         return ''
 
-    def magic_head(self, code, kernel):
+    def magic_head(self, code, kernel, N=None):
         self.status = -1
         try:
             self.parse.head.parse_args(code.split(' '))
         except:
             return ''
-
-        hasif = re.search(r"\bif\b", code) is not None
-        using = kernel.conf.get('cache_dir') / 'data_head.csv'
-        cmd = '_StataKernelHead ' + code.strip() + ' using ' + str(using)
-        cm = CodeManager(cmd)
-        text_to_run, md5, text_to_exclude = cm.get_text(kernel.conf)
-        rc, res = kernel.stata.do(text_to_run, md5, text_to_exclude=text_to_exclude, display=False)
-        if rc:
+        res = self.show_data_head(code, kernel, N=10)
+        if res:
             try:
                 self.parse.head.error(res)
             except:
-                return ''
+                pass
+        return ''
+
+    def show_data_head(self, code, kernel, N=10):
+        hasif = re.search(r"\bif\b", code) is not None
+        using = kernel.conf.get('cache_dir') / 'data_head.csv'
+        cmd = '_StataKernelHead ' + code.strip() + ' using ' + str(using)
+        cmd += ' , n_default({})'.format(N)
+        cm = CodeManager(cmd)
+        text_to_run, md5, text_to_exclude = cm.get_text(kernel.conf)
+        rc, res = kernel.stata.do(
+            text_to_run, md5, text_to_exclude=text_to_exclude, display=False)
+        if rc:
+            return res
         else:
             if hasif:
-                df = pd.read_csv(using, index_col = 0)
+                df = pd.read_csv(using, index_col=0, dtype=str)
                 df.index.name = None
             else:
-                df = pd.read_csv(using)
+                df = pd.read_csv(using, dtype=str)
                 df.index += 1
 
-            html = df.to_html(na_rep = '.', notebook=True)
-            content = {'data': {'text/plain': res, 'text/html': html}, 'metadata': {}}
+            html = df.to_html(na_rep='.', notebook=True)
+            content = {
+                'data': {
+                    'text/plain': res,
+                    'text/html': html},
+                'metadata': {}}
             kernel.send_response(kernel.iopub_socket, 'display_data', content)
 
         return ''
@@ -295,7 +315,8 @@ class StataMagics():
         cmd = '_StataKernelTail ' + code.strip() + ' using ' + str(using)
         cm = CodeManager(cmd)
         text_to_run, md5, text_to_exclude = cm.get_text(kernel.conf)
-        rc, res = kernel.stata.do(text_to_run, md5, text_to_exclude=text_to_exclude, display=False)
+        rc, res = kernel.stata.do(
+            text_to_run, md5, text_to_exclude=text_to_exclude, display=False)
         if rc:
             try:
                 self.parse.tail.error(res)
@@ -303,18 +324,23 @@ class StataMagics():
                 return ''
         else:
             if hasif:
-                df = pd.read_csv(using, index_col = 0)
+                df = pd.read_csv(using, index_col=0, dtype=str)
                 df.index.name = None
             else:
+                res = res.rstrip()
                 lastn = res.rfind('\n')
                 nobs = int(res[lastn:].strip())
                 res = res[:lastn]
-                df = pd.read_csv(using)
+                df = pd.read_csv(using, dtype=str)
                 nread = df.shape[0]
                 df.index = list(range(nobs - nread + 1, nobs + 1))
 
-            html = df.to_html(na_rep = '.', notebook=True)
-            content = {'data': {'text/plain': res, 'text/html': html}, 'metadata': {}}
+            html = df.to_html(na_rep='.', notebook=True)
+            content = {
+                'data': {
+                    'text/plain': res,
+                    'text/html': html},
+                'metadata': {}}
             kernel.send_response(kernel.iopub_socket, 'display_data', content)
 
         return ''
@@ -347,7 +373,7 @@ class StataMagics():
         if self.status == -1:
             return code
 
-        cm = CodeManager("macro dir")
+        cm = CodeManager(kernel.stata._mata_escape("macro dir"))
         text_to_run, md5, text_to_exclude = cm.get_text(kernel.conf)
         rc, res = kernel.stata.do(
             text_to_run, md5, text_to_exclude=text_to_exclude, display=False)
@@ -519,8 +545,7 @@ class StataMagics():
 
         cmd = scode.replace(" ", "_")
         try:
-            reply = urllib.request.urlopen(
-                self.html_help.format(cmd))
+            reply = urllib.request.urlopen(self.html_help.format(cmd))
             html = reply.read().decode("utf-8")
             soup = bs(html, 'html.parser')
 
@@ -588,6 +613,34 @@ class StataMagics():
         self.status = -1
         print_kernel("Magic restart has not been implemented.", kernel)
         return code
+
+    def magic_status(self, code, kernel):
+        self.status = -1
+        delim = ';' if kernel.sc_delimit_mode else 'cr'
+        env = 'mata' if kernel.stata.mata_mode else 'stata'
+        info = (
+            kernel.implementation, kernel.implementation_version,
+            kernel.language, kernel.language_version)
+        print_kernel('{0} {1} for {2} {3}'.format(*info), kernel)
+        print_kernel('\tDelimiter:   {}'.format(delim), kernel)
+        print_kernel('\tEnvironment: {}'.format(env), kernel)
+        return ''
+
+    def magic_show_gui(self, code, kernel):
+        try:
+            self.parse.show_gui.parse_args(code.split(' '))
+        except:
+            return ''
+        kernel.stata.show_gui()
+        return ''
+
+    def magic_hide_gui(self, code, kernel):
+        try:
+            self.parse.hide_gui.parse_args(code.split(' '))
+        except:
+            return ''
+        kernel.stata.hide_gui()
+        return ''
 
 
 def print_kernel(msg, kernel):

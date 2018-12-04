@@ -1,8 +1,18 @@
-# Remote Servers
+# Remote Unix/Linux Servers
 
-Using Jupyter to run code on a remote server is one of my favorite parts of Jupyter. Since the only data communicated to and from the server are the text of the input and output command, this has low latency, and is fast even on slower networks.
+## Introduction
 
-When using a program like `tmux` or `screen` on the server, you can reconnect _to the same Jupyter kernel_ (and thus the same Stata session) after becoming disconnected to the network (i.e. if a VPN times out). In contrast, with a normal console or GUI Stata session, there is no way to reconnect to the running Stata session, and you'd have to recreate the state of the environment from scratch.
+There are two ways to use Jupyter on a remote Unix/Linux server.
+
+- The less-usable way, but which is simpler to get started with, is simply using [Jupyter Console](../console) within a remote terminal. This gives you many—but not all—of the features of `stata_kernel`, including syntax highlighting, free-flowing comments, autocompletions, and `#delimit ;` support. To do this, all you need to do is install `stata_kernel` on the remote server (Stata must also be installed on that remote server).
+
+- The much more powerful way to run Jupyter on a remote server is to set it up so that you're working with Jupyter Notebook in your local web browser, or with Hydrogen in Atom running locally, but where all the computation happens on the remote server. This is a little more involved to set up, but, once running, makes working on a remote server effortless.
+
+    This setup is one of my favorite parts of Jupyter. The only information communicated to the server is the input command as text, and the only information communicated back from the server to the local computer is the output of the command. Since very little information is sent back and forth, this setup has very low latency, which means that it's fast even on slower networks: if you're waiting on output, it's likely because Stata is slow, not the connection.
+
+    When using a program like `tmux` or `screen` on the server, you can reconnect _to the same Jupyter kernel_ (and thus the same Stata session) after becoming disconnected from the network (i.e. if a VPN times out). In contrast, with a normal console or GUI Stata session, there is no way to reconnect to the running Stata session, and you'd have to recreate the state of the environment from scratch.
+
+The rest of this document explains how to set up the latter method.
 
 !!! warning
 

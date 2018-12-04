@@ -15,7 +15,6 @@ from pkg_resources import resource_filename
 
 if platform.system() == 'Windows':
     import win32com.client
-    from win32api import WinExec
 
 # Regex from: https://stackoverflow.com/a/45448194
 ansi_regex = r'\x1b(' \
@@ -47,6 +46,34 @@ class StataSession():
         self.kernel = kernel
         self.banner = 'stata_kernel {}\n'.format(kernel.implementation_version)
 
+        # Mata switches
+        # -------------
+
+        self.mata_mode = False
+        self.mata_open = False
+        self.mata_error = False
+        self.mata_restart = False
+        self.stata_prompt = r'\r\n\. '
+        self.mata_prompt = r'\r\n: '
+
+        self.stata_prompt_dot = r'\.'
+        self.mata_prompt_dot = r'[\.:\>]'
+
+        self.stata_prompt_regex = r'^(  \d+)?\.  ??(.+)$'
+        self.mata_prompt_regex = r'^([:\>])  ??(.+)$'
+
+        self.mata_trim = re.compile(
+            r'((\r\n|\r|\n)\s+?)?(\r\n|\r|\n)\Z', flags=re.MULTILINE)
+        self.mata_enter = re.compile(
+            r'^[^\r\n\S]*\.  ??m(ata)?[^\r\n\S]*(:[^\r\n\S]*)?$').match
+
+        self.prompt = self.stata_prompt
+        self.prompt_dot = self.stata_prompt_dot
+        self.prompt_regex = self.stata_prompt_regex
+
+        # New version
+        # -----------
+
         try:
             r = requests.get('https://pypi.org/pypi/stata-kernel/json')
             pypi_v = r.json()['info']['version']
@@ -62,6 +89,10 @@ class StataSession():
         # See https://github.com/kylebarron/stata_kernel/issues/177
         self.linesize = 255
         self.cwd = os.getcwd()
+
+        # Platform
+        # --------
+
         if platform.system() == 'Windows':
             self.init_windows()
         elif platform.system() == 'Darwin':
@@ -72,6 +103,9 @@ class StataSession():
         else:
             self.init_console()
             self.config.set('execution_mode', 'console', permanent=True)
+
+        # Stata
+        # -----
 
         adofile = resource_filename(
             'stata_kernel', 'ado/_StataKernelCompletions.ado')
@@ -94,18 +128,33 @@ class StataSession():
         rc, res = self.do(
             'di "`c(stata_version)\'"\n`done\'', md5='done', display=False)
         self.stata_version = res
-        if (platform.system() == 'Windows') and (int(self.stata_version[:2]) <
-                                                 15):
+        isold = int(self.stata_version[:2]) < 15
+        if (platform.system() == 'Windows') and isold:
             self.config.set('graph_format', 'png', permanent=True)
 
     def init_windows(self):
         """Start Stata on Windows
 
-        The WinExec step is necessary for some reason to make graphs work. Stata
-        can't be launched directly with `win32com.client.Dispatch()`.
-        """
+        Until version 1.8.0, I included
+        ```py
+        from win32api import WinExec
         WinExec(self.config.get('stata_path'))
-        sleep(0.25)
+        ```
+        _before_ calling `win32com.client.Dispatch`. When opening a new Stata
+        session using `win32com.client.Dispatch`, graph windows from the Stata
+        GUI don't persist when opened. Originally, when developing `stata-exec`,
+        I treated this as a bug, because that window was what a user looked at.
+        However, for the purposes of `stata_kernel`, that's actually a helpful
+        feature!
+
+        - Though the graph window doesn't stay open, the _content_ of the
+          graph is still in memory, so `graph export` still functions correctly!
+        - This solves the problem of annoying graph windows popping up while
+          using Jupyter Notebook. See #188
+        - But since I don't call `graph close`, it's still possible for a user
+          to call `graph export` on the most recently opened graph. See:
+          https://github.com/kylebarron/stata_kernel/commit/58c45636c4bfed24d36bf447f285f5bfb4b312da#commitcomment-31045398
+        """
         self.stata = win32com.client.Dispatch("stata.StataOLEApp")
         self.automate(cmd_name='UtilShowStata', value=1)
         self.config.set('execution_mode', 'automation', permanent=True)
@@ -135,7 +184,7 @@ class StataSession():
                 'w', encoding='utf-8')
         banner = []
         try:
-            self.child.expect('\r\n\. ', timeout=0.2)
+            self.child.expect(self.prompt, timeout=0.2)
             banner.append(self.child.before)
         except pexpect.TIMEOUT:
             try:
@@ -144,7 +193,7 @@ class StataSession():
                     banner.append(self.child.before)
                     self.child.send('q')
             except pexpect.TIMEOUT:
-                self.child.expect('\r\n\. ')
+                self.child.expect(self.prompt)
                 banner.append(self.child.before)
 
         # Set banner to Stata's shell header
@@ -176,13 +225,8 @@ class StataSession():
             return rc
 
         self.fd = Path(log_path).open()
-        if platform.system() == 'Windows':
-            self.log_fd = pexpect.fdpexpect.fdspawn(
-                self.fd, encoding='utf-8', codec_errors='replace')
-        else:
-            self.log_fd = pexpect.fdpexpect.fdspawn(
-                self.fd, encoding='utf-8', maxread=1, codec_errors='replace')
-
+        self.log_fd = pexpect.fdpexpect.fdspawn(
+            self.fd, encoding='utf-8', codec_errors='replace')
         self.log_fd.logfile = (
             self.config.get('cache_dir') / 'console_debug.log').open(
                 'w', encoding='utf-8')
@@ -219,8 +263,14 @@ class StataSession():
             rc, res = self.expect(text=text, child=child, md5=md5, **kwargs)
         except KeyboardInterrupt:
             self.send_break(child=child, md5="`{}'".format(md5))
+            # expect twice because the md5 was sent to the log twice
+            kwargs.update({'display': False})
+            self.expect(text=text, child=child, md5=md5, **kwargs)
+            self.expect(text=text, child=child, md5=md5, **kwargs)
             rc, res = 1, ''
 
+        if hasattr(self.kernel, 'completions'):
+            self.kernel.cleanTail("`{0}'".format(md5), self.prompt_dot)
         return rc, res
 
     def expect(self, text, child, md5, text_to_exclude=None, display=True):
@@ -241,7 +291,8 @@ class StataSession():
         else:
             code_lines = text.split('\n')
 
-        md5 = ". `{}'".format(md5)
+        md5 = "`{}'".format(md5)
+        md5Prompt = self.prompt_dot + " " + md5
         error_re = r'^r\((\d+)\);'
 
         g_exp = r'\(file ({}'.format(self.cache_dir_str)
@@ -253,7 +304,7 @@ class StataSession():
 
         more = r'^--more--'
         eol = r'\r?\n'
-        expect_list = [md5, error_re, g_exp, more, eol, pexpect.EOF]
+        expect_list = [md5Prompt, error_re, g_exp, more, eol, pexpect.EOF]
 
         match_index = -1
         res_list = []
@@ -294,8 +345,8 @@ class StataSession():
                 if display:
                     self.kernel.send_image(g_path)
             if match_index == 3:
-                self.send_break(child=child, md5=md5[2:])
-                child.expect_exact(md5, timeout=None)
+                self.send_break(child=child, md5=md5)
+                child.expect(md5Prompt, timeout=None)
                 if display:
                     self.kernel.send_response(
                         self.kernel.iopub_socket, 'stream', {
@@ -326,6 +377,7 @@ class StataSession():
             if match_index == 5:
                 sleep(0.05)
 
+        self._mata_break(match_index, child)
         res_disp = re.sub(r'\n\Z', '', res_disp, re.M)
         if display and res_disp and any_disp:
             self.kernel.send_response(
@@ -368,7 +420,7 @@ class StataSession():
             - Result to be displayed
         """
         regex = r'^\(note: file {}/graph\d+\.({}) not found\)'.format(
-            self.cache_dir_str, self.kernel.graph_formats)
+            self.cache_dir_str, '|'.join(self.kernel.graph_formats))
         if re.search(regex, res):
             return code_lines, None
 
@@ -383,7 +435,11 @@ class StataSession():
         if not code_lines[0][:self.linesize - 5].lstrip() in res[1:].lstrip():
             return code_lines, res
 
-        res_match = re.search(r'^(\s*\d+)?\.  ??(.+)$', res)
+        if self.mata_enter(res) and self.mata_mode:
+            res_match = re.search(self.stata_prompt_regex, res)
+        else:
+            res_match = re.search(self.prompt_regex, res)
+
         if not res_match:
             return code_lines, ''
         res = res_match.group(2)
@@ -481,3 +537,90 @@ class StataSession():
         else:
             self.child.close(force=True)
         return
+
+    def show_gui(self):
+        if self.config.get('execution_mode', '') == 'automation':
+            self.automate(cmd_name='UtilShowStata', value=0)
+
+    def hide_gui(self):
+        if self.config.get('execution_mode', '') == 'automation':
+            self.automate(cmd_name='UtilShowStata', value=1)
+
+    def _mata_refresh(self, cm):
+        self.mata_mode = cm.mata_mode and not cm.mata_closed
+        self.mata_open = cm.mata_open
+        self.mata_error = cm.mata_error or self.mata_error
+        if self.mata_mode:
+            self.prompt = self.mata_prompt
+            self.prompt_dot = self.mata_prompt_dot
+            self.prompt_regex = self.mata_prompt_regex
+        else:
+            self.prompt = self.stata_prompt
+            self.prompt_dot = self.stata_prompt_dot
+            self.prompt_regex = self.stata_prompt_regex
+
+    def _mata_restart(self, rc, res):
+        # If mata was opened with a colon, :, an error ends mata
+        if self.mata_error and rc:
+            self.mata_open = False
+            self.mata_mode = False
+            self.mata_restart = False
+            self.mata_error = False
+        else:
+            # If incomplete input, yell at user
+            self.mata_open = self.mata_mode
+            if self.mata_mode and self.mata_restart:
+                self.kernel.send_response(
+                    self.kernel.iopub_socket, 'stream', {
+                        'text': "(input incomplete; breaking execution)\n",
+                        'name': 'stdout'})
+                self.mata_restart = False
+            elif self.mata_mode and (rc == 0):
+                res = self.mata_trim.sub('', res)
+
+        return res
+
+    def _mata_escape(self, line):
+        if self.mata_open:
+            strfmt = 'stata(`"{0}"\')'
+            return '\n'.join([
+                strfmt.format(l) if l else l for l in line.split('\n')])
+        else:
+            return line
+
+    def _mata_break(self, match_index, child):
+        # Only full input allowed in mata: If command ended in line
+        # continuation, yell at the user. Note that some valid mata code
+        # ends in a line continuation. In this case we hack it by adding
+        # {} and {}.
+        if self.mata_mode and child.after.startswith('> ') and match_index == 0:
+            mata_index = -1
+            child.sendline('{}\n')
+            while mata_index == -1:
+                mata_index = child.expect([
+                    r'\r\n\.', r'\r\n:', r'\r\n>', pexpect.EOF])
+                sleep(0.01)
+
+            mata_index = -1
+            child.sendline('{}\n')
+            while mata_index == -1:
+                mata_index = child.expect([
+                    r'\r\n\.', r'\r\n:', r'\r\n>', pexpect.EOF])
+                sleep(0.01)
+
+            res = re.sub(r'^ *{}(\r\n)?', '', child.before)
+            self.kernel.send_response(
+                self.kernel.iopub_socket, 'stream', {
+                    'text': res + '\n',
+                    'name': 'stdout'})
+
+            self.mata_restart = True
+            if re.match(r'(\r?\n)? *>(\r?\n)?', child.after):
+                if self.config.get('execution_mode') == 'console':
+                    child.sendcontrol('c')
+                    child.sendcontrol('d')
+                    child.sendline('\r\n')
+                else:
+                    self.automate('UtilSetStataBreak')
+
+                child.expect(r'\r?\n: ')

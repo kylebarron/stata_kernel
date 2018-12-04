@@ -1,8 +1,9 @@
-mkdocs==1.0
-mkdocs-material==3.0.3
 bumpversion==0.5.3
 coverage==4.5.1
 flake8==3.5.0
+jupyter_kernel_test==0.3.0
+mkdocs-material==3.0.3
+mkdocs==1.0
 pip==18.0
 pytest==3.7.1
 tox==2.9.1

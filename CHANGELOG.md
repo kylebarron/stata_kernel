@@ -1,5 +1,50 @@
 # Changelog
 
+## [1.8.0] - 2018-11-28
+
+- Don't launch Stata with WinExec on Windows. This should have the benefit that 1) a new Stata window isn't created unless it needs to be, and 2) graphs don't show up unnecessarily. #249
+- Add magics to show and hide the Stata GUI. #251
+- Fix displaying image in QtConsole. #246
+- Fix completions bug. #247
+
+## [1.7.4] - 2018-11-21
+
+- Fix finding Stata path on Windows when key not in registry. #242
+
+## [1.7.3] - 2018-11-20
+
+- Fix log cleaning on Windows. #241
+
+## [1.7.2] - 2018-11-20
+
+- Fix install. Add _mata_builtins to MANIFEST.in. #239
+
+## [1.7.1] - 2018-11-19
+
+- Fix `%browse`, `%head`, `%tail` display issues. #237
+
+## [1.7.0] - 2018-11-19
+
+- Add Mata mode. #116
+- Allow program to function without a configuration file. #222
+- Fixed <kbd>Ctrl</kbd>+<kbd>C</kbd> behavior.
+- Hide most Stata kernel output from user logs #228
+- Add completions on word boundaries. #229
+- Wrap SVGs in iframe tags to prevent cross-image issues. #235
+- Don't overwrite configuration file if it already exists.
+
+## [1.6.2] - 2018-10-25
+
+- Revert closing graph window automatically. #219
+- Refactor `%browse` to use the same code as `%head` internally. #217
+
+## [1.6.1] - 2018-10-24
+
+- Remove `regex` package as a dependency. #212
+- Fix `cap`/`noi`/`qui` completions with scalars and matrices. #213
+- Close Stata graph window after saving graph. #214
+- Fix regex to hide "note: graph.svg not found"
+
 ## [1.6.0] - 2018-10-24
 
 - File path autocompletions. Currently only works when files have no spaces in them. #195
