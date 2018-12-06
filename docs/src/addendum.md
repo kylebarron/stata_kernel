@@ -10,3 +10,4 @@ upwards of a _decade_.
 
 - [Kyle Barron](https://github.com/kylebarron)
 - [Mauricio Cáceres](https://github.com/mcaceresb)
+- [Full list of contributors](https://github.com/kylebarron/stata_kernel/graphs/contributors)
