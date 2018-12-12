@@ -98,6 +98,45 @@ class MyKernelTests(jupyter_kernel_test.KernelTests):
         matches = {'./stata_kernel/completions.py', './stata_kernel/code_manager.py', './stata_kernel/config.py'}
         self._test_completion(text, matches, exact=False)
 
+    def test_stata_path_completion6(self):
+        text = 'use "CHANGE'
+        matches = {'CHANGELOG.md'}
+        self._test_completion(text, matches, exact=True)
+
+    def test_stata_path_completion7(self):
+        text = 'use "stata_kernel/'
+        matches = {'stata_kernel/completions.py', 'stata_kernel/code_manager.py', 'stata_kernel/config.py'}
+        self._test_completion(text, matches, exact=False)
+
+    def test_stata_path_completion8(self):
+        text = 'use "stata_kernel/c'
+        matches = {'stata_kernel/completions.py', 'stata_kernel/code_manager.py', 'stata_kernel/config.py'}
+        self._test_completion(text, matches, exact=False)
+
+    def test_stata_path_completion9(self):
+        self._run('global datadir "stata_kernel"')
+        text = 'use "$datadir/'
+        matches = {'$datadir/completions.py', '$datadir/code_manager.py', '$datadir/config.py'}
+        self._test_completion(text, matches, exact=False)
+
+    def test_stata_path_completion10(self):
+        self._run('global datadir "stata_kernel"')
+        text = 'use "$datadir/c'
+        matches = {'$datadir/completions.py', '$datadir/code_manager.py', '$datadir/config.py'}
+        self._test_completion(text, matches, exact=False)
+
+    def test_stata_path_completion11(self):
+        self._run('global datadir "stata_kernel"')
+        text = 'use "${datadir}/'
+        matches = {'${datadir}/completions.py', '${datadir}/code_manager.py', '${datadir}/config.py'}
+        self._test_completion(text, matches, exact=False)
+
+    def test_stata_path_completion12(self):
+        text = 'use "${datadir}/c'
+        matches = {'${datadir}/completions.py', '${datadir}/code_manager.py', '${datadir}/config.py'}
+        self._test_completion(text, matches, exact=False)
+
+
     def test_stata_varlist_completion(self):
         self._run()
         text = 'list '
@@ -121,6 +160,8 @@ class MyKernelTests(jupyter_kernel_test.KernelTests):
             if exact:
                 self.assertEqual(set(reply['content']['matches']), set(matches))
             else:
+                print(set(matches))
+                print(set(reply['content']['matches']))
                 self.assertTrue(
                     set(matches) <= set(reply['content']['matches']))
         else:

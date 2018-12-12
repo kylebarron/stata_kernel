@@ -405,10 +405,10 @@ class CompletionsManager():
             user_starts = chunk
 
         # Replace globals with their values
-        globals_re = r'\$\{?(?![0-9_])\w{1,32}\}?'
+        globals_re = r'\$\{?((?![0-9_])\w{1,32})\}?'
         try:
             folder = re.sub(
-                globals_re, lambda x: self.globals[x.group(0)[1:]], user_folder)
+                globals_re, lambda x: self.globals[x.group(1)], user_folder)
         except KeyError:
             # If the global doesn't exist in self.globals (aka it hasn't been
             # defined in the Stata environment yet), then there are no paths to
