@@ -15,9 +15,13 @@ in your terminal or command prompt. Just like the Notebook, this should open up 
 ### Syntax highlighting
 
 To enable syntax highlighting for Stata with JupyterLab, you need to run (only once):
-```
+
+```bash
+conda install -c conda-forge nodejs -y
 jupyter labextension install jupyterlab-stata-highlight
 ```
+
+If you didn't install Python from Anaconda, the `conda` command won't work and you'll need to install [Node.js](https://nodejs.org/en/download/) directly before running `jupyter labextension install`.
 
 ### Plugins
 

@@ -31,17 +31,21 @@ To install the kernel, from a terminal or command prompt run:
 ```bash
 pip install stata_kernel
 python -m stata_kernel.install
-# Syntax highlighting in JupyterLab
-jupyter labextension install jupyterlab-stata-highlight
 ```
 
 If Python 2 is the default version of Python on your system, you may need to use
 ```bash
 pip3 install stata_kernel
 python3 -m stata_kernel.install
-# Syntax highlighting in JupyterLab
+```
+
+In order to get syntax highlighting in Jupyter Lab, run:
+```bash
+conda install -c conda-forge nodejs -y
 jupyter labextension install jupyterlab-stata-highlight
 ```
+
+If you didn't install Python from Anaconda, the `conda` command won't work and you'll need to install [Node.js](https://nodejs.org/en/download/) directly before running `jupyter labextension install`.
 
 ### Upgrading
 
