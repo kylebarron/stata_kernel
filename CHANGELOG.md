@@ -1,5 +1,14 @@
 # Changelog
 
+## [1.8.1] - 2018-12-17
+
+- Fix log cleaning for programs and for loops with > 10 lines. #257
+- Fix autocomplete to show globals upon typing `${`. #253
+- Add kernel tests. #254
+- JupyterLab syntax highlighting now exists. Run `jupyter labextension install jupyterlab-stata-highlight`
+- Fix bug where incorrect files were suggested. #262
+- Allow use of bracketed globals in file path autocompletion
+
 ## [1.8.0] - 2018-11-28
 
 - Don't launch Stata with WinExec on Windows. This should have the benefit that 1) a new Stata window isn't created unless it needs to be, and 2) graphs don't show up unnecessarily. #249
