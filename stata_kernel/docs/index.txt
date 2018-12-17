@@ -16,15 +16,14 @@ grown to interface with dozens of programming languages.
 stata_kernel is the bridge that interactively connects Stata to all the
 elements in the ecosystem.
 
--   The JUPYTER NOTEBOOK is a web-based interactive editor that allows
-    for interweaving of code, text, and results.
+-   JUPYTERLAB is a web-based interactive editor that allows for
+    interweaving of code, text, and results.
 
     -   Splice models in LaTeX math mode with the code that implements
         them and the graphs depicting their output.
     -   Jupyter Notebooks can be exported as PDFs or HTML, and are as
         good for teaching new students as they are for displaying
         research results.
-    -   Use Stata in the same document with R, Python, or Julia code.
 
     [Jupyter Notebook]
 
@@ -60,9 +59,6 @@ stata_kernel Features
 -   [x] Work with a remote session of Stata.
 -   [x] Mata interactive support
 -   [ ] Cross-session history file
-
-If you find a bug or want to suggest a new feature, please submit an
-issue on Github here.
 
 
 Screenshots
