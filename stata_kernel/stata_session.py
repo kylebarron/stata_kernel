@@ -59,7 +59,7 @@ class StataSession():
         self.stata_prompt_dot = r'\.'
         self.mata_prompt_dot = r'[\.:\>]'
 
-        self.stata_prompt_regex = r'^(  \d+)?\.  ??(.+)$'
+        self.stata_prompt_regex = r'^(\s*\d+)?\.  ??(.+)$'
         self.mata_prompt_regex = r'^([:\>])  ??(.+)$'
 
         self.mata_trim = re.compile(
