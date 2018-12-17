@@ -222,6 +222,9 @@ class CodeManager():
         `md5' so that I can definitively know when Stata has finished with the
         code I sent it.
 
+        Args:
+            config (.config.Config): Configuration instance
+
         Returns:
             (str, str, str):
             (Text to run in kernel, md5 to expect for, code lines to remove from output)
