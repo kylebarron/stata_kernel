@@ -25,19 +25,6 @@ class MyKernelTests(jupyter_kernel_test.KernelTests):
     # for each dictionary, `text` is the input to try and complete, and
     # `matches` the list of all complete matching strings which should be found
     completion_samples = [
-        {
-            'text': 'di $S',
-            'matches': {'S_ADO', 'S_level', 'S_StataSE', 'S_CONSOLE', 'S_FLAVOR', 'S_OS', 'S_MACH'}
-        },
-        {
-            'text': 'di ${S',
-            'matches': {'S_ADO', 'S_level', 'S_StataSE', 'S_CONSOLE', 'S_FLAVOR', 'S_OS', 'S_MACH'}
-        },
-        # Path completion
-        {
-            'text': 'use tests/test_data/',
-            'matches': {'tests/test_data/auto.dta'}
-        },
         # Magics
         {
             'text': '%',
@@ -64,6 +51,22 @@ class MyKernelTests(jupyter_kernel_test.KernelTests):
     # code_display_data = [
     #     {'code': 'sysuse auto\nscatter price mpg', 'mime': 'image/svg+xml'}
     # ]
+
+    def test_stata_global_completion(self):
+        code = f"""\
+            global abcd "helloworld"
+            global abdef "foo"
+            global aef "bar"
+            """
+        self._run(code)
+
+        text = 'di $a'
+        matches = {'abcd', 'abdef', 'aef'}
+        self._test_completion(text, matches, exact=True)
+
+        text = 'di ${a'
+        matches = {'abcd', 'abdef', 'aef'}
+        self._test_completion(text, matches, exact=True)
 
     def test_stata_path_completion(self):
         text = 'use "'
