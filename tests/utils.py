@@ -31,14 +31,18 @@ class StataKernelTestFramework(jupyter_kernel_test.KernelTests):
         self.assertEqual(output_msgs[0]['msg_type'], 'display_data')
         self.assertIn(mimetype, output_msgs[0]['content']['data'])
 
-    def _test_execute_stdout(self, code, output, exact=False):
+    def _test_execute_stdout(self, code, output=None, exact=False):
         """
         This strings all output sent to stdout together and then checks that
         `code` is in `output`
         """
         reply, output_msgs = self._run(code=code)
         self.assertEqual(reply['content']['status'], 'ok')
-        self.assertGreaterEqual(len(output_msgs), 1)
+        if output:
+            self.assertGreaterEqual(len(output_msgs), 1)
+        else:
+            self.assertEqual(len(output_msgs), 0)
+            return
 
         all_output = []
         for msg in output_msgs:

@@ -27,3 +27,29 @@ class TestKernelStdout(StataKernelTestFramework):
         self._run('sum mpg', dataset='auto')
         self._run('local res = r(max)', dataset=None)
         self._test_execute_stdout("di `res'", '41', exact=True)
+
+    def test_long_program(self):
+        """
+        Programs with more than 10 lines should not show line continuation
+        numbers
+        """
+        code = f"""\
+            cap program drop helloworld
+            program helloworld
+                di "helloworld"
+                di "helloworld"
+                di "helloworld"
+                di "helloworld"
+                di "helloworld"
+                di "helloworld"
+                di "helloworld"
+                di "helloworld"
+                di "helloworld"
+                di "helloworld"
+                di "helloworld"
+                di "helloworld"
+                di "helloworld"
+                di "helloworld"
+            end
+            """
+        self._test_execute_stdout(code, output=None)
