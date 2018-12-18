@@ -24,11 +24,22 @@ The magics that respond with richly formatted text, namely `%browse` and
 `%help`, will not work with Jupyter Console or Jupyter QtConsole, since they
 don't support displaying HTML.
 
-## `%browse`
+## `%browse`, `%head`, `%tail`
 
 **Interactively view your dataset**
 
-For now, this displays the first 200 rows of your data. This will be expanded in the future to allow for a `varlist`, `if`, and `in` options.
+This can optionally be provided with a `varlist`, `N`, or `if`:
+```
+%browse [-h] [N] [varlist] [if]
+%head [-h] [N] [varlist] [if]
+%tail [-h] [N] [varlist] [if]
+```
+
+By default:
+
+- `%browse` displays the first 200 rows
+- `%head` displays the first 10 rows
+- `%tail` displays the last 10 rows
 
 If you're using Windows or macOS with Automation mode, you can also run `browse`
 (without the `%`) and it will open the usual Stata data explorer.
@@ -59,22 +70,6 @@ In [4]: #delimit cr
 delimiter now cr
 ```
 
-## `%head`, `%tail`
-
-**View the first or last observations of the data**
-
-This can optionally be provided with a `varlist`, `N`, or `if`:
-```
-%head [-h] [N] [varlist] [if]
-%tail [-h] [N] [varlist] [if]
-```
-
-For example,
-```
-sysuse auto
-%head 5 make price mpg if mpg < 20
-```
-
 ## `%help`
 
 **Display a help file in rich text**
@@ -96,6 +91,35 @@ on them to see another help menu.
 |:--------------------:|:-----------------------------------------------:|
 |       **Atom**       |         ![Atom](../img/atom_help_magic.png)         |
 | **Jupyter Notebook** | ![Jupyter Notebook](../img/notebook_help_magic.png) |
+
+## `%html`, `%latex`
+
+**Display command output as HTML or LaTeX**
+
+This can be useful when creating regression tables with `esttab`, for example. The images below are run following
+
+```stata
+sysuse auto
+eststo: qui regress price weight mpg
+eststo: qui regress price weight mpg foreign
+```
+
+An HTML table will display correctly both inside JupyterLab and as a saved HTML file.
+
+|                     |                                                              |
+|:-------------------:|:------------------------------------------------------------:|
+|   **JupyterLab**    | ![esttab-html-jupyterlab](../img/esttab-html-jupyterlab.png) |
+| **Saved HTML file** |       ![esttab-html-file](../img/esttab-html-file.png)       |
+
+
+A LaTeX table will not display correctly within JupyterLab (it only supports the math subset of LaTeX) **but it _will_** render correctly upon export to a PDF (which happens through LaTeX).
+
+|                     |                                                                |
+|:-------------------:|:--------------------------------------------------------------:|
+| **Saved PDF file**  |        ![esttab-latex-pdf](../img/esttab-latex-pdf.png)        |
+| **Saved HTML file** | ![esttab-latex-jupyterlab](../img/esttab-latex-jupyterlab.png) |
+
+
 
 
 ## `%locals`, `%globals`
@@ -157,13 +181,9 @@ As an example, you can change the graph settings like so:
 %set graph_height 300
 ```
 
-## `%show_gui`
+## `%show_gui`, `%hide_gui`
 
-Show Stata Graphical User Interface. Only works on Windows (and Mac if using automation execution mode)"
-
-## `%hide_gui`
-
-Hide Stata Graphical User Interface. Only works on Windows (and Mac if using automation execution mode)"
+Show/hide the Stata Graphical User Interface (GUI). Only works on Windows (and Mac if using automation execution mode)"
 
 ## `%status`
 
