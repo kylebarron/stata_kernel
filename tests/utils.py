@@ -55,7 +55,8 @@ class StataKernelTestFramework(jupyter_kernel_test.KernelTests):
         """Wrapper to run arbitrary code in the Stata kernel
         """
         self.flush_channels()
-        res = self.execute_helper(f'sysuse {dataset}, clear')
+        if dataset is not None:
+            res = self.execute_helper(f'sysuse {dataset}, clear')
         if code is not None:
             res = self.execute_helper(code=code, **kwargs)
         return res

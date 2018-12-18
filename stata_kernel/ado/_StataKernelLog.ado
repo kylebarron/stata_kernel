@@ -1,5 +1,13 @@
 capture program drop _StataKernelLog
 program _StataKernelLog
+
+    * Hold r() results
+    if ( `"`0'"' == "off" ) {
+        cap _return drop _StataKernelR
+        _return hold _StataKernelR
+    }
+
+    * Loop through log files and close or reopen them all
     set more off
     set trace off
     qui log query _all
@@ -38,5 +46,11 @@ program _StataKernelLog
     else {
         disp as err "Can only switch logs -on- or -off-"
         exit 198
+    }
+
+    * Restore r() results
+    if ( `"`0'"' == "on" ) {
+        cap _return restore _StataKernelR
+        cap _return drop _StataKernelR
     }
 end
