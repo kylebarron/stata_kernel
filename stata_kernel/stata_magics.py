@@ -43,12 +43,23 @@ class MagicParsers():
             help="Verbose output (print full contents of matched locals).",
             required=False)
 
-        self.browse = StataParser(prog='%browse', kernel=kernel)
         self.browse = StataParser(
             prog='%browse', kernel=kernel,
             usage='%(prog)s [-h] [N] [varlist] [if]',
             description="Display the first N rows of the dataset in memory.")
         self.browse.add_argument('code', nargs='*', type=str, help=SUPPRESS)
+
+        self.html = StataParser(prog='%html', kernel=kernel,
+            usage='%(prog)s [-h] code',
+            description="Display output of code as HTML.")
+        self.html.add_argument(
+            'code', nargs='*', type=str, metavar='CODE', help="Code to run")
+
+        self.latex = StataParser(prog='%latex', kernel=kernel,
+            usage='%(prog)s [-h] code',
+            description="Display output of code as LaTeX.")
+        self.latex.add_argument(
+            'code', nargs='*', type=str, metavar='CODE', help="Code to run")
 
         self.time = StataParser(prog='%time', kernel=kernel)
         self.time.add_argument(
@@ -170,6 +181,8 @@ class StataMagics():
         'head',
         'help',
         'hide_gui',
+        'html',
+        'latex',
         'locals',
         # 'restart',
         'set',
@@ -445,6 +458,40 @@ class StataMagics():
     def magic_delimit(self, code, kernel):
         delim = ';' if kernel.sc_delimit_mode else 'cr'
         print_kernel('The delimiter is currently: {}'.format(delim), kernel)
+        return ''
+
+    def magic_html(self, code, kernel):
+        cm = CodeManager(code)
+        text_to_run, md5, text_to_exclude = cm.get_text(kernel.conf)
+        rc, res = kernel.stata.do(
+            text_to_run, md5, text_to_exclude=text_to_exclude, display=False)
+        if rc:
+            return res
+        else:
+            content = {
+                'data': {
+                    'text/plain': 'This front-end or document format cannot display HTML',
+                    'text/html': res},
+                'metadata': {}}
+            kernel.send_response(kernel.iopub_socket, 'display_data', content)
+
+        return ''
+
+    def magic_latex(self, code, kernel):
+        cm = CodeManager(code)
+        text_to_run, md5, text_to_exclude = cm.get_text(kernel.conf)
+        rc, res = kernel.stata.do(
+            text_to_run, md5, text_to_exclude=text_to_exclude, display=False)
+        if rc:
+            return res
+        else:
+            content = {
+                'data': {
+                    'text/plain': 'This front-end or document format cannot display LaTeX',
+                    'text/latex': res},
+                'metadata': {}}
+            kernel.send_response(kernel.iopub_socket, 'display_data', content)
+
         return ''
 
     def magic_set(self, code, kernel):
