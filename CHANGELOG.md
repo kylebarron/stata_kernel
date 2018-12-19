@@ -1,5 +1,11 @@
 # Changelog
 
+## [1.9.0] - 2018-12-19
+
+- Add `%html` and `%latex` magics for displaying formatted output. #267
+- `r()` is no longer cleared between commands. #266
+- Add tests
+
 ## [1.8.1] - 2018-12-17
 
 - Fix log cleaning for programs and for loops with > 10 lines. #257

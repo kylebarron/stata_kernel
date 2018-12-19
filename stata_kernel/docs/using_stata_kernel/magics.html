@@ -198,9 +198,18 @@ optional arguments:
   -h, --help     show this help message and exit
   -v, --verbose  Verbose output (print full contents of matched locals).</code></pre>
 <p>The magics that respond with richly formatted text, namely <code>%browse</code> and <code>%help</code>, will not work with Jupyter Console or Jupyter QtConsole, since they don’t support displaying HTML.</p>
-<h2 id="browse"><code>%browse</code></h2>
+<h2 id="browse-head-tail"><code>%browse</code>, <code>%head</code>, <code>%tail</code></h2>
 <p><strong>Interactively view your dataset</strong></p>
-<p>For now, this displays the first 200 rows of your data. This will be expanded in the future to allow for a <code>varlist</code>, <code>if</code>, and <code>in</code> options.</p>
+<p>This can optionally be provided with a <code>varlist</code>, <code>N</code>, or <code>if</code>:</p>
+<pre><code>%browse [-h] [N] [varlist] [if]
+%head [-h] [N] [varlist] [if]
+%tail [-h] [N] [varlist] [if]</code></pre>
+<p>By default:</p>
+<ul>
+<li><code>%browse</code> displays the first 200 rows</li>
+<li><code>%head</code> displays the first 10 rows</li>
+<li><code>%tail</code> displays the last 10 rows</li>
+</ul>
 <p>If you’re using Windows or macOS with Automation mode, you can also run <code>browse</code> (without the <code>%</code>) and it will open the usual Stata data explorer.</p>
 <table>
 <tbody>
@@ -227,14 +236,6 @@ The delimiter is currently: ;
 
 In [4]: #delimit cr
 delimiter now cr</code></pre>
-<h2 id="head-tail"><code>%head</code>, <code>%tail</code></h2>
-<p><strong>View the first or last observations of the data</strong></p>
-<p>This can optionally be provided with a <code>varlist</code>, <code>N</code>, or <code>if</code>:</p>
-<pre><code>%head [-h] [N] [varlist] [if]
-%tail [-h] [N] [varlist] [if]</code></pre>
-<p>For example,</p>
-<pre><code>sysuse auto
-%head 5 make price mpg if mpg &lt; 20</code></pre>
 <h2 id="help"><code>%help</code></h2>
 <p><strong>Display a help file in rich text</strong></p>
 <pre><code>%help [-h] command_or_topic_name</code></pre>
@@ -250,6 +251,38 @@ delimiter now cr</code></pre>
 <tr class="even">
 <td style="text-align: center;"><strong>Jupyter Notebook</strong></td>
 <td style="text-align: center;"><img alt="Jupyter Notebook" src="https://kylebarron.github.io/stata_kernel/img/notebook_help_magic.png"/></td>
+</tr>
+</tbody>
+</table>
+<h2 id="html-latex"><code>%html</code>, <code>%latex</code></h2>
+<p><strong>Display command output as HTML or LaTeX</strong></p>
+<p>This can be useful when creating regression tables with <code>esttab</code>, for example. The images below are run following</p>
+<pre class="stata"><code>sysuse auto
+eststo: qui regress price weight mpg
+eststo: qui regress price weight mpg foreign</code></pre>
+<p>An HTML table will display correctly both inside JupyterLab and as a saved HTML file.</p>
+<table>
+<tbody>
+<tr class="odd">
+<td style="text-align: center;"><strong>JupyterLab</strong></td>
+<td style="text-align: center;"><img alt="esttab-html-jupyterlab" src="https://kylebarron.github.io/stata_kernel/img/esttab-html-jupyterlab.png"/></td>
+</tr>
+<tr class="even">
+<td style="text-align: center;"><strong>Saved HTML file</strong></td>
+<td style="text-align: center;"><img alt="esttab-html-file" src="https://kylebarron.github.io/stata_kernel/img/esttab-html-file.png"/></td>
+</tr>
+</tbody>
+</table>
+<p>A LaTeX table will not display correctly within JupyterLab (it only supports the math subset of LaTeX) <strong>but it <em>will</em></strong> render correctly upon export to a PDF (which happens through LaTeX).</p>
+<table>
+<tbody>
+<tr class="odd">
+<td style="text-align: center;"><strong>Saved PDF file</strong></td>
+<td style="text-align: center;"><img alt="esttab-latex-pdf" src="https://kylebarron.github.io/stata_kernel/img/esttab-latex-pdf.png"/></td>
+</tr>
+<tr class="even">
+<td style="text-align: center;"><strong>Saved HTML file</strong></td>
+<td style="text-align: center;"><img alt="esttab-latex-jupyterlab" src="https://kylebarron.github.io/stata_kernel/img/esttab-latex-jupyterlab.png"/></td>
 </tr>
 </tbody>
 </table>
@@ -295,10 +328,8 @@ S_MACH:    PC (64-bit x86-64)</code></pre>
 %set graph_scale 1
 %set graph_width 500
 %set graph_height 300</code></pre>
-<h2 id="show_gui"><code>%show_gui</code></h2>
-<p>Show Stata Graphical User Interface. Only works on Windows (and Mac if using automation execution mode)"</p>
-<h2 id="hide_gui"><code>%hide_gui</code></h2>
-<p>Hide Stata Graphical User Interface. Only works on Windows (and Mac if using automation execution mode)"</p>
+<h2 id="show_gui-hide_gui"><code>%show_gui</code>, <code>%hide_gui</code></h2>
+<p>Show/hide the Stata Graphical User Interface (GUI). Only works on Windows (and Mac if using automation execution mode)"</p>
 <h2 id="status"><code>%status</code></h2>
 <p>Print information about:</p>
 <ul>
