@@ -12,7 +12,7 @@ class TestKernelCompletions(StataKernelTestFramework):
             'text': '%',
             'matches': {'browse', 'delimit', 'globals', 'head', 'help',
                         'hide_gui', 'locals', 'set', 'show_gui', 'status',
-                        'tail'}
+                        'tail', 'html', 'latex'}
         },
         {
             'text': '%b',
