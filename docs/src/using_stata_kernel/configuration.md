@@ -70,11 +70,23 @@ an integer. This is the height in pixels of graphs displayed.
 
 a string. `stata_kernel` [displays graphs](intro.md#displaying-graphs) by quietly inserting a `graph export` command after any command that creates a graph, and then loading and displaying the saved file. By default, it only looks for the base list of graph commands.
 
-    If you use third party commands that generate figures, this option allows you to provide a list of commands that will also display graphs. Provide multiple graph names as a comma-delimited string, e.g. in the configuration file add:
+If you use third party commands that generate figures, this option allows you to provide a list of commands that will also display graphs. Provide multiple graph names as a comma-delimited string, e.g. in the configuration file add:
 
-    ```
-    user_graph_keywords = vioplot, coefplot
-    ```
+```
+user_graph_keywords = vioplot,coefplot
+```
+
+Note that when using the [`%set` magic](magics.md#set), the list of comma-delimited keywords must not have any spaces in it. For example, you must run
+
+```
+%set user_graph_keywords vioplot,coefplot
+```
+
+and not
+
+```
+%set user_graph_keywords vioplot, coefplot
+```
 
 ### `graph_svg_redundancy`
 
