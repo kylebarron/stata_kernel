@@ -1,11 +1,11 @@
 # Configuration
 
-The configuration file is named `.stata_kernel.conf` and is located in your home
-directory. You can change any of the package's settings by opening the file and
-changing the `value` of any line of the form
+The configuration file is a plain text file named `.stata_kernel.conf` and is
+located in your home directory. You can change any of the package's settings by
+opening the file and changing the `value` of any line of the form
 
 ```
-configuration_setting = value
+configuration_setting_name = value
 ```
 
 You can also make changes to the configuration while the kernel is running with the [%set magic](magics.md#set). For example:
@@ -25,7 +25,7 @@ If you want these changes to be stored permanently, add `--permanently`:
 
 ### `stata_path`
 
-A string; the path on your file system to your Stata executable. Usually this can be found automatically during the [install step](../getting_started.md#package-install), but sometimes may need to be set manually.
+A string; the path on your file system to your Stata executable. Usually this can be found automatically during the [install step](../getting_started.md#package-install), but sometimes may need to be set manually. This cannot be changed while using `%set`, and must be edited in the configuration file before starting Jupyter.
 
 ### `cache_directory`
 
