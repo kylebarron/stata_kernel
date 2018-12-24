@@ -90,7 +90,9 @@ class StataKernel(Kernel):
 
         This usually means that a loop or program was not correctly terminated.
         This can also happen if you are in `#delimit ;` mode and did not end the
-        command with `;`. Use `%delimit` to see the current delimiter mode.
+        command with `;`. Use `%delimit` to see the current delimiter mode and
+        use `#delimit cr` to switch back to the default mode where `;` is
+        unnecessary.
         """
         if not self.is_complete(code):
             self.send_response(
