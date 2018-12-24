@@ -600,12 +600,18 @@ class StataMagics():
             # Set root for links to https://ww.stata.com
             for a in soup.find_all('a', href=True):
                 href = a.get('href')
-                relative = href.find(cmd + '#')
-                if relative >= 0:
+                match = re.search(r'{}(.*?)#'.format(cmd), href)
+                if match:
                     hrelative = href.find('#')
                     a['href'] = href[hrelative:]
                 elif not href.startswith('http'):
-                    a['href'] = urllib.parse.urljoin(self.html_base, href)
+                    link = a['href']
+                    match = re.search(r'/help.cgi\?(.+)$', link)
+                    # URL encode bad characters like %
+                    if match:
+                        link = '/help.cgi?'
+                        link += urllib.parse.quote_plus(match.group(1))
+                    a['href'] = urllib.parse.urljoin(self.html_base, link)
                     a['target'] = '_blank'
 
             # Remove header 'Stata 15 help for ...'
@@ -665,10 +671,10 @@ class StataMagics():
     def magic_status(self, code, kernel):
         self.status = -1
         delim = ';' if kernel.sc_delimit_mode else 'cr'
-        env = 'mata' if kernel.stata.mata_mode else 'stata'
+        env = 'Mata' if kernel.stata.mata_mode else 'Stata'
         info = (
             kernel.implementation, kernel.implementation_version,
-            kernel.language, kernel.language_version)
+            kernel.language.title(), kernel.language_version)
         msg = '{0} {1} for {2} {3}'.format(*info)
         msg += '\n\tDelimiter:   {}'.format(delim)
         msg += '\n\tEnvironment: {}'.format(env)
