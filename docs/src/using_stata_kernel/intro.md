@@ -25,7 +25,7 @@ To display graphs from user created commands, add the command name to the
 [`user_graph_keywords`](../../getting_started#user_graph_keywords) setting. You
 can do this either in the configuration file before starting the session or with
 ```
-%set user_graph_keywords command1, command2, ...
+%set user_graph_keywords command1,command2,...
 ```
 during the session.
 
