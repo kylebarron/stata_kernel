@@ -1,8 +1,28 @@
 import re
+import requests
 import platform
 
-from pathlib import Path
 from shutil import which
+from pathlib import Path
+from textwrap import dedent
+from packaging import version
+
+
+def check_stata_kernel_updated_version(stata_kernel_version):
+    try:
+        r = requests.get('https://pypi.org/pypi/stata-kernel/json')
+        pypi_v = r.json()['info']['version']
+        if version.parse(pypi_v) > version.parse(stata_kernel_version):
+            msg = """\
+                NOTE: A newer version of stata_kernel exists. Run
+
+                \tpip install stata_kernel --upgrade
+
+                to install the latest version.
+                """
+            return dedent(msg)
+    except requests.exceptions.RequestException:
+        return
 
 
 def find_path():

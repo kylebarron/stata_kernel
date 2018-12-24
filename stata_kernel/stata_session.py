@@ -3,15 +3,14 @@ import re
 import pexpect
 import pexpect.fdpexpect
 import platform
-import requests
 import subprocess
 
 from time import sleep
 # from timeit import default_timer
 from pathlib import Path
 from textwrap import dedent
-from packaging import version
 from pkg_resources import resource_filename
+from .utils import check_stata_kernel_updated_version
 
 if platform.system() == 'Windows':
     import win32com.client
@@ -71,20 +70,9 @@ class StataSession():
         self.prompt_dot = self.stata_prompt_dot
         self.prompt_regex = self.stata_prompt_regex
 
-        # New version
-        # -----------
-
-        try:
-            r = requests.get('https://pypi.org/pypi/stata-kernel/json')
-            pypi_v = r.json()['info']['version']
-            if version.parse(pypi_v) > version.parse(
-                    kernel.implementation_version):
-                msg = '\nNOTE: A newer version of stata_kernel exists. Run\n'
-                msg += '    pip install stata_kernel --upgrade\n'
-                msg += 'to install the latest version.\n'
-                self.banner += msg
-        except requests.exceptions.RequestException:
-            pass
+        msg = check_stata_kernel_updated_version(kernel.implementation_version)
+        if msg is not None:
+            self.banner += msg
 
         # See https://github.com/kylebarron/stata_kernel/issues/177
         self.linesize = 255

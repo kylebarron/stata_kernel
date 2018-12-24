@@ -6,6 +6,7 @@ from textwrap import dedent
 from argparse import ArgumentParser, SUPPRESS
 
 from bs4 import BeautifulSoup as bs
+from .utils import check_stata_kernel_updated_version
 from .code_manager import CodeManager
 from pkg_resources import resource_filename
 
@@ -674,9 +675,16 @@ class StataMagics():
         info = (
             kernel.implementation, kernel.implementation_version,
             kernel.language.title(), kernel.language_version)
-        print_kernel('{0} {1} for {2} {3}'.format(*info), kernel)
-        print_kernel('\tDelimiter:   {}'.format(delim), kernel)
-        print_kernel('\tEnvironment: {}'.format(env), kernel)
+        msg = '{0} {1} for {2} {3}'.format(*info)
+        msg += '\n\tDelimiter:   {}'.format(delim)
+        msg += '\n\tEnvironment: {}'.format(env)
+
+        m = check_stata_kernel_updated_version(kernel.implementation_version)
+        if m is not None:
+            msg += '\n\n'
+            msg += m
+
+        print_kernel(msg, kernel)
         return ''
 
     def magic_show_gui(self, code, kernel):
