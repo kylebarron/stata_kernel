@@ -5,6 +5,8 @@
 `stata_kernel` is a Jupyter kernel for Stata; It works on Windows, macOS, and
 Linux.
 
+To see an example Jupyter Notebook, [click here.](https://nbviewer.jupyter.org/github/kylebarron/stata_kernel/blob/master/examples/Example.ipynb)
+
 For documentation and more information, see: [https://kylebarron.github.io/stata_kernel](https://kylebarron.github.io/stata_kernel)
 
 #### Jupyter Notebook

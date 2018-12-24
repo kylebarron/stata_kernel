@@ -15,6 +15,7 @@ elements in the ecosystem.
 - [**JupyterLab**](using_jupyter/lab.md) is a web-based interactive editor that allows for interweaving of code, text, and results.
 
     - Splice models in LaTeX math mode with the code that implements them and the graphs depicting their output.
+    - [Click here](https://nbviewer.jupyter.org/github/kylebarron/stata_kernel/blob/master/examples/Example.ipynb) to see an example Jupyter Notebook file using `stata_kernel`.
     - Jupyter Notebooks can be exported as PDFs or HTML, and are as good for teaching new students as they are for displaying research results.
 
     ![Jupyter Notebook](img/jupyter_notebook_example.gif)

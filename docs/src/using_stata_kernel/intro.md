@@ -2,7 +2,7 @@
 
 `stata_kernel` is the bridge between Stata and the Jupyter ecosystem. It will work with any of the tools outlined in [Using Jupyter](../using_jupyter/intro.md). After [installing](../getting_started.md) and optionally [configuring](configuration.md) `stata_kernel`, it should be ready for use.
 
-On the rest of this page, you can learn more about some of the features `stata_kernel` provides.
+I recommend browsing [this example Jupyter Notebook file](https://nbviewer.jupyter.org/github/kylebarron/stata_kernel/blob/master/examples/Example.ipynb) to see many of `stata_kernel`'s features in action. If you [download that file](https://raw.githubusercontent.com/kylebarron/stata_kernel/master/examples/Example.ipynb) and load it into [JupyterLab](../using_jupyter/lab.md), you can edit the cells to try it out interactively.
 
 ## Displaying graphs
 
