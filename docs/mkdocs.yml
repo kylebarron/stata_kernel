@@ -26,6 +26,7 @@ extra:
 nav:
     - Home: 'index.md'
     - Getting Started: 'getting_started.md'
+    - Jupyter Notebook Example: 'https://nbviewer.jupyter.org/github/kylebarron/stata_kernel/blob/master/examples/Example.ipynb'
     - Using Jupyter:
         - Introduction: 'using_jupyter/intro.md'
         - JupyterLab: 'using_jupyter/lab.md'
