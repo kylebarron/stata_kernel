@@ -14,6 +14,7 @@ from .utils import check_stata_kernel_updated_version
 
 if platform.system() == 'Windows':
     import win32com.client
+    from pywintypes import com_error
 
 # Regex from: https://stackoverflow.com/a/45448194
 ansi_regex = r'\x1b(' \
@@ -143,7 +144,18 @@ class StataSession():
           to call `graph export` on the most recently opened graph. See:
           https://github.com/kylebarron/stata_kernel/commit/58c45636c4bfed24d36bf447f285f5bfb4b312da#commitcomment-31045398
         """
-        self.stata = win32com.client.Dispatch("stata.StataOLEApp")
+
+        try:
+            stata = win32com.client.Dispatch("stata.StataOLEApp")
+        except com_error:
+            msg = """
+            The Stata Automation library is not enabled. Follow the instructions
+            here and then try again:
+
+            https://kylebarron.github.io/stata_kernel/getting_started/#prerequisites
+            """
+            raise com_error(dedent(msg))
+
         self.automate(cmd_name='UtilShowStata', value=1)
         self.config.set('execution_mode', 'automation', permanent=True)
         self.start_log_aut()
