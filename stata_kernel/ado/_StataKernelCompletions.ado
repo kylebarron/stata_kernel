@@ -24,6 +24,8 @@ program _StataKernelCompletions
     }
     disp "%scalars%"
     disp `"`:all scalars'"'
+    disp "%programs%"
+    program dir
     disp "%matrices%"
     disp `"`:all matrices'"'
 end
