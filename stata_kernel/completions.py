@@ -312,11 +312,11 @@ class CompletionsManager():
                 if var.startswith(starts)]
         elif env == 0:
             paths = self.get_file_paths(starts)
-            return paths + [
+            return [
                 var for var in self.suggestions['programs']
                 if var.startswith(starts)] + [
                 var for var in self.suggestions['varlist']
-                if var.startswith(starts)]
+                if var.startswith(starts)] + paths
         elif env == 1:
             return [
                 var + rcomp
