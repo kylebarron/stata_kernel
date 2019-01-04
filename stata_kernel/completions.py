@@ -37,6 +37,7 @@ class CompletionsManager():
             # r"%locals%(?P<locals>.*?)"
             r"%logfiles%(?P<logfiles>.*?)"
             r"%scalars%(?P<scalars>.*?)"
+            r"%programs%(?P<programs>.*?)"
             r"%matrices%(?P<matrices>.*?)(\Z|---+\s*end)",
             flags=re.DOTALL + re.MULTILINE).match
 
@@ -117,7 +118,7 @@ class CompletionsManager():
             env (int):
                 -2: %set magic, %set x*
                 -1: magics, %x*
-                0: varlist and/or file path
+                0: varlist, program names, and/or file path
                 1: locals, `x* completed with `x*'
                 2: globals, $x* completed with $x*
                 3: globals, ${x* completed with ${x*}
@@ -312,6 +313,8 @@ class CompletionsManager():
         elif env == 0:
             paths = self.get_file_paths(starts)
             return paths + [
+                var for var in self.suggestions['programs']
+                if var.startswith(starts)] + [
                 var for var in self.suggestions['varlist']
                 if var.startswith(starts)]
         elif env == 1:
@@ -437,8 +440,9 @@ class CompletionsManager():
         if match:
             suggestions = match.groupdict()
             suggestions['mata'] = self._parse_mata_desc(suggestions['mata'])
+            suggestions['programs'] = self._parse_programs_desc(suggestions['programs'])
             for k, v in suggestions.items():
-                if k == 'mata':
+                if k in ['mata', 'programs']:
                     continue
                 suggestions[k] = self.varlist.findall(self.varclean('', v))
 
@@ -457,6 +461,7 @@ class CompletionsManager():
                 'matrices': [],
                 'logfiles': [],
                 'globals': [],
+                'programs': [],
                 'locals': []}
 
         suggestions['globals'] = [
@@ -481,6 +486,40 @@ class CompletionsManager():
         rc, res = kernel.stata.do(
             text_to_run, md5, text_to_exclude=text_to_exclude, display=False)
         return res
+
+    def _parse_programs_desc(self, desc):
+        """Parse output from programs desc
+
+        Usually the output looks something like:
+        ```
+        . program dir
+                   254  helloworld
+          ado      787  _view_helper
+          ado      786  whelp
+          ado      341  help
+          ado      756  _matrix_cmds.List
+          ado      451  _matrix_cmds
+              --------
+                  3375
+        ```
+        """
+        regex = re.compile(r"\s+(\S+)\s*$", flags=re.MULTILINE + re.DOTALL)
+        items = regex.findall(desc)
+        # If last line is only numbers, remove
+        if re.match(r'^\s*\d*\s*$', items[-1]):
+            items = items[:-1]
+
+        # If last line is only dashes, remove
+        if re.match(r'^\s*[-]*\s*$', items[-1]):
+            items = items[:-1]
+
+        # Remove stata-kernel ado files
+        files = ['_StataKernelCompletions', '_StataKernelHead', '_StataKernelLog', '_StataKernelTail']
+        items = [x for x in items if x not in files]
+
+        # Remove if period in name
+        items = [x for x in items if '.' not in x]
+        return items
 
     def _parse_mata_desc(self, desc):
         """Parse output from mata desc
