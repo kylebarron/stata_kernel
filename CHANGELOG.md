@@ -1,5 +1,13 @@
 # Changelog
 
+## [1.10.0] - 2019-01-04
+
+- Fix `%help` magic in JupyterLab. #273
+- Added example Jupyter Notebook file to documentation. #275
+- Throws custom error if the Automation type library isn't registered on Windows. #276
+- Adds program names to autocompletion. #280
+- Don't sort file paths before variable names. #261
+
 ## [1.9.0] - 2018-12-19
 
 - Add `%html` and `%latex` magics for displaying formatted output. #267
