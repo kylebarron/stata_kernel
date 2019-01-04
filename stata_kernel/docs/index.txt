@@ -21,6 +21,8 @@ elements in the ecosystem.
 
     -   Splice models in LaTeX math mode with the code that implements
         them and the graphs depicting their output.
+    -   Click here to see an example Jupyter Notebook file using
+        stata_kernel.
     -   Jupyter Notebooks can be exported as PDFs or HTML, and are as
         good for teaching new students as they are for displaying
         research results.
