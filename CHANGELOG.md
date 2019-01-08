@@ -1,6 +1,6 @@
 # Changelog
 
-## [1.10.0] - 2019-01-04
+## [1.10.1] - 2019-01-08
 
 - Fix bug that prevented from working on Windows. #281
 
