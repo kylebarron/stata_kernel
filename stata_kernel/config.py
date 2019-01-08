@@ -37,19 +37,20 @@ class Config():
                                   '~/.stata_kernel_cache')).expanduser()
         cache_dir.mkdir(parents=True, exist_ok=True)
 
+        stata_path = self.get('stata_path', find_path())
+        if not stata_path:
+            self.raise_config_error('stata_path')
+
         if platform.system() == 'Darwin':
-            stata_path = self.get(
-                'stata_path', self.get_mac_stata_path_variant())
+            stata_path = self.get_mac_stata_path_variant(stata_path)
             execution_mode = self.get('execution_mode', 'console')
             if execution_mode not in ['console', 'automation']:
                 self.raise_config_error('execution_mode')
         elif platform.system() == 'Windows':
             execution_mode = 'automation'
-            stata_path = self.get('stata_path', find_path())
         else:
             execution_mode = 'console'
-            stata_path = self.get(
-                'stata_path', self.get_linux_stata_path_variant())
+            stata_path = self.get_linux_stata_path_variant(stata_path)
 
         self.set('cache_dir', cache_dir)
         self.set('stata_path', stata_path)
@@ -84,11 +85,7 @@ class Config():
             with self.config_path.open('w') as f:
                 self.config.write(f)
 
-    def get_mac_stata_path_variant(self):
-        stata_path = self.get('stata_path', find_path())
-        if stata_path == '':
-            return ''
-
+    def get_mac_stata_path_variant(self, stata_path):
         path = Path(stata_path)
         if self.get('execution_mode') == 'automation':
             d = {'stata': 'Stata', 'stata-se': 'StataSE', 'stata-mp': 'StataMP'}
@@ -98,9 +95,7 @@ class Config():
         bin_name = d.get(path.name, path.name)
         return str(path.parent / bin_name)
 
-    def get_linux_stata_path_variant(self):
-        stata_path = self.get('stata_path', find_path())
-
+    def get_linux_stata_path_variant(self, stata_path):
         d = {
             'xstata': 'stata',
             'xstata-se': 'stata-se',
