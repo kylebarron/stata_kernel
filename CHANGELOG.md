@@ -2,6 +2,10 @@
 
 ## [1.10.0] - 2019-01-04
 
+- Fix bug that prevented from working on Windows. #281
+
+## [1.10.0] - 2019-01-04
+
 - Fix `%help` magic in JupyterLab. #273
 - Added example Jupyter Notebook file to documentation. #275
 - Throws custom error if the Automation type library isn't registered on Windows. #276

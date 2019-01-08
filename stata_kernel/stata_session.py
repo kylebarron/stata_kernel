@@ -146,7 +146,7 @@ class StataSession():
         """
 
         try:
-            stata = win32com.client.Dispatch("stata.StataOLEApp")
+            self.stata = win32com.client.Dispatch("stata.StataOLEApp")
         except com_error:
             msg = """
             The Stata Automation library is not enabled. Follow the instructions
