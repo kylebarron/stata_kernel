@@ -10,16 +10,17 @@
 
 - If you have multiple installations of Python on your machine, make sure you run `python -m stata_kernel.install` during installation with the same Python executable as the one you usually use. This matters especially when using several Python virtual environments. You'll need to install `stata_kernel` within each environment you use.
 
-## Running
+## Graphs won't display
 
-- If you're on Windows, and upon trying to start `stata_kernel` you see an error message in the terminal window that ends with:
+- If you're using a user-written command to generate your graph, you'll need to add that command to the [list of graph keywords](configuration.md#user_graph_keywords).
+- If you're on Windows and using Edge as your browser, SVG images won't work. This is a known issue.
 
-    ```
-    pywintypes.com_error: (-2147221005, 'Invalid class string', None, None)
-    ```
+    Easy solutions:
 
-    That means that the Stata type library has not been correctly registered, so
-    `stata_kernel` is unable to communicate with Stata. See the [instructions
-    here](../../getting_started#prerequisites) (under "Windows-specific steps")
-    for how to register the type library. It is not necessary to reinstall
-    `stata_kernel` after this.
+    - Don't use Internet Explorer/Edge
+    - Set the graph format to PNG instead of SVG. Run one of the following to [change the graph's storage format](configuration.md#graph_format):
+
+        ```
+        %set graph_format png
+        %set graph_format png --permanently
+        ```
