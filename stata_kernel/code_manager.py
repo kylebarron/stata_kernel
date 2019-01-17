@@ -3,6 +3,7 @@ import platform
 import hashlib
 
 from pygments import lex
+from pygments.token import Text
 from textwrap import dedent
 
 from .stata_lexer import StataLexer
@@ -52,14 +53,17 @@ class CodeManager():
         self.tokens_fp_no_comments = self.remove_comments(self.tokens_fp_all)
 
         if not self.tokens_fp_no_comments:
-            self.tokens_fp_no_comments = [('Token.Text', '')]
+            self.tokens_fp_no_comments = [(Text, '')]
 
         self.ends_sc = str(self.tokens_fp_no_comments[-1][0]) in [
             'Token.TextInSemicolonBlock', 'Token.SemicolonDelimiter']
 
         tokens_nl_delim = self.convert_delimiter(self.tokens_fp_no_comments)
         text = ''.join([x[1] for x in tokens_nl_delim])
-        self.tokens_final = self.tokenize_second_pass(text)
+        tokens = self.tokenize_second_pass(text)
+
+        # When not in String, replace consecutive spaces with one space
+        self.tokens_final = self.remove_consecutive_whitespace(tokens)
 
         # NOTE: Consider wrapping mata call for include in mata and
         # end. Do not include end in the include file if the result of
@@ -130,14 +134,16 @@ class CodeManager():
             return tokens
 
         # Replace newlines in `;`-delimited blocks with spaces
-        tokens = [('Space instead of newline', ' ')
-                  if (str(x[0]) == 'Token.TextInSemicolonBlock')
-                  and x[1] == '\n' else x for x in tokens[:-1]]
+        tokens = [
+            ('Space instead of newline', ' ') if
+            (str(x[0]) == 'Token.TextInSemicolonBlock') and x[1] == '\n' else x
+            for x in tokens[:-1]]
 
         # Change the ; delimiters to \n
-        tokens = [('Newline delimiter', '\n')
-                  if (str(x[0]) == 'Token.SemicolonDelimiter') and x[1] == ';'
-                  else x for x in tokens]
+        tokens = [
+            ('Newline delimiter', '\n') if
+            (str(x[0]) == 'Token.SemicolonDelimiter') and x[1] == ';' else x
+            for x in tokens]
         return tokens
 
     def tokenize_second_pass(self, code):
@@ -161,6 +167,16 @@ class CodeManager():
         """
         block_lexer = StataLexer(stripall=False, stripnl=False)
         return [x for x in lex(code, block_lexer)]
+
+    def remove_consecutive_whitespace(self, tokens):
+        """Remove consecutive whitespace not in string"""
+
+        spaces = [
+            ind for ind, x in enumerate(tokens)
+            if (x[0] == Text) & (x[1] == ' ')]
+        consecutive_spaces = [x for x in spaces if x - 1 in spaces]
+        return [
+            x for ind, x in enumerate(tokens) if ind not in consecutive_spaces]
 
     def _is_complete(self):
         """Determine whether the code provided is complete
