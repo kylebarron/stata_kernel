@@ -1,6 +1,6 @@
 import re
 from pygments.lexer import RegexLexer, include
-from pygments.token import Comment, Text, Token
+from pygments.token import Comment, Text, Token, String
 
 
 # yapf: disable
@@ -36,8 +36,8 @@ class StataLexer(RegexLexer):
     flags = re.MULTILINE | re.DOTALL
     tokens = {
         'root': [
-            (r'`"', Text, 'string-compound'),
-            (r'(?<!`)"', Text, 'string-regular'),
+            (r'`"', String, 'string-compound'),
+            (r'(?<!`)"', String, 'string-regular'),
             (r'^[^\r\n\S]*m(ata)?[^\r\n\S]*$', Token.Mata.Open, 'mata'),
             (r'^[^\r\n\S]*m(ata)?[^\r\n\S]*:[^\r\n\S]*$', Token.Mata.OpenError, 'mata'),
             (r'\{', Token.TextBlock, 'block'),
@@ -89,9 +89,9 @@ class StataLexer(RegexLexer):
         ],
         'strings': [
             # `"compound string"'
-            (r'`"', Text, 'string-compound'),
+            (r'`"', String, 'string-compound'),
             # "string"
-            (r'(?<!`)"', Text, 'string-regular'),
+            (r'(?<!`)"', String, 'string-regular'),
         ],
         'strings-inside-blocks': [
             # `"compound string"'
@@ -100,13 +100,13 @@ class StataLexer(RegexLexer):
             (r'(?<!`)"', Token.TextBlock, 'string-regular-inside-blocks'),
         ],
         'string-compound': [
-            (r'`"', Text, '#push'),
-            (r'"\'', Text, '#pop'),
-            (r'.', Text)
+            (r'`"', String, '#push'),
+            (r'"\'', String, '#pop'),
+            (r'.', String)
         ],
         'string-regular': [
-            (r'(")(?!\')|(?=\n)', Text, '#pop'),
-            (r'.', Text)
+            (r'(")(?!\')|(?=\n)', String, '#pop'),
+            (r'.', String)
         ],
         'string-compound-inside-blocks': [
             (r'`"', Token.TextBlock, '#push'),
