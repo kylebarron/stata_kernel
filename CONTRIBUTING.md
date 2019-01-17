@@ -11,6 +11,27 @@ All types of contributions are welcome. You can:
 
 The best way to get your issue solved is to provide a [minimal, complete, verifiable example.](https://stackoverflow.com/help/mcve) In order to submit a bug report, [click here](https://github.com/kylebarron/stata_kernel/issues/new/choose) and fill out the template.
 
+## Debugging
+
+The following seems to be the easiest way to debug internals:
+
+```py
+from stata_kernel.kernel import StataKernel
+from stata_kernel.code_manager import CodeManager
+
+kernel = StataKernel()
+session = kernel.stata
+
+# If on windows, may be helpful
+session.show_gui()
+
+code = 'sysuse auto, clear'
+cm = CodeManager(code)
+text_to_run, md5, text_to_exclude = cm.get_text(kernel.conf, session)
+rc, res = session.do(
+    text_to_run, md5, text_to_exclude=text_to_exclude, display=False)
+```
+
 ## Tests
 
 ### Adding tests
