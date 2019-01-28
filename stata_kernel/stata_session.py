@@ -198,6 +198,7 @@ class StataSession():
 
         # Set banner to Stata's shell header
         self.banner += ansi_escape.sub('', '\n'.join(banner))
+        self.banner = re.sub(r'\r\n', '\n', self.banner)
 
     def start_log_aut(self):
         """Start log and watch file
@@ -357,8 +358,8 @@ class StataSession():
                 code_lines, res = self.clean_log_eol(child, code_lines, res)
                 if res is None:
                     continue
-                res += '\n'
-                res = ansi_escape.sub('', res)
+                res = ansi_escape.sub('', res) + '\n'
+                res = re.sub(r'\r\n', '\n', res)
                 res_disp += res
                 res_list.append(res)
                 if not ''.join(res_list).strip():
