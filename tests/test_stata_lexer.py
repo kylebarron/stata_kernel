@@ -1,5 +1,5 @@
 import pytest
-from pygments.token import Token, Text, String
+from pygments.token import Token
 from stata_kernel.code_manager import CodeManager
 
 
@@ -506,74 +506,19 @@ class TestBlocks(object):
             (Token.Text, 'i'),
             (Token.Text, 'f'),
             (Token.Text, ' '),
-            (String, '"'),
-            (String, '0'),
-            (String, '"'),
+            (Token.Text, '"'),
+            (Token.Text, '0'),
+            (Token.Text, '"'),
             (Token.Text, ' '),
             (Token.Text, '='),
             (Token.Text, '='),
             (Token.Text, ' '),
-            (String, '"'),
-            (String, '1'),
-            (String, '"'),
+            (Token.Text, '"'),
+            (Token.Text, '1'),
+            (Token.Text, '"'),
             (Token.Text, ' '),
             (Token.TextBlock, '{'),
             (Token.TextBlock, '\n')]
-        assert tokens == expected
-
-class TestRemovingConsecutiveWhitespace():
-    def test_whitespace(self):
-        code = 'a   b'
-        tokens = CodeManager(code).tokens_final
-        expected = [
-            (Text, 'a'),
-            (Text, ' '),
-            (Text, 'b'),
-            (Text, '\n')]
-        assert tokens == expected
-
-    def test_whitespace2(self):
-        code = 'a ///\n   b'
-        tokens = CodeManager(code).tokens_final
-        expected = [
-            (Text, 'a'),
-            (Text, ' '),
-            (Text, 'b'),
-            (Text, '\n')]
-        assert tokens == expected
-
-    def test_whitespace3(self):
-        code = 'a "   "   b'
-        tokens = CodeManager(code).tokens_final
-        expected = [
-            (Text, 'a'),
-            (Text, ' '),
-            (String, '"'),
-            (String, ' '),
-            (String, ' '),
-            (String, ' '),
-            (String, '"'),
-            (Text, ' '),
-            (Text, 'b'),
-            (Text, '\n')]
-        assert tokens == expected
-
-    def test_whitespace4(self):
-        code = 'a,     a("   ")'
-        tokens = CodeManager(code).tokens_final
-        expected = [
-            (Text, 'a'),
-            (Text, ','),
-            (Text, ' '),
-            (Text, 'a'),
-            (Text, '('),
-            (String, '"'),
-            (String, ' '),
-            (String, ' '),
-            (String, ' '),
-            (String, '"'),
-            (Text, ')'),
-            (Text, '\n')]
         assert tokens == expected
 
 class TestSemicolonDelimitComments(object):
