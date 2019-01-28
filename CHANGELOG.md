@@ -1,5 +1,11 @@
 # Changelog
 
+## [1.10.2] - 2019-01-28
+
+- Fix bug that prevented long commands on Windows from working. #284
+- Make sure to always find correct Stata path on Mac when using Automation.
+- Several documentation updates
+
 ## [1.10.1] - 2019-01-08
 
 - Fix bug that prevented from working on Windows. #281
