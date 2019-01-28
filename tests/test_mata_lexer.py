@@ -1,5 +1,5 @@
 import pytest
-from pygments.token import Token, String
+from pygments.token import Token
 from stata_kernel.code_manager import CodeManager
 
 
@@ -752,15 +752,15 @@ class TestSemicolonDelimitCommentsMata(object):
             (Token.Mata.Open, ' mata'),
             (Token.Text, '\n'),
             (Token.Text, ' '),
-            (String, '"'),
-            (String, ' '),
-            (String, 'a'),
-            (String, ' '),
-            (String, '2'),
-            (String, ' '),
-            (String, 'b'),
-            (String, ' '),
-            (String, '"'),
+            (Token.Text, '"'),
+            (Token.Text, ' '),
+            (Token.Text, 'a'),
+            (Token.Text, ' '),
+            (Token.Text, '2'),
+            (Token.Text, ' '),
+            (Token.Text, 'b'),
+            (Token.Text, ' '),
+            (Token.Text, '"'),
             (Token.Text, ' '),
             (Token.Mata.Close, '\n end'),
             (Token.Text, '\n')]
