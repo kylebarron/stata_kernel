@@ -226,7 +226,7 @@ class StataSession():
 
         self.fd = Path(log_path).open()
         self.log_fd = pexpect.fdpexpect.fdspawn(
-            self.fd, encoding='utf-8', codec_errors='replace')
+            self.fd, encoding='utf-8', maxread=9999999, codec_errors='replace')
         self.log_fd.logfile = (
             self.config.get('cache_dir') / 'console_debug.log').open(
                 'w', encoding='utf-8')
@@ -410,9 +410,9 @@ class StataSession():
         repeat.
 
         Args:
+            child (pexpect.spawn): pexpect instance to send break to
             code_lines (List[str]): List of code lines sent to console that have not yet been matched in output
             res (str): Current line of result/output
-            l_cont (bool): Whether current line is a line continuation
 
         Returns:
             (List[str], str, bool)
