@@ -448,12 +448,19 @@ class StataSession():
         # Remove the characters that were matched. If there's still text left,
         # it's on the next line.
         code_lines[0] = code_lines[0][len(res):]
+        res = ''
         while code_lines[0]:
-            child.expect(r'\r?\n', timeout=5)
-            res = child.before
-            assert child.before.startswith('> ')
+            try:
+                child.expect(r'\r?\n', timeout=5)
+                res += child.before
+            except pexpect.EOF:
+                res += child.before
+                sleep(0.05)
+                continue
+            assert res.startswith('> ')
             res = res[2:]
             code_lines[0] = code_lines[0][len(res):]
+            res = ''
 
         return code_lines[1:], None
 
