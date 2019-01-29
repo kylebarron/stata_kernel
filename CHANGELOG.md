@@ -1,5 +1,9 @@
 # Changelog
 
+## [1.10.4] - 2019-01-29
+
+- _Actually_ fix bug that prevented long commands on Windows from working. #284
+
 ## [1.10.3] - 2019-01-28
 
 - Fix "Code editor out of sync" Jupyterlab message. #270
