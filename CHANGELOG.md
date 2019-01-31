@@ -1,5 +1,9 @@
 # Changelog
 
+## [1.10.5] - 2019-01-30
+
+- Fix bug where the return code (`_rc`) was reset by internal code after every user command. #288
+
 ## [1.10.4] - 2019-01-29
 
 - _Actually_ fix bug that prevented long commands on Windows from working. #284
