@@ -75,6 +75,7 @@ class StataKernel(Kernel):
         self.language_version = self.stata.stata_version
         self.magics = StataMagics(self)
         self.completions = CompletionsManager(self, self.conf)
+        self.quickdo('cap di "Set _rc to 0 initially"')
 
     def do_execute(
             self, code, silent, store_history=True, user_expressions=None,
@@ -155,6 +156,11 @@ class StataKernel(Kernel):
         """Things to do after running commands in Stata
         """
 
+        store_rc = """\
+        tempname __user_rc
+        local `__user_rc' = _rc
+        """
+        self.quickdo(dedent(store_rc))
         _rc, _res = self.cleanLogs("off")
 
         self.stata.linesize = int(self.quickdo("di `c(linesize)'"))
@@ -162,6 +168,14 @@ class StataKernel(Kernel):
         self.completions.refresh(self)
 
         _rc, _res = self.cleanLogs("on")
+
+        # Restore _rc
+        restore_rc = """\
+        _StataKernelResetRC, num(``__user_rc'')
+        macro drop _`__user_rc'
+        macro drop ___user_rc
+        """
+        self.quickdo(dedent(restore_rc))
 
     def quickdo(self, code):
         code = self.stata._mata_escape(code)
