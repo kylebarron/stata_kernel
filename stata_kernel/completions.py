@@ -87,12 +87,12 @@ class CompletionsManager():
                     r"\([^\)\s]*?\Z", **kwargs).search,
             'line':
                 re.compile(
-                    r"^\s*({0}\s+)*(?P<context>\S+)".format(pre), **kwargs)
-                .search,
+                    r"^\s*({0}\s+)*(?P<context>\S+)".format(pre),
+                    **kwargs).search,
             'delimit_line':
                 re.compile(
-                    r"\A\s*({0}\s+)*(?P<context>\S+)".format(pre), **kwargs)
-                .search}
+                    r"\A\s*({0}\s+)*(?P<context>\S+)".format(pre),
+                    **kwargs).search}
 
         self.suggestions = self.get_suggestions(kernel)
         self.suggestions['magics'] = kernel.magics.available_magics
@@ -315,8 +315,8 @@ class CompletionsManager():
             return [
                 var for var in self.suggestions['programs']
                 if var.startswith(starts)] + [
-                var for var in self.suggestions['varlist']
-                if var.startswith(starts)] + paths
+                    var for var in self.suggestions['varlist']
+                    if var.startswith(starts)] + paths
         elif env == 1:
             return [
                 var + rcomp
@@ -440,7 +440,8 @@ class CompletionsManager():
         if match:
             suggestions = match.groupdict()
             suggestions['mata'] = self._parse_mata_desc(suggestions['mata'])
-            suggestions['programs'] = self._parse_programs_desc(suggestions['programs'])
+            suggestions['programs'] = self._parse_programs_desc(
+                suggestions['programs'])
             for k, v in suggestions.items():
                 if k in ['mata', 'programs']:
                     continue
@@ -514,7 +515,9 @@ class CompletionsManager():
             items = items[:-1]
 
         # Remove stata-kernel ado files
-        files = ['_StataKernelCompletions', '_StataKernelHead', '_StataKernelLog', '_StataKernelTail']
+        files = [
+            '_StataKernelCompletions', '_StataKernelHead', '_StataKernelLog',
+            '_StataKernelTail']
         items = [x for x in items if x not in files]
 
         # Remove if period in name

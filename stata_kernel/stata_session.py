@@ -176,8 +176,7 @@ class StataSession():
         gone away.
         """
         self.child = pexpect.spawn(
-            config.get('stata_path'), encoding='utf-8',
-            codec_errors='replace')
+            config.get('stata_path'), encoding='utf-8', codec_errors='replace')
         self.child.setwinsize(100, 255)
         self.child.delaybeforesend = None
         self.child.logfile = (
@@ -215,8 +214,7 @@ class StataSession():
         log_counter = 0
         rc = 1
         while (rc) and (log_counter < 15):
-            log_path = config.get('cache_dir') / 'log{}.log'.format(
-                log_counter)
+            log_path = config.get('cache_dir') / 'log{}.log'.format(log_counter)
             cmd = 'log using `"{}"\', replace text name(stata_kernel_log)'.format(
                 log_path)
             rc = self.automate('DoCommand', cmd)

@@ -24,6 +24,7 @@ if sys.version_info[0] < 3:
 if sys.version_info[1] < 5:
     raise ImportError('Python < 3.5 is unsupported.')
 
+
 def install_my_kernel_spec(user=True, prefix=None):
     with TemporaryDirectory() as td:
         os.chmod(td, 0o755)  # Starts off as 700, not user readable

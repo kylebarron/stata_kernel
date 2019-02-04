@@ -51,14 +51,14 @@ class MagicParsers():
             description="Display the first N rows of the dataset in memory.")
         self.browse.add_argument('code', nargs='*', type=str, help=SUPPRESS)
 
-        self.html = StataParser(prog='%html', kernel=kernel,
-            usage='%(prog)s [-h] code',
+        self.html = StataParser(
+            prog='%html', kernel=kernel, usage='%(prog)s [-h] code',
             description="Display output of code as HTML.")
         self.html.add_argument(
             'code', nargs='*', type=str, metavar='CODE', help="Code to run")
 
-        self.latex = StataParser(prog='%latex', kernel=kernel,
-            usage='%(prog)s [-h] code',
+        self.latex = StataParser(
+            prog='%latex', kernel=kernel, usage='%(prog)s [-h] code',
             description="Display output of code as LaTeX.")
         self.latex.add_argument(
             'code', nargs='*', type=str, metavar='CODE', help="Code to run")
@@ -158,13 +158,15 @@ class MagicParsers():
             help="Restore default settings.", required=False)
 
         self.show_gui = StataParser(
-            prog='%show_gui', kernel=kernel,
-            description="Show Stata GUI. Only works on Windows (and Mac if using automation execution mode)")
+            prog='%show_gui', kernel=kernel, description=
+            "Show Stata GUI. Only works on Windows (and Mac if using automation execution mode)"
+        )
         self.show_gui.add_argument('code', nargs='*', type=str, help=SUPPRESS)
 
         self.hide_gui = StataParser(
-            prog='%hide_gui', kernel=kernel,
-            description="Hide Stata GUI. Only works on Windows (and Mac if using automation execution mode)")
+            prog='%hide_gui', kernel=kernel, description=
+            "Hide Stata GUI. Only works on Windows (and Mac if using automation execution mode)"
+        )
         self.hide_gui.add_argument('code', nargs='*', type=str, help=SUPPRESS)
 
 
@@ -191,8 +193,8 @@ class StataMagics():
         'show_gui',
         'status',
         'tail']
-        # 'time',
-        # 'timeit'
+    # 'time',
+    # 'timeit'
 
     csshelp_default = resource_filename(
         'stata_kernel', 'css/_StataKernelHelpDefault.css')
@@ -472,8 +474,10 @@ class StataMagics():
         else:
             content = {
                 'data': {
-                    'text/plain': 'This front-end or document format cannot display HTML',
-                    'text/html': res},
+                    'text/plain':
+                        'This front-end or document format cannot display HTML',
+                    'text/html':
+                        res},
                 'metadata': {}}
             kernel.send_response(kernel.iopub_socket, 'display_data', content)
 
@@ -489,8 +493,10 @@ class StataMagics():
         else:
             content = {
                 'data': {
-                    'text/plain': 'This front-end or document format cannot display LaTeX',
-                    'text/latex': res},
+                    'text/plain':
+                        'This front-end or document format cannot display LaTeX',
+                    'text/latex':
+                        res},
                 'metadata': {}}
             kernel.send_response(kernel.iopub_socket, 'display_data', content)
 

@@ -123,4 +123,5 @@ class Config():
             with self.config_path.open('w') as f:
                 self.config.write(f)
 
+
 config = Config()

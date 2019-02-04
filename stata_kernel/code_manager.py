@@ -131,14 +131,16 @@ class CodeManager():
             return tokens
 
         # Replace newlines in `;`-delimited blocks with spaces
-        tokens = [('Space instead of newline', ' ')
-                  if (str(x[0]) == 'Token.TextInSemicolonBlock')
-                  and x[1] == '\n' else x for x in tokens[:-1]]
+        tokens = [
+            ('Space instead of newline', ' ') if
+            (str(x[0]) == 'Token.TextInSemicolonBlock') and x[1] == '\n' else x
+            for x in tokens[:-1]]
 
         # Change the ; delimiters to \n
-        tokens = [('Newline delimiter', '\n')
-                  if (str(x[0]) == 'Token.SemicolonDelimiter') and x[1] == ';'
-                  else x for x in tokens]
+        tokens = [
+            ('Newline delimiter', '\n') if
+            (str(x[0]) == 'Token.SemicolonDelimiter') and x[1] == ';' else x
+            for x in tokens]
         return tokens
 
     def tokenize_second_pass(self, code):
