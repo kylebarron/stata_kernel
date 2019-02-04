@@ -7,6 +7,7 @@ from textwrap import dedent
 
 from .stata_lexer import StataLexer
 from .stata_lexer import CommentAndDelimitLexer
+from .config import config
 
 base_graph_keywords = [
     r'gr(a|ap|aph)?' + r'(?!\s+' + r'(save|replay|print|export|dir|set|' +
@@ -130,14 +131,16 @@ class CodeManager():
             return tokens
 
         # Replace newlines in `;`-delimited blocks with spaces
-        tokens = [('Space instead of newline', ' ')
-                  if (str(x[0]) == 'Token.TextInSemicolonBlock')
-                  and x[1] == '\n' else x for x in tokens[:-1]]
+        tokens = [
+            ('Space instead of newline', ' ') if
+            (str(x[0]) == 'Token.TextInSemicolonBlock') and x[1] == '\n' else x
+            for x in tokens[:-1]]
 
         # Change the ; delimiters to \n
-        tokens = [('Newline delimiter', '\n')
-                  if (str(x[0]) == 'Token.SemicolonDelimiter') and x[1] == ';'
-                  else x for x in tokens]
+        tokens = [
+            ('Newline delimiter', '\n') if
+            (str(x[0]) == 'Token.SemicolonDelimiter') and x[1] == ';' else x
+            for x in tokens]
         return tokens
 
     def tokenize_second_pass(self, code):
@@ -210,7 +213,7 @@ class CodeManager():
 
         return True
 
-    def get_text(self, config, stata=None):
+    def get_text(self, stata=None):
         """Get valid, executable text
 
         For any text longer than one line, I save the text to a do file and send
@@ -223,7 +226,7 @@ class CodeManager():
         code I sent it.
 
         Args:
-            config (.config.Config): Configuration instance
+            stata: instance of Stata session
 
         Returns:
             (str, str, str):

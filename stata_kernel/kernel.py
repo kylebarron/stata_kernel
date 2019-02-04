@@ -13,7 +13,7 @@ from xml.etree import ElementTree as ET
 from pkg_resources import resource_filename
 from ipykernel.kernelbase import Kernel
 
-from .config import Config
+from .config import config
 from .completions import CompletionsManager
 from .code_manager import CodeManager
 from .stata_session import StataSession
@@ -66,15 +66,13 @@ class StataKernel(Kernel):
 
         super(StataKernel, self).__init__(*args, **kwargs)
 
-        # Can't name this `self.config`. Conflicts with a Jupyter attribute
-        self.conf = Config()
         self.graph_formats = ['svg', 'png', 'pdf']
         self.sc_delimit_mode = False
-        self.stata = StataSession(self, self.conf)
+        self.stata = StataSession(self)
         self.banner = self.stata.banner
         self.language_version = self.stata.stata_version
         self.magics = StataMagics(self)
-        self.completions = CompletionsManager(self, self.conf)
+        self.completions = CompletionsManager(self)
         self.quickdo('cap di "Set _rc to 0 initially"')
 
     def do_execute(
@@ -118,7 +116,7 @@ class StataKernel(Kernel):
         # Tokenize code and return code chunks
         cm = CodeManager(code, self.sc_delimit_mode, self.stata.mata_mode)
         self.stata._mata_refresh(cm)
-        text_to_run, md5, text_to_exclude = cm.get_text(self.conf, self.stata)
+        text_to_run, md5, text_to_exclude = cm.get_text(self.stata)
 
         # Execute code chunk
         rc, res = self.stata.do(
@@ -180,7 +178,7 @@ class StataKernel(Kernel):
     def quickdo(self, code):
         code = self.stata._mata_escape(code)
         cm = CodeManager(code)
-        text_to_run, md5, text_to_exclude = cm.get_text(self.conf)
+        text_to_run, md5, text_to_exclude = cm.get_text()
         rc, res = self.stata.do(
             text_to_run, md5, text_to_exclude=text_to_exclude, display=False)
 
@@ -201,7 +199,7 @@ class StataKernel(Kernel):
     def cleanLogs(self, what):
         code = self.stata._mata_escape("_StataKernelLog {0}".format(what))
         cm = CodeManager(code)
-        text_to_run, md5, text_to_exclude = cm.get_text(self.conf)
+        text_to_run, md5, text_to_exclude = cm.get_text()
         rc, res = self.stata.do(
             text_to_run, md5, text_to_exclude=text_to_exclude, display=False)
 
@@ -295,7 +293,7 @@ class StataKernel(Kernel):
         <https://kylebarron.github.io/stata_kernel/using_stata_kernel/intro/#graph-redundancy>
         """
         msg = dedent(msg)
-        warn_setting = self.config.get('graph_redundancy_warning', 'True')
+        warn_setting = config.get('graph_redundancy_warning', 'True')
         if warn and (warn_setting.lower() == 'true'):
             self.send_response(
                 self.iopub_socket, 'display_data', {

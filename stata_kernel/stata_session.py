@@ -10,7 +10,9 @@ from time import sleep
 from pathlib import Path
 from textwrap import dedent
 from pkg_resources import resource_filename
+
 from .utils import check_stata_kernel_updated_version
+from .config import config
 
 if platform.system() == 'Windows':
     import win32com.client
@@ -35,14 +37,13 @@ ansi_escape = re.compile(ansi_regex, flags=re.IGNORECASE)
 
 
 class StataSession():
-    def __init__(self, kernel, config):
+    def __init__(self, kernel):
         """Initialize Session
         Args:
             kernel (ipykernel.kernelbase): Running instance of kernel
             config (ConfigParser): config class
         """
 
-        self.config = config
         self.kernel = kernel
         self.banner = 'stata_kernel {}\n'.format(kernel.implementation_version)
 
@@ -85,13 +86,13 @@ class StataSession():
         if platform.system() == 'Windows':
             self.init_windows()
         elif platform.system() == 'Darwin':
-            if self.config.get('execution_mode') == 'automation':
+            if config.get('execution_mode') == 'automation':
                 self.init_mac_automation()
             else:
                 self.init_console()
         else:
             self.init_console()
-            self.config.set('execution_mode', 'console', permanent=True)
+            config.set('execution_mode', 'console', permanent=True)
 
         # Stata
         # -----
@@ -119,7 +120,7 @@ class StataSession():
         self.stata_version = res
         isold = int(self.stata_version[:2]) < 15
         if (platform.system() == 'Windows') and isold:
-            self.config.set('graph_format', 'png', permanent=True)
+            config.set('graph_format', 'png', permanent=True)
 
     def init_windows(self):
         """Start Stata on Windows
@@ -127,7 +128,7 @@ class StataSession():
         Until version 1.8.0, I included
         ```py
         from win32api import WinExec
-        WinExec(self.config.get('stata_path'))
+        WinExec(config.get('stata_path'))
         ```
         _before_ calling `win32com.client.Dispatch`. When opening a new Stata
         session using `win32com.client.Dispatch`, graph windows from the Stata
@@ -157,7 +158,7 @@ class StataSession():
             raise com_error(dedent(msg))
 
         self.automate(cmd_name='UtilShowStata', value=1)
-        self.config.set('execution_mode', 'automation', permanent=True)
+        config.set('execution_mode', 'automation', permanent=True)
         self.start_log_aut()
 
     def init_mac_automation(self):
@@ -175,12 +176,11 @@ class StataSession():
         gone away.
         """
         self.child = pexpect.spawn(
-            self.config.get('stata_path'), encoding='utf-8',
-            codec_errors='replace')
+            config.get('stata_path'), encoding='utf-8', codec_errors='replace')
         self.child.setwinsize(100, 255)
         self.child.delaybeforesend = None
         self.child.logfile = (
-            self.config.get('cache_dir') / 'console_debug.log').open(
+            config.get('cache_dir') / 'console_debug.log').open(
                 'w', encoding='utf-8')
         banner = []
         try:
@@ -214,8 +214,7 @@ class StataSession():
         log_counter = 0
         rc = 1
         while (rc) and (log_counter < 15):
-            log_path = self.config.get('cache_dir') / 'log{}.log'.format(
-                log_counter)
+            log_path = config.get('cache_dir') / 'log{}.log'.format(log_counter)
             cmd = 'log using `"{}"\', replace text name(stata_kernel_log)'.format(
                 log_path)
             rc = self.automate('DoCommand', cmd)
@@ -229,7 +228,7 @@ class StataSession():
         self.log_fd = pexpect.fdpexpect.fdspawn(
             self.fd, encoding='utf-8', maxread=9999999, codec_errors='replace')
         self.log_fd.logfile = (
-            self.config.get('cache_dir') / 'console_debug.log').open(
+            config.get('cache_dir') / 'console_debug.log').open(
                 'w', encoding='utf-8')
 
         return 0
@@ -249,11 +248,11 @@ class StataSession():
             display (bool): Whether to send results to front-end
         """
 
-        self.cache_dir_str = str(self.config.get('cache_dir'))
+        self.cache_dir_str = str(config.get('cache_dir'))
         if platform.system() == 'Windows':
             self.cache_dir_str = re.sub(r'\\', '/', self.cache_dir_str)
 
-        if self.config.get('execution_mode') == 'console':
+        if config.get('execution_mode') == 'console':
             self.child.sendline(text)
             child = self.child
         else:
@@ -329,9 +328,9 @@ class StataSession():
                 g_path = [child.match.group(1)]
                 g_fmt = child.match.group(2).lower()
                 if g_fmt == 'svg':
-                    pdf_dup = self.config.get('graph_svg_redundancy', 'True')
+                    pdf_dup = config.get('graph_svg_redundancy', 'True')
                 elif g_fmt == 'png':
-                    pdf_dup = self.config.get('graph_png_redundancy', 'False')
+                    pdf_dup = config.get('graph_png_redundancy', 'False')
                 pdf_dup = pdf_dup.lower() == 'true'
 
                 if pdf_dup:
@@ -479,7 +478,7 @@ class StataSession():
             child (pexpect.spawn): pexpect instance to send break to
             md5 (str): The md5 to send a second time
         """
-        if self.config.get('execution_mode') == 'console':
+        if config.get('execution_mode') == 'console':
             child.sendcontrol('c')
             child.sendcontrol('d')
             self.child.sendline(md5)
@@ -500,7 +499,7 @@ class StataSession():
                 return getattr(self.stata, cmd_name)()
             return getattr(self.stata, cmd_name)(value, **kwargs)
 
-        app_name = Path(self.config.get('stata_path')).name
+        app_name = Path(config.get('stata_path')).name
         cmd = 'tell application "{}" to {}'.format(app_name, cmd_name)
         if value is not None:
             value = str(value).replace('\n', '\\n').replace('\r', '\\r')
@@ -540,18 +539,18 @@ class StataSession():
         return stdout
 
     def shutdown(self):
-        if self.config.get('execution_mode') == 'automation':
+        if config.get('execution_mode') == 'automation':
             self.automate('DoCommandAsync', 'exit, clear')
         else:
             self.child.close(force=True)
         return
 
     def show_gui(self):
-        if self.config.get('execution_mode', '') == 'automation':
+        if config.get('execution_mode', '') == 'automation':
             self.automate(cmd_name='UtilShowStata', value=0)
 
     def hide_gui(self):
-        if self.config.get('execution_mode', '') == 'automation':
+        if config.get('execution_mode', '') == 'automation':
             self.automate(cmd_name='UtilShowStata', value=1)
 
     def _mata_refresh(self, cm):
@@ -624,7 +623,7 @@ class StataSession():
 
             self.mata_restart = True
             if re.match(r'(\r?\n)? *>(\r?\n)?', child.after):
-                if self.config.get('execution_mode') == 'console':
+                if config.get('execution_mode') == 'console':
                     child.sendcontrol('c')
                     child.sendcontrol('d')
                     child.sendline('\r\n')

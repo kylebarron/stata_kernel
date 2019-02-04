@@ -3,12 +3,13 @@ import re
 import urllib
 import pandas as pd
 from textwrap import dedent
-from argparse import ArgumentParser, SUPPRESS
-
 from bs4 import BeautifulSoup as bs
-from .utils import check_stata_kernel_updated_version
-from .code_manager import CodeManager
+from argparse import ArgumentParser, SUPPRESS
 from pkg_resources import resource_filename
+
+from .config import config
+from .code_manager import CodeManager
+from .utils import check_stata_kernel_updated_version
 
 
 class StataParser(ArgumentParser):
@@ -50,14 +51,14 @@ class MagicParsers():
             description="Display the first N rows of the dataset in memory.")
         self.browse.add_argument('code', nargs='*', type=str, help=SUPPRESS)
 
-        self.html = StataParser(prog='%html', kernel=kernel,
-            usage='%(prog)s [-h] code',
+        self.html = StataParser(
+            prog='%html', kernel=kernel, usage='%(prog)s [-h] code',
             description="Display output of code as HTML.")
         self.html.add_argument(
             'code', nargs='*', type=str, metavar='CODE', help="Code to run")
 
-        self.latex = StataParser(prog='%latex', kernel=kernel,
-            usage='%(prog)s [-h] code',
+        self.latex = StataParser(
+            prog='%latex', kernel=kernel, usage='%(prog)s [-h] code',
             description="Display output of code as LaTeX.")
         self.latex.add_argument(
             'code', nargs='*', type=str, metavar='CODE', help="Code to run")
@@ -157,13 +158,15 @@ class MagicParsers():
             help="Restore default settings.", required=False)
 
         self.show_gui = StataParser(
-            prog='%show_gui', kernel=kernel,
-            description="Show Stata GUI. Only works on Windows (and Mac if using automation execution mode)")
+            prog='%show_gui', kernel=kernel, description=
+            "Show Stata GUI. Only works on Windows (and Mac if using automation execution mode)"
+        )
         self.show_gui.add_argument('code', nargs='*', type=str, help=SUPPRESS)
 
         self.hide_gui = StataParser(
-            prog='%hide_gui', kernel=kernel,
-            description="Hide Stata GUI. Only works on Windows (and Mac if using automation execution mode)")
+            prog='%hide_gui', kernel=kernel, description=
+            "Hide Stata GUI. Only works on Windows (and Mac if using automation execution mode)"
+        )
         self.hide_gui.add_argument('code', nargs='*', type=str, help=SUPPRESS)
 
 
@@ -190,8 +193,8 @@ class StataMagics():
         'show_gui',
         'status',
         'tail']
-        # 'time',
-        # 'timeit'
+    # 'time',
+    # 'timeit'
 
     csshelp_default = resource_filename(
         'stata_kernel', 'css/_StataKernelHelpDefault.css')
@@ -290,11 +293,11 @@ class StataMagics():
 
     def show_data_head(self, code, kernel, N=10):
         hasif = re.search(r"\bif\b", code) is not None
-        using = kernel.conf.get('cache_dir') / 'data_head.csv'
+        using = config.get('cache_dir') / 'data_head.csv'
         cmd = '_StataKernelHead ' + code.strip() + ' using ' + str(using)
         cmd += ' , n_default({})'.format(N)
         cm = CodeManager(cmd)
-        text_to_run, md5, text_to_exclude = cm.get_text(kernel.conf)
+        text_to_run, md5, text_to_exclude = cm.get_text()
         rc, res = kernel.stata.do(
             text_to_run, md5, text_to_exclude=text_to_exclude, display=False)
         if rc:
@@ -325,10 +328,10 @@ class StataMagics():
             return ''
 
         hasif = re.search(r"\bif\b", code) is not None
-        using = kernel.conf.get('cache_dir') / 'data_tail.csv'
+        using = config.get('cache_dir') / 'data_tail.csv'
         cmd = '_StataKernelTail ' + code.strip() + ' using ' + str(using)
         cm = CodeManager(cmd)
-        text_to_run, md5, text_to_exclude = cm.get_text(kernel.conf)
+        text_to_run, md5, text_to_exclude = cm.get_text()
         rc, res = kernel.stata.do(
             text_to_run, md5, text_to_exclude=text_to_exclude, display=False)
         if rc:
@@ -388,7 +391,7 @@ class StataMagics():
             return code
 
         cm = CodeManager(kernel.stata._mata_escape("macro dir"))
-        text_to_run, md5, text_to_exclude = cm.get_text(kernel.conf)
+        text_to_run, md5, text_to_exclude = cm.get_text()
         rc, res = kernel.stata.do(
             text_to_run, md5, text_to_exclude=text_to_exclude, display=False)
         if rc:
@@ -463,7 +466,7 @@ class StataMagics():
 
     def magic_html(self, code, kernel):
         cm = CodeManager(code)
-        text_to_run, md5, text_to_exclude = cm.get_text(kernel.conf)
+        text_to_run, md5, text_to_exclude = cm.get_text()
         rc, res = kernel.stata.do(
             text_to_run, md5, text_to_exclude=text_to_exclude, display=False)
         if rc:
@@ -471,8 +474,10 @@ class StataMagics():
         else:
             content = {
                 'data': {
-                    'text/plain': 'This front-end or document format cannot display HTML',
-                    'text/html': res},
+                    'text/plain':
+                        'This front-end or document format cannot display HTML',
+                    'text/html':
+                        res},
                 'metadata': {}}
             kernel.send_response(kernel.iopub_socket, 'display_data', content)
 
@@ -480,7 +485,7 @@ class StataMagics():
 
     def magic_latex(self, code, kernel):
         cm = CodeManager(code)
-        text_to_run, md5, text_to_exclude = cm.get_text(kernel.conf)
+        text_to_run, md5, text_to_exclude = cm.get_text()
         rc, res = kernel.stata.do(
             text_to_run, md5, text_to_exclude=text_to_exclude, display=False)
         if rc:
@@ -488,8 +493,10 @@ class StataMagics():
         else:
             content = {
                 'data': {
-                    'text/plain': 'This front-end or document format cannot display LaTeX',
-                    'text/latex': res},
+                    'text/plain':
+                        'This front-end or document format cannot display LaTeX',
+                    'text/latex':
+                        res},
                 'metadata': {}}
             kernel.send_response(kernel.iopub_socket, 'display_data', content)
 
@@ -510,12 +517,12 @@ class StataMagics():
                     self.parse.set.error(msg)
 
                 # reset graph settings
-                kernel.conf.set('graph_format', 'svg', permanent=perm)
-                kernel.conf.set('graph_scale', '1', permanent=perm)
-                kernel.conf._remove_unsafe('graph_width', permanent=perm)
-                kernel.conf._remove_unsafe('graph_height', permanent=perm)
+                config.set('graph_format', 'svg', permanent=perm)
+                config.set('graph_scale', '1', permanent=perm)
+                config._remove_unsafe('graph_width', permanent=perm)
+                config._remove_unsafe('graph_height', permanent=perm)
             else:
-                kernel.conf.set(key, value, permanent=perm)
+                config.set(key, value, permanent=perm)
 
         except:
             pass
