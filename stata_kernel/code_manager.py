@@ -7,6 +7,7 @@ from textwrap import dedent
 
 from .stata_lexer import StataLexer
 from .stata_lexer import CommentAndDelimitLexer
+from .config import config
 
 base_graph_keywords = [
     r'gr(a|ap|aph)?' + r'(?!\s+' + r'(save|replay|print|export|dir|set|' +
@@ -210,7 +211,7 @@ class CodeManager():
 
         return True
 
-    def get_text(self, config, stata=None):
+    def get_text(self, stata=None):
         """Get valid, executable text
 
         For any text longer than one line, I save the text to a do file and send
@@ -223,7 +224,7 @@ class CodeManager():
         code I sent it.
 
         Args:
-            config (.config.Config): Configuration instance
+            stata: instance of Stata session
 
         Returns:
             (str, str, str):

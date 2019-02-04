@@ -122,3 +122,5 @@ class Config():
             self.config.remove_option(option=key, section='stata_kernel')
             with self.config_path.open('w') as f:
                 self.config.write(f)
+
+config = Config()
