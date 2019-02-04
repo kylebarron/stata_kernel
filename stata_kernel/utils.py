@@ -1,3 +1,4 @@
+import os
 import re
 import requests
 import platform
@@ -26,6 +27,9 @@ def check_stata_kernel_updated_version(stata_kernel_version):
 
 
 def find_path():
+    if os.getenv('CONTINUOUS_INTEGRATION'):
+        print('WARNING: Running as CI; Stata path not set correctly')
+        return 'stata'
     if platform.system() == 'Windows':
         return win_find_path()
     elif platform.system() == 'Darwin':
