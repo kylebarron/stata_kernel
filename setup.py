@@ -1,6 +1,11 @@
 import platform
-from subprocess import run
 from setuptools import setup
+try:
+    from subprocess import run
+except ImportError:
+    msg = '\n\nPython < 3.5 is unsupported. '
+    msg += 'Please upgrade to Python 3.5 or higher.'
+    raise ImportError(msg)
 
 with open('README.md') as f:
     readme = f.read()
@@ -49,6 +54,7 @@ setup(
     long_description_content_type='text/markdown',
     name='stata_kernel',
     packages=['stata_kernel'],
+    python_requires='>=3.5',
     setup_requires=setup_requirements,
     test_suite='tests',
     tests_require=test_requirements,

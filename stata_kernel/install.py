@@ -18,6 +18,11 @@ kernel_json = {
     "display_name": "Stata",
     "language": "stata", }
 
+if sys.version_info[0] < 3:
+    raise ImportError('Python < 3 is unsupported.')
+
+if sys.version_info[1] < 5:
+    raise ImportError('Python < 3.5 is unsupported.')
 
 def install_my_kernel_spec(user=True, prefix=None):
     with TemporaryDirectory() as td:
