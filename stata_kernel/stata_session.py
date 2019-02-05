@@ -177,7 +177,6 @@ class StataSession():
         """
         self.child = pexpect.spawn(
             config.get('stata_path'), encoding='utf-8', codec_errors='replace')
-        self.child.setwinsize(100, 255)
         self.child.delaybeforesend = None
         self.child.logfile = (
             config.get('cache_dir') / 'console_debug.log').open(
