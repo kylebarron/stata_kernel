@@ -77,7 +77,7 @@ class StataSession():
             self.banner += msg
 
         # See https://github.com/kylebarron/stata_kernel/issues/177
-        self.linesize = 255
+        self.linesize = 80
         self.cwd = os.getcwd()
 
         # Platform
@@ -295,12 +295,8 @@ class StataSession():
         md5Prompt = self.prompt_dot + " " + md5
         error_re = r'^r\((\d+)\);'
 
-        g_exp = r'\(file ({}'.format(self.cache_dir_str)
-        g_fmts = '|'.join(self.kernel.graph_formats)
-        g_exp += r'/graph\d+\.({0})) written in ({0}) format\)'.format(g_fmts)
-        # Ignore case for SVG/PDF/PNG
-        # This is not a `(?i:)` flag to support Python 3.5
-        g_exp = re.compile(g_exp, re.IGNORECASE)
+        # The minimum linesize in Stata is 40 characters
+        g_exp = r'\(file {}'.format(self.cache_dir_str[:34])
 
         more = r'^--more--'
         eol = r'\r?\n'
@@ -325,23 +321,21 @@ class StataSession():
                             'name': 'stderr'})
                 continue
             if match_index == 2:
-                g_path = [child.match.group(1)]
-                g_fmt = child.match.group(2).lower()
-                if g_fmt == 'svg':
-                    pdf_dup = config.get('graph_svg_redundancy', 'True')
-                elif g_fmt == 'png':
-                    pdf_dup = config.get('graph_png_redundancy', 'False')
-                pdf_dup = pdf_dup.lower() == 'true'
+                g_path = [self.expect_graph(child, child.match.group(0))]
+                if ((config.get('graph_format') == 'svg')
+                        and config.get('graph_svg_redundancy', 'True')) or (
+                            (config.get('graph_format') == 'png')
+                            and config.get('graph_png_redundancy', 'True')):
 
-                if pdf_dup:
                     while True:
                         ind = child.expect([g_exp, pexpect.EOF], timeout=None)
                         if ind == 0:
+                            g_path.append(
+                                self.expect_graph(child, child.match.group(0)))
                             break
                         sleep(0.1)
 
                     code_lines = code_lines[1:]
-                    g_path.append(child.match.group(1))
                 if display:
                     self.kernel.send_image(g_path)
             if match_index == 3:
@@ -395,6 +389,22 @@ class StataSession():
         res = res.replace('\n> ', '')
 
         return rc, res
+
+    def expect_graph(self, child, res):
+        """Find graph path over multiple lines
+        """
+        expect_list = [r'\r?\n> ', r'\r?\n', pexpect.EOF]
+        while True:
+            m = child.expect(expect_list)
+            if m in [0, 1]:
+                res += child.before
+            if m == 1:
+                break
+            if m == 2:
+                sleep(0.1)
+
+        fname = re.search(r'/(graph\d+\.\w+) written', res).group(1)
+        return self.cache_dir_str + '/' + fname
 
     def clean_log_eol(self, child, code_lines, res):
         """Clean output when expect hit a newline
