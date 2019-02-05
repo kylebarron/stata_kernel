@@ -115,12 +115,14 @@ class StataSession():
             `finished_init_cmd'
             """.format(adodir, os.getcwd(), self.linesize).rstrip()
         self.do(dedent(init_cmd), md5='finished_init_cmd', display=False)
-        rc, res = self.do(
-            'di "`c(stata_version)\'"\n`done\'', md5='done', display=False)
-        self.stata_version = res
-        isold = int(self.stata_version[:2]) < 15
-        if (platform.system() == 'Windows') and isold:
-            config.set('graph_format', 'png', permanent=True)
+        _, res = self.do(
+        'di "`c(stata_version)\'"\n`done\'', md5='done', display=False)
+        try:
+            isold = int(res[:2]) < 15
+            if (platform.system() == 'Windows') and isold:
+                config.set('graph_format', 'png', permanent=True)
+        except ValueError:
+            pass
 
     def init_windows(self):
         """Start Stata on Windows
