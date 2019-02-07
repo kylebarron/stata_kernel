@@ -372,3 +372,34 @@ class StataKernel(Kernel):
                 if pos > maxread:
                     fh.seek(pos + 1, os.SEEK_SET)
                     fh.truncate()
+
+    def do_inspect(self, code, cursor_pos, detail_level=0):
+        inspect_keyword = re.compile(
+            r'(^|\s+|\=)(?P<keyword>\w+)(\(|\s+|$)', flags=re.MULTILINE).search
+
+        inspect_not_found = re.compile(r'help for \w+ not found').search
+
+        found = False
+        data = {}
+        match = inspect_keyword(code)
+        if match:
+            keyword = match.groupdict()['keyword']
+            cm = CodeManager('help ' + keyword)
+            text_to_run, md5, text_to_exclude = cm.get_text()
+            rc, res = self.stata.do(
+                text_to_run, md5, text_to_exclude=text_to_exclude,
+                display=False)
+
+            if inspect_not_found(res) is None:
+                found = True
+                data = {'text/plain': res}
+
+        content = {
+            'status': 'ok',
+            # found should be true if an object was found, false otherwise
+            'found': found,
+            # data can be empty if nothing is found
+            'data': data,
+            'metadata': {}}
+
+        return content
