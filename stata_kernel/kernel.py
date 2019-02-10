@@ -375,7 +375,7 @@ class StataKernel(Kernel):
 
     def do_inspect(self, code, cursor_pos, detail_level=0):
         inspect_keyword = re.compile(
-            r'(^|\s+|\=)(?P<keyword>\w+)\(?\s*$', flags=re.MULTILINE).search
+            r'\b(?P<keyword>\w+)\(?\s*$', flags=re.MULTILINE).search
 
         pre = (
             r'\b(cap(t|tu|tur|ture)?'
