@@ -375,15 +375,33 @@ class StataKernel(Kernel):
 
     def do_inspect(self, code, cursor_pos, detail_level=0):
         inspect_keyword = re.compile(
-            r'(^|\s+|\=)(?P<keyword>\w+)(\(|\s+|$)', flags=re.MULTILINE).search
+            r'\b(?P<keyword>\w+)\(?\s*$', flags=re.MULTILINE).search
+
+        pre = (
+            r'\b(cap(t|tu|tur|ture)?'
+            r'|qui(e|et|etl|etly)?'
+            r'|n(o|oi|ois|oisi|oisil|oisily)?)\b')
+
+        inspect_mata = re.compile(
+            r'^(\s*{0})*(?P<context>\w+)\b'.format(pre),
+            flags=re.MULTILINE).search
 
         inspect_not_found = re.compile(r'help for \w+ not found').search
+
+        ismata = False
+        context = inspect_mata(code)
+        if context:
+            ismata = context.groupdict()['context'].strip() == 'mata'
+            ismata = ismata and code.strip() != 'mata'
 
         found = False
         data = {}
         match = inspect_keyword(code)
         if match:
             keyword = match.groupdict()['keyword']
+            if ismata:
+                keyword = 'mf_' + keyword
+
             cm = CodeManager('help ' + keyword)
             text_to_run, md5, text_to_exclude = cm.get_text()
             rc, res = self.stata.do(
