@@ -3,9 +3,7 @@
 """
     pygments.lexers.stata
     ~~~~~~~~~~~~~~~~~~~~~
-
     Lexer for Stata
-
     :copyright: Copyright 2006-2017 by the Pygments team, see AUTHORS.
     :license: BSD, see LICENSE for details.
 """
@@ -23,7 +21,6 @@ __all__ = ['StataLexer']
 class StataLexer(RegexLexer):
     """
     For `Stata <http://www.stata.com/>`_ do files.
-
     .. versionadded:: 2.2
     """
     # Syntax based on
@@ -31,11 +28,11 @@ class StataLexer(RegexLexer):
     # - http://github.com/isagalaev/highlight.js/blob/master/src/languages/stata.js
     # - http://github.com/jpitblado/vim-stata/blob/master/syntax/stata.vim
 
-    name = 'Stata'
-    aliases = ['stata', 'do']
+    name      = 'Stata'
+    aliases   = ['stata', 'do']
     filenames = ['*.do', '*.ado']
     mimetypes = ['text/x-stata', 'text/stata', 'application/x-stata']
-    flags = re.MULTILINE | re.DOTALL
+    flags     = re.MULTILINE | re.DOTALL
 
     tokens = {
         'root': [
@@ -164,9 +161,9 @@ class StataLexer(RegexLexer):
         ],
         # Stata formats
         'format': [
-            (r'%-?\d{1,2}(\.\d{1,2})?[gfe]c?', Name.Format),
-            (r'%(21x|16H|16L|8H|8L)', Name.Format),
-            (r'%-?(tc|tC|td|tw|tm|tq|th|ty|tg).{0,32}', Name.Format),
-            (r'%[-~]?\d{1,4}s', Name.Format),
+            (r'%-?\d{1,2}(\.\d{1,2})?[gfe]c?', Name.Other),
+            (r'%(21x|16H|16L|8H|8L)', Name.Other),
+            (r'%-?(tc|tC|td|tw|tm|tq|th|ty|tg)\S{0,32}', Name.Other),
+            (r'%[-~]?\d{1,4}s', Name.Other),
         ]
     }
