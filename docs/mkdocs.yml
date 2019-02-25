@@ -95,7 +95,8 @@ markdown_extensions:
         repo_url_shortener: true
     - pymdownx.smartsymbols
     - pymdownx.superfences
-    - pymdownx.tasklist(custom_checkbox=true)
+    - pymdownx.tasklist:
+        custom_checkbox: true
     - pymdownx.tilde
     - toc:
         permalink: true
