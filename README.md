@@ -7,7 +7,7 @@ Linux.
 
 To see an example Jupyter Notebook, [click here.](https://nbviewer.jupyter.org/github/kylebarron/stata_kernel/blob/master/examples/Example.ipynb)
 
-For documentation and more information, see: [https://kylebarron.github.io/stata_kernel](https://kylebarron.github.io/stata_kernel)
+For documentation and more information, see: [https://kylebarron.dev/stata_kernel](https://kylebarron.dev/stata_kernel)
 
 #### Jupyter Notebook
 ![Jupyter Notebook](https://raw.githubusercontent.com/kylebarron/stata_kernel/master/docs/src/img/jupyter_notebook_example.gif)

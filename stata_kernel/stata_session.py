@@ -157,7 +157,7 @@ class StataSession():
             The Stata Automation library is not enabled. Follow the instructions
             here and then try again:
 
-            https://kylebarron.github.io/stata_kernel/getting_started/#prerequisites
+            https://kylebarron.dev/stata_kernel/getting_started/#prerequisites
             """
             raise com_error(dedent(msg))
 

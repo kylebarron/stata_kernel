@@ -31,7 +31,7 @@ class StataKernel(Kernel):
         'file_extension': '.do',
         'version': '15.1'}
     help_links = [
-        {'text': 'stata_kernel Help', 'url': 'https://kylebarron.github.io/stata_kernel/'},
+        {'text': 'stata_kernel Help', 'url': 'https://kylebarron.dev/stata_kernel/'},
         {'text': 'Stata Help', 'url': 'https://www.stata.com/features/documentation/'}
     ]  # yapf: disable
 
@@ -290,7 +290,7 @@ class StataKernel(Kernel):
         ```
 
         For more information, see:
-        <https://kylebarron.github.io/stata_kernel/using_stata_kernel/intro/#graph-redundancy>
+        <https://kylebarron.dev/stata_kernel/using_stata_kernel/intro/#graph-redundancy>
         """
         msg = dedent(msg)
         warn_setting = config.get('graph_redundancy_warning', 'True')

@@ -9,15 +9,15 @@ import os
 help_msg_html = """\
 <p>
 Online documentation is available at
-<a href="https://kylebarron.github.io/stata_kernel/">
-    kylebarron.github.io/stata_kernel
+<a href="https://kylebarron.dev/stata_kernel/">
+    kylebarron.dev/stata_kernel
 </a><br>
 </p>
 """
 
 # (file, include help message)
 files = [('index.html', True), ('using_stata_kernel/magics.html', False)]
-html_root = "https://kylebarron.github.io/stata_kernel/"
+html_root = "https://kylebarron.dev/stata_kernel/"
 
 
 def main():

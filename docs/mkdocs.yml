@@ -10,7 +10,7 @@ site_dir: 'html/mkdocs'
 repo_name: 'kylebarron/stata_kernel'
 repo_url: 'https://github.com/kylebarron/stata_kernel'
 edit_uri: 'blob/master/docs/src/'
-site_url: 'https://kylebarron.github.io/stata_kernel/'
+site_url: 'https://kylebarron.dev/stata_kernel/'
 
 # Social links
 extra:

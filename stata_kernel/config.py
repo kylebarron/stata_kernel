@@ -112,7 +112,7 @@ class Config():
         {} option in configuration file is missing or invalid
         Refer to the documentation to see how to set it manually:
 
-        https://kylebarron.github.io/stata_kernel/user_guide/configuration/
+        https://kylebarron.dev/stata_kernel/user_guide/configuration/
         """.format(option)
         raise ValueError(dedent(msg))
 

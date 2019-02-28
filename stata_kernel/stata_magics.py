@@ -115,7 +115,7 @@ class MagicParsers():
         Note: This front end cannot display rich HTML help. See the online
         documentation at
 
-                https://kylebarron.github.io/stata_kernel/
+                https://kylebarron.dev/stata_kernel/
 
         For kernel help in plain text, type
 
