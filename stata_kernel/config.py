@@ -42,19 +42,18 @@ class Config():
             self.raise_config_error('stata_path')
 
         if platform.system() == 'Darwin':
+            self.execution_mode = self.get('execution_mode', 'console')
             stata_path = self.get_mac_stata_path_variant(stata_path)
-            execution_mode = self.get('execution_mode', 'console')
-            if execution_mode not in ['console', 'automation']:
+            if self.execution_mode not in ['console', 'automation']:
                 self.raise_config_error('execution_mode')
         elif platform.system() == 'Windows':
-            execution_mode = 'automation'
+            self.execution_mode = 'automation'
         else:
-            execution_mode = 'console'
+            self.execution_mode = 'console'
             stata_path = self.get_linux_stata_path_variant(stata_path)
 
         self.set('cache_dir', cache_dir)
         self.set('stata_path', stata_path)
-        self.set('execution_mode', execution_mode)
         if not self.get('stata_path'):
             self.raise_config_error('stata_path')
 
@@ -93,6 +92,9 @@ class Config():
             d = {'Stata': 'stata', 'StataSE': 'stata-se', 'StataMP': 'stata-mp'}
 
         bin_name = d.get(path.name, path.name)
+        if path.name == 'StataIC':
+
+
         return str(path.parent / bin_name)
 
     def get_linux_stata_path_variant(self, stata_path):
