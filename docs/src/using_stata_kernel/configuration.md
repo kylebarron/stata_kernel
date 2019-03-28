@@ -42,6 +42,34 @@ of Stata to run at the same time, and can be faster. `automation` supports runni
 
 On Windows, all communication with Stata happens through Stata Automation, because Stata console doesn't exist for Windows. On Linux/Unix all communication happens through the console, because Stata Automation doesn't exist for Linux/Unix.
 
+???+ warning "Notice for StataIC Mac users"
+
+    The main way that `stata_kernel` communicates with the running Stata session
+    on macOS and Linux is with the _console version_ of Stata. This runs in a
+    terminal instead of with the Stata GUI. For no good reason StataCorp decided
+    not to ship the console program with StataIC on macOS.
+
+    To work around this, StataIC Mac users must use `automation` execution mode.
+
+    On macOS, using Automation is slower than using console mode, but there's
+    nothing I can do about it. I asked StataCorp why they don't ship a console
+    version with StataIC on Mac, when they do on Linux. Basically you're not a
+    "power user".
+
+    > Unix operating systems often have an optional graphical user interface so we
+    > need to include console versions of Stata for all flavors of Stata on those
+    > systems.
+    >
+    > The Mac operating system always has a graphical user interface so the console
+    > version of Stata on the Mac is a special tool that is included for power users.
+    > The Stata/IC for Mac is designed for regular Stata users and does not include a
+    > console version.
+    >
+    > Originally the Mac versions of Stata were just like the Windows versions and
+    > did not have any console support.
+
+    \- Stata Technical Support
+
 ### `autocomplete_closing_symbol`
 
 either `True` or `False`; whether autocompletion suggestions should include the closing symbol (i.e. ``'`` for a local macro or `}` if the global starts with `${`). This is `False` by default.

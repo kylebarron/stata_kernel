@@ -57,17 +57,6 @@ pip install stata_kernel --upgrade
 
 When upgrading, you don't have to run `python -m stata_kernel.install` again.
 
-#### Release notifications
-
-If you'd like to be notified when a new version of `stata_kernel` is released,
-you can [create a GitHub account](https://github.com/join), then go to [the
-project homepage](https://github.com/kylebarron/stata_kernel), and in the top
-right, click "Watch" and select "Releases Only".
-
-![subscribe-to-releases](img/subscribe-to-releases.png)
-
-While you're there, click "Star" as well! :blush:
-
 ## Using
 
 Next, read more about [Jupyter and its different
