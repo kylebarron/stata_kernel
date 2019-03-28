@@ -79,7 +79,7 @@ def mac_find_path():
         return ''
 
     if len(dirs) > 1:
-        for ext in ['MP.app', 'SE.app', '.app']:
+        for ext in ['MP.app', 'SE.app', 'IC.app', '.app']:
             name = [x for x in dirs if x.name.endswith(ext)]
             if name:
                 dirs = name
@@ -90,7 +90,7 @@ def mac_find_path():
         return ''
 
     binaries = [x for x in path.iterdir()]
-    for pref in ['stata-mp', 'stata-se', 'stata']:
+    for pref in ['stata-mp', 'stata-se', 'stata', 'StataIC']:
         name = [x for x in binaries if x.name == pref]
         if name:
             binaries = name
