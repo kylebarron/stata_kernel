@@ -59,8 +59,11 @@ class CompletionsManager():
             r'(?P<quote>[^\)]*?")'
             r'(?P<pre>[^\)]*?)\Z', flags=re.MULTILINE + re.DOTALL).search
 
-        # Varlist-style matching; applies to all
+        # Varlist-style matching; applies to most
         self.varlist = re.compile(r"(?:\s+)(\S+)", flags=re.MULTILINE)
+
+        # file-style matching
+        self.filelist = re.compile(r"[\r\n]{1,2}", flags=re.MULTILINE)
 
         # Clean line-breaks.
         self.varclean = re.compile(
@@ -445,7 +448,11 @@ class CompletionsManager():
             for k, v in suggestions.items():
                 if k in ['mata', 'programs']:
                     continue
-                suggestions[k] = self.varlist.findall(self.varclean('', v))
+                elif k in ['logfiles']:
+                    suggestions[k] = [
+                        f for f in self.filelist.split(v.strip()) if f]
+                else:
+                    suggestions[k] = self.varlist.findall(self.varclean('', v))
 
             all_locals = """mata : invtokens(st_dir("local", "macro", "*")')"""
             res = '\r\n'.join(
