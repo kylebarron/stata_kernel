@@ -7,6 +7,8 @@ from configparser import ConfigParser, NoSectionError
 
 from .utils import find_path
 
+GLOBAL_PATH = '/etc/stata_kernel.conf'
+
 
 class Config():
     all_settings = [
@@ -24,14 +26,35 @@ class Config():
         'user_graph_keywords', ]  # yapf: ignore
 
     def __init__(self):
+        """
+        Load config both from a potential system-wide config file, and merge
+        with a user-defined one if present.
+
+        We load from the system-wide location if present first and them from the
+        user-defined location; updating entries. Thus the user-location takes
+        precedence, but either file can be missing.
+
+        We do not keep a reference to the system-wide config as it is likely
+        non-writable; and thus setting any config option should go to the
+        user-config.
+
+        """
+
+        global_config = ConfigParser()
+        global_config.read(str(GLOBAL_PATH))
+
+
         self.config_path = Path('~/.stata_kernel.conf').expanduser()
         self.config = ConfigParser()
         self.config.read(str(self.config_path))
 
-        try:
-            self.env = dict(self.config.items('stata_kernel'))
-        except NoSectionError:
-            self.env = {}
+        self.env = {}
+
+        for c in (global_config, self.config):
+            try:
+                self.env.update(dict(c.items('stata_kernel')))
+            except NoSectionError:
+                pass
 
         cache_dir = Path(self.get('cache_directory',
                                   '~/.stata_kernel_cache')).expanduser()
