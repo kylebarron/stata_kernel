@@ -27,17 +27,17 @@ class Config():
 
     def __init__(self):
         """
-        Load config both from a potential system-wide config file, and merge
-        with a user-defined one if present.
+        Load config both from a potential system-wide config file and from a
+        user-defined one if present.
 
-        We load from the system-wide location if present first and them from the
-        user-defined location; updating entries. Thus the user-location takes
-        precedence, but either file can be missing.
+        We first load from the system-wide location if the file is present and
+        then we load the user-defined location, updating entries. Thus the
+        user-location takes precedence, but either file can be missing.
 
-        We do not keep a reference to the system-wide config as it is likely
-        non-writable; and thus setting any config option should go to the
-        user-config.
-
+        The system-wide config file was added to facilitate deployments on
+        systems like Jupyter Hub; it must be created in `/etc/stata_kernel.conf`
+        and we do not otherwise keep a reference to it because it is likely
+        non-writable. Setting any config option should go to the user-config.
         """
 
         global_config = ConfigParser()
