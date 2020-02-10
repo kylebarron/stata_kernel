@@ -20,6 +20,11 @@ If you want these changes to be stored permanently, add `--permanently`:
 %set graph_format png --permanently
 ```
 
+!!! info "System wide configuration file for JupyterHub"
+
+    If you are installign `stata_kernel` in Jupyter Hub you must create a system
+    wide configuration file in `/etc/stata_kernel.conf` to provide default
+    values.
 
 ## General settings
 
