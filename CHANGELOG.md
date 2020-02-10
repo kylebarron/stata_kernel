@@ -1,5 +1,9 @@
 # Changelog
 
+## [1.11.1] - 2020-02-10
+
+- Update search path to find Stata 16 path automatically on Windows. #330
+
 ## [1.11.0] - 2020-02-10
 
 - Allow for a global configuration file on Linux. #327
