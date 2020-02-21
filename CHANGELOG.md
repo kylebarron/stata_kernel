@@ -1,5 +1,9 @@
 # Changelog
 
+## [1.11.2] - 2020-02-21
+
+- Fix bug where `pdf_dup` was not defined when `graph_format` was not `svg` or `png`. #332
+
 ## [1.11.1] - 2020-02-10
 
 - Update search path to find Stata 16 path automatically on Windows. #330
