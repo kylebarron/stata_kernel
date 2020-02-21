@@ -267,9 +267,12 @@ class CodeManager():
         cache_dir = config.get('cache_dir')
         if graph_fmt == 'svg':
             pdf_dup = config.get('graph_svg_redundancy', 'True')
+            pdf_dup = pdf_dup.lower() == 'true'
         elif graph_fmt == 'png':
             pdf_dup = config.get('graph_png_redundancy', 'False')
-        pdf_dup = pdf_dup.lower() == 'true'
+            pdf_dup = pdf_dup.lower() == 'true'
+        else:
+            pdf_dup = False
 
         dim_str = " width({})".format(int(graph_width * graph_scale))
         if graph_height:
