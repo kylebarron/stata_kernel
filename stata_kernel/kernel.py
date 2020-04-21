@@ -66,7 +66,7 @@ class StataKernel(Kernel):
 
         super(StataKernel, self).__init__(*args, **kwargs)
 
-        self.graph_formats = ['svg', 'png', 'pdf']
+        self.graph_formats = ['svg', 'png', 'pdf', 'eps']
         self.sc_delimit_mode = False
         self.stata = StataSession(self)
         self.banner = self.stata.banner
@@ -227,8 +227,30 @@ class StataKernel(Kernel):
             if (file_size > 2 * (1024 ** 3)) & (len(graph_paths) >= 2):
                 warn = True
 
-            if graph_path.endswith('.svg'):
-                with Path(graph_path).open('r', encoding='utf-8') as f:
+            # run user-specified eps convert, if available
+            graph_epstopng = False
+            graph_epstopdf = False
+            if graph_path.endswith('.eps'):
+                epstopdf_program = config.get('graph_epstopdf_program')
+                epstopng_program = config.get('graph_epstopng_program')
+                if epstopng_program:
+                    base_path = graph_path
+                    graph_path = Path(graph_path).with_suffix('.png')
+                    os.system(epstopng_program.format(base_path, graph_path))
+                    graph_epstopng = True
+                elif epstopdf_program:
+                    base_path = graph_path
+                    graph_path = Path(graph_path).with_suffix('.pdf')
+                    os.system(epstopdf_program.format(base_path, graph_path))
+                    graph_epstopdf = True
+                else:
+                    graph_path = Path(graph_path)
+            else:
+                graph_path = Path(graph_path)
+
+            # display graph in front-end
+            if graph_path.suffix == '.svg':
+                with graph_path.open('r', encoding='utf-8') as f:
                     img = f.read()
                 e = ET.ElementTree(ET.fromstring(img))
                 root = e.getroot()
@@ -250,7 +272,7 @@ class StataKernel(Kernel):
                     'width': int(root.attrib['width'][:-2]),
                     'height': int(root.attrib['height'][:-2])}
 
-            elif graph_path.endswith('.png'):
+            elif graph_path.suffix == '.png' or graph_epstopng:
                 im = Image.open(graph_path)
                 width = im.size[0]
                 height = im.size[1]
@@ -260,7 +282,7 @@ class StataKernel(Kernel):
                 if platform.system() == 'Darwin':
                     width /= 2
                     height /= 2
-                with Path(graph_path).open('rb') as f:
+                with graph_path.open('rb') as f:
                     img = base64.b64encode(f.read()).decode('utf-8')
 
                 content['data']['image/png'] = img
@@ -268,10 +290,15 @@ class StataKernel(Kernel):
                     'width': width,
                     'height': height}
 
-            elif graph_path.endswith('.pdf'):
-                with Path(graph_path).open('rb') as f:
+            elif graph_path.suffix == '.pdf' or graph_epstopdf:
+                with graph_path.open('rb') as f:
                     pdf = base64.b64encode(f.read()).decode('utf-8')
                 content['data']['application/pdf'] = pdf
+
+            elif graph_path.suffix == '.eps':
+                with graph_path.open('rb') as f:
+                    eps = base64.b64encode(f.read()).decode('utf-8')
+                content['data']['application/eps'] = eps
 
         msg = """\
         **`stata_kernel` Warning**: One of your image files is larger than 2MB
