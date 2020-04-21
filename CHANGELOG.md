@@ -1,5 +1,19 @@
 # Changelog
 
+## [1.11.2] - 2020-02-21
+
+- Fix bug where `pdf_dup` was not defined when `graph_format` was not `svg` or `png`. #332
+
+## [1.11.1] - 2020-02-10
+
+- Update search path to find Stata 16 path automatically on Windows. #330
+
+## [1.11.0] - 2020-02-10
+
+- Allow for a global configuration file on Linux. #327
+- Fix bug with spaces in log file. #318
+- Fix deprecation notice. #324
+
 ## [1.10.5] - 2019-01-30
 
 - Fix bug where the return code (`_rc`) was reset by internal code after every user command. #288

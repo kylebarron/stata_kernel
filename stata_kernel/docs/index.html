@@ -187,45 +187,45 @@
 <h1 id="stata_kernel">stata_kernel</h1>
 <p><code>stata_kernel</code> is a Jupyter kernel for Stata. It works on Windows, macOS, and Linux.<p>
 Online documentation is available at
-<a href="https://kylebarron.github.io/stata_kernel/">
-    kylebarron.github.io/stata_kernel
+<a href="https://kylebarron.dev/stata_kernel/">
+    kylebarron.dev/stata_kernel
 </a><br/>
 </p></p>
 <h2 id="what-is-jupyter">What is Jupyter?</h2>
 <p>Jupyter is an open-source ecosystem for interactive data science. Originally developed around the Python programming language, Jupyter has grown to interface with dozens of programming languages.</p>
 <p><code>stata_kernel</code> is the bridge that interactively connects Stata to all the elements in the ecosystem.</p>
 <ul>
-<li><p><a href="https://kylebarron.github.io/stata_kernel/using_jupyter/lab"><strong>JupyterLab</strong></a> is a web-based interactive editor that allows for interweaving of code, text, and results.</p>
+<li><p><a href="https://kylebarron.dev/stata_kernel/using_jupyter/lab"><strong>JupyterLab</strong></a> is a web-based interactive editor that allows for interweaving of code, text, and results.</p>
 <ul>
 <li>Splice models in LaTeX math mode with the code that implements them and the graphs depicting their output.</li>
 <li><a href="https://nbviewer.jupyter.org/github/kylebarron/stata_kernel/blob/master/examples/Example.ipynb">Click here</a> to see an example Jupyter Notebook file using <code>stata_kernel</code>.</li>
 <li>Jupyter Notebooks can be exported as PDFs or HTML, and are as good for teaching new students as they are for displaying research results.</li>
 </ul>
 <figure>
-<img alt="Jupyter Notebook" src="https://kylebarron.github.io/stata_kernel/img/jupyter_notebook_example.gif"/><figcaption>Jupyter Notebook</figcaption>
+<img alt="Jupyter Notebook" src="https://kylebarron.dev/stata_kernel/img/jupyter_notebook_example.gif"/><figcaption>Jupyter Notebook</figcaption>
 </figure></li>
-<li><a href="https://kylebarron.github.io/stata_kernel/using_jupyter/atom"><strong>Hydrogen</strong></a> is a package for the <a href="https://atom.io">Atom text editor</a> that connects with Jupyter kernels to display results interactively in your text editor.</li>
-<li>The <a href="https://kylebarron.github.io/stata_kernel/using_jupyter/console"><strong>Jupyter console</strong></a> is an enhanced interactive console. Its features include enhanced autocompletion, better searching of history, syntax highlighting, among others. The similar <a href="https://kylebarron.github.io/stata_kernel/using_jupyter/qtconsole">QtConsole</a> even allows displaying plots within the terminal.</li>
-<li><p><a href="https://kylebarron.github.io/stata_kernel/using_jupyter/remote">Enhanced remote work</a>. You can set up Jupyter to run computations remotely but to show results locally. Since the only data passing over the network are the text inputs and outputs from Stata, communcation happens much faster than loading <code>xstata</code>, especially on slower networks. Being able to use Jupyter Notebook or Hydrogen vastly enhances productivity compared to working with the Stata console through a remote terminal.</p></li>
+<li><a href="https://kylebarron.dev/stata_kernel/using_jupyter/atom"><strong>Hydrogen</strong></a> is a package for the <a href="https://atom.io">Atom text editor</a> that connects with Jupyter kernels to display results interactively in your text editor.</li>
+<li>The <a href="https://kylebarron.dev/stata_kernel/using_jupyter/console"><strong>Jupyter console</strong></a> is an enhanced interactive console. Its features include enhanced autocompletion, better searching of history, syntax highlighting, among others. The similar <a href="https://kylebarron.dev/stata_kernel/using_jupyter/qtconsole">QtConsole</a> even allows displaying plots within the terminal.</li>
+<li><p><a href="https://kylebarron.dev/stata_kernel/using_jupyter/remote">Enhanced remote work</a>. You can set up Jupyter to run computations remotely but to show results locally. Since the only data passing over the network are the text inputs and outputs from Stata, communcation happens much faster than loading <code>xstata</code>, especially on slower networks. Being able to use Jupyter Notebook or Hydrogen vastly enhances productivity compared to working with the Stata console through a remote terminal.</p></li>
 </ul>
 <h2 id="stata_kernel-features"><code>stata_kernel</code> Features</h2>
 <ul>
 <li>[x] Supports Windows, macOS, and Linux.</li>
 <li>[x] Use any type of comments in your code, not just <code>*</code>.</li>
-<li>[x] <a href="https://kylebarron.github.io/stata_kernel/using_stata_kernel/intro#autocompletion">Autocompletions</a> as you type based on the variables, macros, scalars, and matrices currently in memory. As of version 1.6.0 it also suggests file paths for autocompletion.</li>
-<li>[x] <a href="https://kylebarron.github.io/stata_kernel/using_stata_kernel/intro/#displaying-graphs">Display graphs</a>.</li>
+<li>[x] <a href="https://kylebarron.dev/stata_kernel/using_stata_kernel/intro#autocompletion">Autocompletions</a> as you type based on the variables, macros, scalars, and matrices currently in memory. As of version 1.6.0 it also suggests file paths for autocompletion.</li>
+<li>[x] <a href="https://kylebarron.dev/stata_kernel/using_stata_kernel/intro/#displaying-graphs">Display graphs</a>.</li>
 <li>[x] Receive results as they appear, not after the entire command finishes.</li>
-<li>[x] <a href="https://kylebarron.github.io/stata_kernel/using_stata_kernel/magics#help">Pull up interactive help files within the kernel</a>.</li>
-<li>[x] <a href="https://kylebarron.github.io/stata_kernel/using_stata_kernel/magics#browse">Browse data interactively</a>.</li>
-<li>[x] <a href="https://kylebarron.github.io/stata_kernel/using_stata_kernel/intro#delimit-mode"><code>#delimit ;</code> interactive support</a></li>
-<li>[x] Work with a <a href="https://kylebarron.github.io/stata_kernel/using_jupyter/remote">remote session of Stata</a>.</li>
+<li>[x] <a href="https://kylebarron.dev/stata_kernel/using_stata_kernel/magics#help">Pull up interactive help files within the kernel</a>.</li>
+<li>[x] <a href="https://kylebarron.dev/stata_kernel/using_stata_kernel/magics#browse">Browse data interactively</a>.</li>
+<li>[x] <a href="https://kylebarron.dev/stata_kernel/using_stata_kernel/intro#delimit-mode"><code>#delimit ;</code> interactive support</a></li>
+<li>[x] Work with a <a href="https://kylebarron.dev/stata_kernel/using_jupyter/remote">remote session of Stata</a>.</li>
 <li>[x] Mata interactive support</li>
 <li>[ ] Cross-session history file</li>
 </ul>
 <h2 id="screenshots">Screenshots</h2>
 <p><strong>Atom</strong></p>
 <figure>
-<img alt="Atom" src="https://kylebarron.github.io/stata_kernel/img/stata_kernel_example.gif"/><figcaption>Atom</figcaption>
+<img alt="Atom" src="https://kylebarron.dev/stata_kernel/img/stata_kernel_example.gif"/><figcaption>Atom</figcaption>
 </figure>
 </body>
 </html>

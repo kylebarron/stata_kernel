@@ -37,7 +37,7 @@ def install_my_kernel_spec(user=True, prefix=None):
 
         print('Installing Jupyter kernel spec')
         KernelSpecManager().install_kernel_spec(
-            td, 'stata', user=user, replace=True, prefix=prefix)
+            td, 'stata', user=user, prefix=prefix)
 
 
 def install_conf(conf_file):
