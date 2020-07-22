@@ -51,7 +51,7 @@ class Config():
         Example config file::
 
             [stata_kernel]
-            stata_path = "C:\Program Files\Stata16\StataMP-64.exe"
+            stata_path = "C:/Program Files/Stata16/StataMP-64.exe"
             execution_mode = automation
             cache_directory = ~/.stata_kernel_cache
             autocomplete_closing_symbol = False
