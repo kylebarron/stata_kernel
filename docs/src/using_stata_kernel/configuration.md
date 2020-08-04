@@ -24,7 +24,7 @@ If you want these changes to be stored permanently, add `--permanently`:
 
 !!! info "System wide configuration file for JupyterHub"
 
-    If you are installign `stata_kernel` in Jupyter Hub you must create a system
+    If you are installing `stata_kernel` in Jupyter Hub you must create a system
     wide configuration file to provide default values. The default location
     is in `/etc/stata_kernel.conf`, or defined by the environmental variable
     `STATA_KERNEL_GLOBAL_CONFIG_PATH`.
