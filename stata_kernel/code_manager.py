@@ -271,6 +271,9 @@ class CodeManager():
         elif graph_fmt == 'png':
             pdf_dup = config.get('graph_png_redundancy', 'False')
             pdf_dup = pdf_dup.lower() == 'true'
+        elif graph_fmt == 'eps':
+            pdf_dup = config.get('graph_eps_redundancy', 'False')
+            pdf_dup = pdf_dup.lower() == 'true'
         else:
             pdf_dup = False
 
@@ -279,6 +282,8 @@ class CodeManager():
             graph_height = int(graph_height)
             dim_str += " height({})".format(int(graph_height * graph_scale))
         if graph_fmt == 'pdf':
+            dim_str = ''
+        if graph_fmt == 'eps':
             dim_str = ''
 
         cache_dir_str = str(cache_dir)

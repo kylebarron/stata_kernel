@@ -1,3 +1,4 @@
+import os
 import re
 import platform
 
@@ -8,6 +9,10 @@ from configparser import ConfigParser, NoSectionError
 from .utils import find_path
 
 GLOBAL_PATH = '/etc/stata_kernel.conf'
+USER_PATH = '~/.stata_kernel.conf'
+
+GLOBAL_PATH_ENVVAR_NAME = 'STATA_KERNEL_GLOBAL_CONFIG_PATH'
+USER_PATH_ENVVAR_NAME = 'STATA_KERNEL_USER_CONFIG_PATH'
 
 
 class Config():
@@ -27,23 +32,40 @@ class Config():
 
     def __init__(self):
         """
-        Load config both from a potential system-wide config file and from a
+        Load config both from a potential system-wide config file or from a
         user-defined one if present.
 
         We first load from the system-wide location if the file is present and
         then we load the user-defined location, updating entries. Thus the
         user-location takes precedence, but either file can be missing.
 
+        The user-defined path defaults to `~/.stata_kernel.conf` or can be read
+        from the environmental variable `STATA_KERNEL_USER_CONFIG_PATH`.
+
         The system-wide config file was added to facilitate deployments on
-        systems like Jupyter Hub; it must be created in `/etc/stata_kernel.conf`
+        systems like Jupyter Hub; it defaults to `/etc/stata_kernel.conf` or
+        read from the environmental variable `STATA_KERNEL_GLOBAL_CONFIG_PATH`,
         and we do not otherwise keep a reference to it because it is likely
         non-writable. Setting any config option should go to the user-config.
+
+        Example config file::
+
+            [stata_kernel]
+            stata_path = "C:/Program Files/Stata16/StataMP-64.exe"
+            execution_mode = automation
+            cache_directory = ~/.stata_kernel_cache
+            autocomplete_closing_symbol = False
+            graph_format = svg
+            graph_scale = 1
+            user_graph_keywords = coefplot,vioplot
         """
+        _global_path = os.environ.get(GLOBAL_PATH_ENVVAR_NAME, GLOBAL_PATH)
+        _user_path = os.environ.get(USER_PATH_ENVVAR_NAME, USER_PATH)
 
         global_config = ConfigParser()
-        global_config.read(str(GLOBAL_PATH))
+        global_config.read(_global_path)
+        self.config_path = Path(_user_path).expanduser()
 
-        self.config_path = Path('~/.stata_kernel.conf').expanduser()
         self.config = ConfigParser()
         self.config.read(str(self.config_path))
 
