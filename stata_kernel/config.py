@@ -43,7 +43,6 @@ class Config():
         global_config = ConfigParser()
         global_config.read(str(GLOBAL_PATH))
 
-
         self.config_path = Path('~/.stata_kernel.conf').expanduser()
         self.config = ConfigParser()
         self.config.read(str(self.config_path))
