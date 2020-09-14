@@ -64,8 +64,8 @@ class Config():
 
         global_config = ConfigParser()
         global_config.read(_global_path)
-        self.config_path = Path(_user_path).expanduser()
 
+        self.config_path = Path(_user_path).expanduser()
         self.config = ConfigParser()
         self.config.read(str(self.config_path))
 
