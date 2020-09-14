@@ -329,7 +329,7 @@ class CodeManager():
         if use_include:
             with (cache_dir / 'include.do').open('w', encoding='utf-8') as f:
                 f.write(text + '\n')
-            text = "include {}/include.do".format(cache_dir_str)
+            text = 'include "{}/include.do"'.format(cache_dir_str)
             text_to_exclude = text + '\n' + text_to_exclude
 
         text += "\n`{}'".format(hash_text)
