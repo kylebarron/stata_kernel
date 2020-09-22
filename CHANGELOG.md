@@ -1,5 +1,11 @@
 # Changelog
 
+## [1.12.0] - 2020-09-21
+
+- Fix including spaces in filename (#356)
+- Add environmental variable option for config global and user locations (#353)
+- Support eps graphics via user-specified convert program (#346)
+
 ## [1.11.2] - 2020-02-21
 
 - Fix bug where `pdf_dup` was not defined when `graph_format` was not `svg` or `png`. #332
