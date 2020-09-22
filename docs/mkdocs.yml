@@ -15,12 +15,10 @@ site_url: 'https://kylebarron.dev/stata_kernel/'
 # Social links
 extra:
   social:
-    - type: 'github'
+    - icon: 'fontawesome/brands/github'
       link: 'https://github.com/kylebarron'
-    - type: 'twitter'
+    - icon: 'fontawesome/brands/twitter'
       link: 'https://twitter.com/kylebarron2'
-    - type: 'key'
-      link: 'https://keybase.io/kylebarron'
 
 # Layout
 nav:
@@ -55,8 +53,9 @@ google_analytics:
 theme:
     feature:
         tabs: false
-    logo:
-        icon: 'home'
+    icon:
+        logo: 'material/home'
+        repo: 'fontawesome/brands/github'
     name: 'material'
     language: 'en'
     palette:
