@@ -88,7 +88,11 @@ These settings determine how graphs are displayed internally. [Read here](intro.
 
 ### `graph_format`
 
-`svg` or `png`, the format to export and display graphs. By default this is `svg` for most operating systems and versions of Stata, but is `png` by default for Windows on Stata 14 and below.
+`svg`, `png` or `eps`; the format to export graphs. By default this is `svg` for most operating systems and versions of Stata, but is `png` by default for Windows on Stata 14 and below. Note `eps` cannot be displayed by kernel front-ends and requires converting to `png` via `graph_epstopng_program`.
+
+### `graph_epstopng_program`
+
+With `graph_format = eps`, a program to convert `eps` figures to `png` so they can be displayed by the kernel front-end. For example, on Linux the user can specify `graph_epstopng_program = convert -density 300 {0} -resize '900x600' {1}`.  (Note the name of the temporary graph files are passed to the program and the user must take that into account.)
 
 ### `graph_scale`
 
