@@ -47,8 +47,6 @@ def install_conf(conf_file):
         execution_mode = 'console'
 
     stata_path = find_path()
-    if 'IC.app' in stata_path:
-        execution_mode = 'automation'
     if not stata_path:
         msg = """\
             WARNING: Could not find Stata path.
@@ -58,6 +56,8 @@ def install_conf(conf_file):
 
             """
         print(dedent(msg))
+    elif 'IC.app' in stata_path:
+        execution_mode = 'automation'
 
     conf_default = dedent(
         """\

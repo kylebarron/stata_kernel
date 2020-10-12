@@ -2,4 +2,7 @@
 
 __version__ = '1.12.0'
 
-from .kernel import StataKernel
+try:
+    from .kernel import StataKernel
+except:
+    print('Cannot import kernel')
