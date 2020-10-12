@@ -26,7 +26,14 @@ It doesn't take much to get `stata_kernel` up and running. Here's how:
 
 ## Package Install
 
-To install the kernel, from a terminal or command prompt run:
+If you use Anaconda or Miniconda, from the Anaconda Prompt run:
+
+```bash
+conda install -c conda-forge stata_kernel
+python -m stata_kernel.install
+```
+
+Otherwise, from a terminal or command prompt run:
 
 ```bash
 pip install stata_kernel
@@ -37,6 +44,24 @@ If Python 2 is the default version of Python on your system, you may need to use
 ```bash
 pip3 install stata_kernel
 python3 -m stata_kernel.install
+```
+
+### Jupyter
+
+If you chose to install Anaconda you already have Jupyter and Jupyter Lab installed.
+
+If you downloaded Miniconda, you need to install Jupyter and optionally Jupyter Lab:
+
+```bash
+conda install jupyter
+conda install jupyterlab
+```
+
+Otherwise you can install them using `pip`:
+
+```bash
+pip install jupyter
+pip install jupyterlab
 ```
 
 In order to get syntax highlighting in Jupyter Lab, run:
@@ -51,9 +76,15 @@ If you didn't install Python from Anaconda, the `conda` command won't work and y
 
 To upgrade from a previous version of `stata_kernel`, from a terminal or command prompt run
 
+```bash
+conda update stata_kernel -y
 ```
+in the case of Anaconda/Miniconda or
+
+```bash
 pip install stata_kernel --upgrade
 ```
+otherwise.
 
 When upgrading, you don't have to run `python -m stata_kernel.install` again.
 
