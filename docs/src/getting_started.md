@@ -48,21 +48,35 @@ python3 -m stata_kernel.install
 
 ### Jupyter
 
-If you chose to install Anaconda you already have Jupyter and Jupyter Lab installed.
+If you chose to install Anaconda you already have [Jupyter Notebook](https://jupyter-notebook.readthedocs.io/en/stable/notebook.html) and [Jupyter Lab](https://jupyterlab.readthedocs.io/en/stable/getting_started/overview.html) installed.
 
-If you downloaded Miniconda, you need to install Jupyter and optionally Jupyter Lab:
+Otherwise, you need to install Jupyter Notebook or Jupyter Lab. I recommend the latter as it is a similar but more modern environment. If you have Miniconda, open the Anaconda Prompt and run:
 
 ```bash
-conda install jupyter
 conda install jupyterlab
 ```
 
-Otherwise you can install them using `pip`:
+If you use pip, you can install it via:
 
 ```bash
-pip install jupyter
-pip install jupyterlab
+pip install jupyterlab 
+pip3 install jupyterlab  # if Python 2 is the default version
 ```
+
+If you would not like to install Jupyter Lab and only need the Notebook, you can install it by running
+
+```bash
+conda install notebook
+```
+
+or
+
+```bash
+pip install notebook
+pip3 install notebook  # if Python 2 is the default version
+```
+
+depending on your package manager.
 
 In order to get syntax highlighting in Jupyter Lab, run:
 ```bash
@@ -70,7 +84,7 @@ conda install -c conda-forge nodejs -y
 jupyter labextension install jupyterlab-stata-highlight
 ```
 
-If you didn't install Python from Anaconda, the `conda` command won't work and you'll need to install [Node.js](https://nodejs.org/en/download/) directly before running `jupyter labextension install`.
+If you didn't install Python from Anaconda/Miniconda, the `conda` command won't work and you'll need to install [Node.js](https://nodejs.org/en/download/) directly before running `jupyter labextension install`.
 
 ### Upgrading
 
