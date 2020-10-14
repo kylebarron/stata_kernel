@@ -33,7 +33,14 @@ conda install -c conda-forge stata_kernel
 python -m stata_kernel.install
 ```
 
-Otherwise, from a terminal or command prompt run:
+If Python 2 is the default ersion of Python on your system, you may need to use
+
+```bash
+conda install -c conda-forge stata_kernel
+python3 -m stata_kernel.install
+```
+
+If you do not use Anaconda/Miniconda, from a terminal or command prompt run:
 
 ```bash
 pip install stata_kernel
