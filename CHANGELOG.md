@@ -1,5 +1,9 @@
 # Changelog
 
+## [1.12.1] - 2020-10-19
+
+- Fix install on linux when unable to find stata path (#363)
+
 ## [1.12.0] - 2020-09-21
 
 - Fix including spaces in filename (#356)
