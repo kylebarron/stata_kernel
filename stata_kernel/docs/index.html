@@ -6,11 +6,14 @@
 <meta content="pandoc" name="generator"/>
 <meta content="width=device-width, initial-scale=1.0, user-scalable=yes" name="viewport"/>
 <title>index</title>
-<style type="text/css">
-      code{white-space: pre-wrap;}
-      span.smallcaps{font-variant: small-caps;}
-      span.underline{text-decoration: underline;}
-      div.column{display: inline-block; vertical-align: top; width: 50%;}
+<style>
+    code{white-space: pre-wrap;}
+    span.smallcaps{font-variant: small-caps;}
+    span.underline{text-decoration: underline;}
+    div.column{display: inline-block; vertical-align: top; width: 50%;}
+    div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+    ul.task-list{list-style: none;}
+    .display.math{display: block; text-align: center; margin: 0.5rem auto;}
   </style>
 <!--[if lt IE 9]>
     <script src="//cdnjs.cloudflare.com/ajax/libs/html5shiv/3.7.3/html5shiv-printshiv.min.js"></script>
@@ -19,14 +22,14 @@
   body {
     font-family: 'Monospace';
   }
-  
+
   blockquote {
     /* color: #666666; */
     margin: 0;
     padding-left: 3em;
     border-left: 0.5em solid /*#EEE*/;
   }
-  
+
   hr {
     display: block;
     height: 2px;
@@ -36,146 +39,146 @@
     margin: 1em 0;
     padding: 0;
   }
-  
+
   p {
     margin: 1em 0;
   }
-  
+
   img {
     max-width: 75%;
   }
-  
+
   h1, h2, h3, h4, h5, h6 {
     /* color: #111; */
     line-height: 125%;
     margin-top: 0em;
     font-weight: normal;
   }
-  
+
   h4, h5, h6 {
     font-weight: bold;
   }
-  
+
   h1 {
     font-size: 2.5em;
   }
-  
+
   h2 {
     font-size: 2em;
   }
-  
+
   h3 {
     font-size: 1.5em;
   }
-  
+
   h4 {
     font-size: 1.2em;
   }
-  
+
   h5 {
     font-size: 1em;
   }
-  
+
   h6 {
     font-size: 0.9em;
   }
-  
+
   pre, code, kbd, samp {
     /* color: #000; */
     font-family: monospace, monospace;
     _font-family: 'courier new', monospace;
     font-size: 0.91em;
   }
-  
+
   pre {
     white-space: pre;
     white-space: pre-wrap;
     word-wrap: break-word;
   }
-  
+
   b, strong {
     font-weight: bold;
   }
-  
+
   dfn {
     font-style: italic;
   }
-  
+
   ins {
     /* background: #ff9; */
     color: #000;
     text-decoration: none;
   }
-  
+
   mark {
     /* background: #ff0; */
     /* color: #000; */
     font-style: italic;
     font-weight: bold;
   }
-  
+
   sub, sup {
     font-size: 75%;
     line-height: 0;
     position: relative;
     vertical-align: baseline;
   }
-  
+
   sup {
     top: -0.5em;
   }
-  
+
   sub {
     bottom: -0.25em;
   }
-  
+
   ul, ol {
     margin: 1em 0;
     padding: 0 0 0 2em;
   }
-  
+
   li p:last-child {
     margin-bottom: 0;
   }
-  
+
   ul ul, ol ol {
     margin: .3em 0;
   }
-  
+
   dl {
     margin-bottom: 1em;
   }
-  
+
   dt {
     font-weight: bold;
     margin-bottom: .8em;
   }
-  
+
   dd {
     margin: 0 0 .8em 2em;
   }
-  
+
   dd:last-child {
     margin-bottom: 0;
   }
-  
+
   img {
     border: 0;
     -ms-interpolation-mode: bicubic;
     vertical-align: middle;
   }
-  
+
   figure {
     display: block;
     text-align: center;
     margin: 1em 0;
   }
-  
+
   figure img {
     border: none;
     margin: 0 auto;
   }
-  
+
   figcaption {
     font-size: 0.8em;
     font-style: italic;
@@ -202,30 +205,41 @@ Online documentation is available at
 <li>Jupyter Notebooks can be exported as PDFs or HTML, and are as good for teaching new students as they are for displaying research results.</li>
 </ul>
 <figure>
-<img alt="Jupyter Notebook" src="https://kylebarron.dev/stata_kernel/img/jupyter_notebook_example.gif"/><figcaption>Jupyter Notebook</figcaption>
+<img alt="Jupyter Notebook" src="https://kylebarron.dev/stata_kernel/img/jupyter_notebook_example.gif"/><figcaption aria-hidden="true">Jupyter Notebook</figcaption>
 </figure></li>
-<li><a href="https://kylebarron.dev/stata_kernel/using_jupyter/atom"><strong>Hydrogen</strong></a> is a package for the <a href="https://atom.io">Atom text editor</a> that connects with Jupyter kernels to display results interactively in your text editor.</li>
-<li>The <a href="https://kylebarron.dev/stata_kernel/using_jupyter/console"><strong>Jupyter console</strong></a> is an enhanced interactive console. Its features include enhanced autocompletion, better searching of history, syntax highlighting, among others. The similar <a href="https://kylebarron.dev/stata_kernel/using_jupyter/qtconsole">QtConsole</a> even allows displaying plots within the terminal.</li>
+<li><p><a href="https://kylebarron.dev/stata_kernel/using_jupyter/atom"><strong>Hydrogen</strong></a> is a package for the <a href="https://atom.io">Atom text editor</a> that connects with Jupyter kernels to display results interactively in your text editor.</p></li>
+<li><p>The <a href="https://kylebarron.dev/stata_kernel/using_jupyter/console"><strong>Jupyter console</strong></a> is an enhanced interactive console. Its features include enhanced autocompletion, better searching of history, syntax highlighting, among others. The similar <a href="https://kylebarron.dev/stata_kernel/using_jupyter/qtconsole">QtConsole</a> even allows displaying plots within the terminal.</p></li>
 <li><p><a href="https://kylebarron.dev/stata_kernel/using_jupyter/remote">Enhanced remote work</a>. You can set up Jupyter to run computations remotely but to show results locally. Since the only data passing over the network are the text inputs and outputs from Stata, communcation happens much faster than loading <code>xstata</code>, especially on slower networks. Being able to use Jupyter Notebook or Hydrogen vastly enhances productivity compared to working with the Stata console through a remote terminal.</p></li>
 </ul>
 <h2 id="stata_kernel-features"><code>stata_kernel</code> Features</h2>
-<ul>
-<li>[x] Supports Windows, macOS, and Linux.</li>
-<li>[x] Use any type of comments in your code, not just <code>*</code>.</li>
-<li>[x] <a href="https://kylebarron.dev/stata_kernel/using_stata_kernel/intro#autocompletion">Autocompletions</a> as you type based on the variables, macros, scalars, and matrices currently in memory. As of version 1.6.0 it also suggests file paths for autocompletion.</li>
-<li>[x] <a href="https://kylebarron.dev/stata_kernel/using_stata_kernel/intro/#displaying-graphs">Display graphs</a>.</li>
-<li>[x] Receive results as they appear, not after the entire command finishes.</li>
-<li>[x] <a href="https://kylebarron.dev/stata_kernel/using_stata_kernel/magics#help">Pull up interactive help files within the kernel</a>.</li>
-<li>[x] <a href="https://kylebarron.dev/stata_kernel/using_stata_kernel/magics#browse">Browse data interactively</a>.</li>
-<li>[x] <a href="https://kylebarron.dev/stata_kernel/using_stata_kernel/intro#delimit-mode"><code>#delimit ;</code> interactive support</a></li>
-<li>[x] Work with a <a href="https://kylebarron.dev/stata_kernel/using_jupyter/remote">remote session of Stata</a>.</li>
-<li>[x] Mata interactive support</li>
-<li>[ ] Cross-session history file</li>
+<ul class="task-list">
+<li><input checked="" disabled="" type="checkbox"/>
+Supports Windows, macOS, and Linux.</li>
+<li><input checked="" disabled="" type="checkbox"/>
+Use any type of comments in your code, not just <code>*</code>.</li>
+<li><input checked="" disabled="" type="checkbox"/>
+<a href="https://kylebarron.dev/stata_kernel/using_stata_kernel/intro#autocompletion">Autocompletions</a> as you type based on the variables, macros, scalars, and matrices currently in memory. As of version 1.6.0 it also suggests file paths for autocompletion.</li>
+<li><input checked="" disabled="" type="checkbox"/>
+<a href="https://kylebarron.dev/stata_kernel/using_stata_kernel/intro/#displaying-graphs">Display graphs</a>.</li>
+<li><input checked="" disabled="" type="checkbox"/>
+Receive results as they appear, not after the entire command finishes.</li>
+<li><input checked="" disabled="" type="checkbox"/>
+<a href="https://kylebarron.dev/stata_kernel/using_stata_kernel/magics#help">Pull up interactive help files within the kernel</a>.</li>
+<li><input checked="" disabled="" type="checkbox"/>
+<a href="https://kylebarron.dev/stata_kernel/using_stata_kernel/magics#browse">Browse data interactively</a>.</li>
+<li><input checked="" disabled="" type="checkbox"/>
+<a href="https://kylebarron.dev/stata_kernel/using_stata_kernel/intro#delimit-mode"><code>#delimit ;</code> interactive support</a></li>
+<li><input checked="" disabled="" type="checkbox"/>
+Work with a <a href="https://kylebarron.dev/stata_kernel/using_jupyter/remote">remote session of Stata</a>.</li>
+<li><input checked="" disabled="" type="checkbox"/>
+Mata interactive support</li>
+<li><input disabled="" type="checkbox"/>
+Cross-session history file</li>
 </ul>
 <h2 id="screenshots">Screenshots</h2>
 <p><strong>Atom</strong></p>
 <figure>
-<img alt="Atom" src="https://kylebarron.dev/stata_kernel/img/stata_kernel_example.gif"/><figcaption>Atom</figcaption>
+<img alt="Atom" src="https://kylebarron.dev/stata_kernel/img/stata_kernel_example.gif"/><figcaption aria-hidden="true">Atom</figcaption>
 </figure>
 </body>
 </html>

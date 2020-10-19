@@ -1,9 +1,6 @@
+Magics
 
-
-MAGICS
-
-
-MAGICS are programs provided by stata_kernel that enhance the experience
+Magics are programs provided by stata_kernel that enhance the experience
 of working with Stata in Jupyter.
 
 All magics are special commands that start with %. They must be the
@@ -27,10 +24,9 @@ The magics that respond with richly formatted text, namely %browse and
 %help, will not work with Jupyter Console or Jupyter QtConsole, since
 they don’t support displaying HTML.
 
-
 %browse, %head, %tail
 
-INTERACTIVELY VIEW YOUR DATASET
+Interactively view your dataset
 
 This can optionally be provided with a varlist, N, or if:
 
@@ -48,14 +44,13 @@ If you’re using Windows or macOS with Automation mode, you can also run
 browse (without the %) and it will open the usual Stata data explorer.
 
   ------------------ --------------------
-         ATOM               [Atom]
-   JUPYTER NOTEBOOK   [Jupyter Notebook]
+         Atom               [Atom]
+   Jupyter Notebook   [Jupyter Notebook]
   ------------------ --------------------
-
 
 %delimit
 
-PRINT THE CURRENT DELIMITER
+Print the current delimiter
 
 This takes no arguments; it prints the delimiter currently set: either
 cr or ;. If you want to change the delimiter, use #delimit ; or
@@ -72,10 +67,9 @@ cr or ;. If you want to change the delimiter, use #delimit ; or
     In [4]: #delimit cr
     delimiter now cr
 
-
 %help
 
-DISPLAY A HELP FILE IN RICH TEXT
+Display a help file in rich text
 
     %help [-h] command_or_topic_name
 
@@ -83,18 +77,17 @@ Add the term you want to search for after %help:
 
     In [1]: %help histogram
 
-The terms in italics (Atom) or underlined (Jupyter Notebook) are
-_links_. Click on them to see another help menu.
+The terms in italics (Atom) or underlined (Jupyter Notebook) are links.
+Click on them to see another help menu.
 
   ------------------ --------------------
-         ATOM               [Atom]
-   JUPYTER NOTEBOOK   [Jupyter Notebook]
+         Atom               [Atom]
+   Jupyter Notebook   [Jupyter Notebook]
   ------------------ --------------------
-
 
 %html, %latex
 
-DISPLAY COMMAND OUTPUT AS HTML OR LATEX
+Display command output as HTML or LaTeX
 
 This can be useful when creating regression tables with esttab, for
 example. The images below are run following
@@ -107,23 +100,22 @@ An HTML table will display correctly both inside JupyterLab and as a
 saved HTML file.
 
   ----------------- --------------------------
-     JUPYTERLAB      [esttab-html-jupyterlab]
-   SAVED HTML FILE      [esttab-html-file]
+     JupyterLab      [esttab-html-jupyterlab]
+   Saved HTML file      [esttab-html-file]
   ----------------- --------------------------
 
 A LaTeX table will not display correctly within JupyterLab (it only
-supports the math subset of LaTeX) BUT IT _WILL_ render correctly upon
+supports the math subset of LaTeX) but it will render correctly upon
 export to a PDF (which happens through LaTeX).
 
   ----------------- ---------------------------
-   SAVED PDF FILE       [esttab-latex-pdf]
-   SAVED HTML FILE   [esttab-latex-jupyterlab]
+   Saved PDF file       [esttab-latex-pdf]
+   Saved HTML file   [esttab-latex-jupyterlab]
   ----------------- ---------------------------
-
 
 %locals, %globals
 
-LIST LOCAL OR GLOBAL MACROS
+List local or global macros
 
     %locals [-h] [-v] [REGEX [REGEX ...]]
     %globals [-h] [-v] [REGEX [REGEX ...]]
@@ -152,10 +144,9 @@ These take two optional arguments:
     S_OS:      Unix
     S_MACH:    PC (64-bit x86-64)
 
-
 %set
 
-SET CONFIGURATION VALUE
+Set configuration value
 
 Usage:
 
@@ -174,12 +165,10 @@ As an example, you can change the graph settings like so:
     %set graph_width 500
     %set graph_height 300
 
-
 %show_gui, %hide_gui
 
 Show/hide the Stata Graphical User Interface (GUI). Only works on
 Windows (and Mac if using automation execution mode)"
-
 
 %status
 
