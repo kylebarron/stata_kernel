@@ -33,13 +33,6 @@ conda install -c conda-forge stata_kernel
 python -m stata_kernel.install
 ```
 
-If Python 2 is the default ersion of Python on your system, you may need to use
-
-```bash
-conda install -c conda-forge stata_kernel
-python3 -m stata_kernel.install
-```
-
 If you do not use Anaconda/Miniconda, from a terminal or command prompt run:
 
 ```bash
@@ -48,10 +41,7 @@ python -m stata_kernel.install
 ```
 
 If Python 2 is the default version of Python on your system, you may need to use
-```bash
-pip3 install stata_kernel
-python3 -m stata_kernel.install
-```
+`python3` instead of `python` for the `python3 -m stata_kernel.install` step.
 
 ### Jupyter
 
@@ -66,8 +56,7 @@ conda install jupyterlab
 If you use pip, you can install it via:
 
 ```bash
-pip install jupyterlab 
-pip3 install jupyterlab  # if Python 2 is the default version
+pip install jupyterlab
 ```
 
 If you would not like to install Jupyter Lab and only need the Notebook, you can install it by running
@@ -80,7 +69,6 @@ or
 
 ```bash
 pip install notebook
-pip3 install notebook  # if Python 2 is the default version
 ```
 
 depending on your package manager.
