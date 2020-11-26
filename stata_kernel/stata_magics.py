@@ -294,7 +294,7 @@ class StataMagics():
     def show_data_head(self, code, kernel, N=10):
         hasif = re.search(r"\bif\b", code) is not None
         using = config.get('cache_dir') / 'data_head.csv'
-        cmd = '_StataKernelHead ' + code.strip() + ' using ' + str(using)
+        cmd = '_StataKernelHead ' + code.strip() + ' using `"' + str(using) + '"' + "'"
         cmd += ' , n_default({})'.format(N)
         cm = CodeManager(cmd)
         text_to_run, md5, text_to_exclude = cm.get_text()
@@ -329,7 +329,7 @@ class StataMagics():
 
         hasif = re.search(r"\bif\b", code) is not None
         using = config.get('cache_dir') / 'data_tail.csv'
-        cmd = '_StataKernelTail ' + code.strip() + ' using ' + str(using)
+        cmd = '_StataKernelTail ' + code.strip() + ' using `"' + str(using) + '"' + "'"
         cm = CodeManager(cmd)
         text_to_run, md5, text_to_exclude = cm.get_text()
         rc, res = kernel.stata.do(
