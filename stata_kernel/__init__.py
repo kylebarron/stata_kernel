@@ -1,6 +1,6 @@
 """An example Jupyter kernel"""
 
-__version__ = '1.12.1'
+__version__ = '1.12.2'
 
 try:
     from .kernel import StataKernel
