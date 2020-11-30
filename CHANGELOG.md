@@ -1,5 +1,10 @@
 # Changelog
 
+## [1.12.2] - 2020-11-30
+
+- File spaces in cache dir for graph export (#371)
+- spacing in cache dir for head/tail magics (#369)
+
 ## [1.12.1] - 2020-10-19
 
 - Fix install on linux when unable to find stata path (#363)
