@@ -1,5 +1,9 @@
 # Changelog
 
+## [XXX] - 2021-02-25
+
+- Simplify kernel installation for conda environments
+
 ## [1.12.2] - 2020-11-30
 
 - File spaces in cache dir for graph export (#371)
