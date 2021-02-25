@@ -13,7 +13,8 @@ from jupyter_client.kernelspec import KernelSpecManager
 
 
 kernel_json = {
-    "argv": [sys.executable, "-m", "stata_kernel.kernel", "-f", "{connection_file}"],
+    "argv": [sys.executable, "-m", "stata_kernel.kernel",
+             "-f", "{connection_file}"],
     "display_name": "Stata",
     "language": "stata", }
 
