@@ -1,6 +1,6 @@
 # Changelog
 
-## [XXX] - 2021-02-25
+## [1.12.3] - 2021-02-25
 
 - Simplify kernel installation for conda environments
 
