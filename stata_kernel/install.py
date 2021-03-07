@@ -11,7 +11,6 @@ from pkg_resources import resource_filename
 from IPython.utils.tempdir import TemporaryDirectory
 from jupyter_client.kernelspec import KernelSpecManager
 
-from .utils import find_path
 
 kernel_json = {
     "argv": [sys.executable, "-m", "stata_kernel", "-f", "{connection_file}"],
@@ -46,6 +45,10 @@ def install_conf(conf_file):
     else:
         execution_mode = 'console'
 
+    # By avoiding an import of .utils until we need it, we can
+    # complete the installation process in virtual environments
+    # without needing this submodule nor its downstream imports.
+    from .utils import find_path
     stata_path = find_path()
     if not stata_path:
         msg = """\
@@ -113,6 +116,9 @@ def main(argv=None):
     ap.add_argument(
         '--prefix', help="Install to the given prefix. "
         "Kernelspec will be installed in {PREFIX}/share/jupyter/kernels/")
+    ap.add_argument(
+        '--no-conf-file', action='store_true',
+        help="Skip the creation of a default user configuration file.")
     args = ap.parse_args(argv)
 
     if args.sys_prefix:
@@ -121,9 +127,10 @@ def main(argv=None):
         args.user = True
 
     install_my_kernel_spec(user=args.user, prefix=args.prefix)
-    conf_file = Path('~/.stata_kernel.conf').expanduser()
-    if not conf_file.is_file():
-        install_conf(conf_file)
+    if not args.no_conf_file:
+        conf_file = Path('~/.stata_kernel.conf').expanduser()
+        if not conf_file.is_file():
+            install_conf(conf_file)
 
 
 if __name__ == '__main__':
