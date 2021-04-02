@@ -39,8 +39,8 @@ with code and Stata results.  Emacs Org Mode allows for fine grained control of 
      ```
     4. In your `init.el`, make sure to remove `("stata" . "stata")` from `'org-babel-load-languages`. 
 
-Further features and usability tips are discussed in this [blog post](https://rlhick.people.wm.edu/posts/stata_kernel_emacs.html).
-
 * Caveats 
 1.  Emacs Org Mode will not currently display `html` output from the `%head` or `%help` magics.  Try using the code block option `:display text/plain`  
 2.  Some graphical output will not display export correctly.  The problem and solution are described in the installation instruction link.  
+
+Further features and usability tips are discussed in this [blog post](https://rlhick.people.wm.edu/posts/stata_kernel_emacs.html).
