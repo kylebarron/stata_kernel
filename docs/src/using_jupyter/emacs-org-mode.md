@@ -40,7 +40,8 @@ with code and Stata results.  Emacs Org Mode allows for fine grained control of 
         ;; you **may** need this for latex output syntax highlighting
         ;; (add-to-list 'org-latex-minted-langs '(stata "stata"))   
      ```
-    4. In your `init.el`, make sure to remove `("stata" . "stata")` from `'org-babel-load-languages`. 
+     
+   5. In your `init.el`, make sure to remove `("stata" . "stata")` from `'org-babel-load-languages`. 
 
 ## Caveats 
 1.  Emacs Org Mode will not currently display `html` output from the `%head` or `%help` magics.  Try using the code block option `:display text/plain`  
