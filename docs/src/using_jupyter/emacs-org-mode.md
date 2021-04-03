@@ -44,7 +44,9 @@ with code and Stata results.  Emacs Org Mode allows for fine grained control of 
    5. In your `init.el`, make sure to remove `("stata" . "stata")` from `'org-babel-load-languages`. 
 
 ## Known Issues
-1.  Emacs Org Mode will not currently display `html` output from the `%head` or `%help` magics.  Try using the code block option `:display text/plain`  
-2.  Some graphical output will not export correctly.  The problem and solution are described in the link below.  
+1.  Emacs Org Mode will not currently display `html` output from any of the magics provided by `stata_kernel`.  
+    - For `%browse` and `%head` use the code block option `:display text/plain` for plain text output
+    - The `%help` magic doesn't provide plain text output, so just issue help commands directly (e.g. `help regress`) 
+3.  Some graphical output will not export correctly.  The problem and solution are described in the link below.  
 
 Further features and usability tips are discussed in this [blog post](https://rlhick.people.wm.edu/posts/stata_kernel_emacs.html).
