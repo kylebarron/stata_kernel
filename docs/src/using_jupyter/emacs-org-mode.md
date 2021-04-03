@@ -8,7 +8,8 @@ with code and Stata results.  Emacs Org Mode allows for fine grained control of 
 ## Installation Instructions 
   1. Install and load emacs-jupyter.el
   2. Ensure that you have activated the python environment where stata_kernel is available
-  3. Add the following lines to your init.el: 
+  3. Install [`emacs-jupyter`](https://github.com/nnicandro/emacs-jupyter)
+  4. Add the following lines to your init.el: 
      ```lisp
         (when (functionp 'module-load)
         (use-package jupyter)
