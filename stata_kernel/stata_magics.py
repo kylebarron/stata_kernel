@@ -630,7 +630,12 @@ class StataMagics():
             soup.find('div', id='menu').decompose()
 
             # Remove Copyright notice
-            soup.find('a', text='Copyright').find_parent("table").decompose()
+            tags = ['a', 'font']
+            for tag in tags:
+                copyright = soup.find(tag, text='Copyright')
+                if copyright:
+                    copyright.find_parent("table").decompose()
+                    break
 
             # Remove last hrule
             soup.find_all('hr')[-1].decompose()
