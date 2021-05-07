@@ -406,7 +406,7 @@ class StataSession():
             if m == 2:
                 sleep(0.1)
 
-        fname = re.search(r'/(graph\d+\.\w+) written', res).group(1)
+        fname = re.search(r'/(graph\d+\.\w+) (written|saved)', res).group(1)
         return self.cache_dir_str + '/' + fname
 
     def clean_log_eol(self, child, code_lines, res):
