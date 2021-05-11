@@ -432,7 +432,7 @@ class StataSession():
             - List of code lines not yet matched in output after this
             - Result to be displayed
         """
-        regex = r'^\(note: file {}/graph\d+\.({}) not found\)'.format(
+        regex = r'^\((note: )?file {}/graph\d+\.({}) not found\)'.format(
             self.cache_dir_str, '|'.join(self.kernel.graph_formats))
         if re.search(regex, res):
             return code_lines, None
