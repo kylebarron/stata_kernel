@@ -299,7 +299,7 @@ class StataSession():
         error_re = r'^r\((\d+)\);'
 
         # The minimum linesize in Stata is 40 characters
-        g_exp = r'\(file {}'.format(self.cache_dir_str[:34])
+        g_exp = r'\(?file {}'.format(self.cache_dir_str[:34])
 
         more = r'^--more--'
         eol = r'\r?\n'
