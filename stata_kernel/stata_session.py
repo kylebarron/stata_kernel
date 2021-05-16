@@ -299,7 +299,7 @@ class StataSession():
         error_re = r'^r\((\d+)\);'
 
         # The minimum linesize in Stata is 40 characters
-        g_exp = r'\(file {}'.format(self.cache_dir_str[:34])
+        g_exp = r'\(?file {}'.format(self.cache_dir_str[:34])
 
         more = r'^--more--'
         eol = r'\r?\n'
@@ -325,6 +325,9 @@ class StataSession():
                 continue
             if match_index == 2:
                 g_path = [self.expect_graph(child, child.match.group(0))]
+                if g_path[0] is None:
+                    res = None
+                    continue
                 if ((config.get('graph_format') == 'svg')
                         and config.get('graph_svg_redundancy', 'True')) or (
                             (config.get('graph_format') == 'png')
@@ -406,8 +409,16 @@ class StataSession():
             if m == 2:
                 sleep(0.1)
 
-        fname = re.search(r'/(graph\d+\.\w+) written', res).group(1)
-        return self.cache_dir_str + '/' + fname
+        # the beginning of `(file ... not found)` of Stata 17 looks identical
+        # to the `(file ... written)` of Stata < 16 (both captured by g_exp)
+        # distinguish them by looking at the end of the output
+        regex = r'^\((note: )?file {}/graph\d+\.({}) not found\)'.format(
+                    self.cache_dir_str, '|'.join(self.kernel.graph_formats))
+        if re.search(regex, res):
+            return None
+        else:
+            fname = re.search(r'/(graph\d+\.\w+) (written|saved)', res).group(1)
+            return self.cache_dir_str + '/' + fname
 
     def clean_log_eol(self, child, code_lines, res):
         """Clean output when expect hit a newline
@@ -432,7 +443,7 @@ class StataSession():
             - List of code lines not yet matched in output after this
             - Result to be displayed
         """
-        regex = r'^\(note: file {}/graph\d+\.({}) not found\)'.format(
+        regex = r'^\((note: )?file {}/graph\d+\.({}) not found\)'.format(
             self.cache_dir_str, '|'.join(self.kernel.graph_formats))
         if re.search(regex, res):
             return code_lines, None
