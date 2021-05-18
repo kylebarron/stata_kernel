@@ -298,6 +298,10 @@ class StataSession():
         md5Prompt = self.prompt_dot + " " + md5
         error_re = r'^r\((\d+)\);'
 
+        # Stata issues a note when saving graphs on disk, including the path.
+        # The beginning of this note will be captured by g_exp.
+        # Stata <17 reports this note within parantheses,
+        # Stata  17 reprts this note without parantheses -> hence the \(?
         # The minimum linesize in Stata is 40 characters
         g_exp = r'\(?file {}'.format(self.cache_dir_str[:34])
 
