@@ -339,7 +339,6 @@ class StataSession():
                         sleep(0.1)
 
                     code_lines = code_lines[1:]
-
                 if display:
                     self.kernel.send_image(g_path)
             if match_index == 3:
