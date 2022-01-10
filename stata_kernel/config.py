@@ -109,6 +109,10 @@ class Config():
         return self.env.get(key, backup)
 
     def set(self, key, val, permanent=False):
+        if key.startswith('cache_dir'):
+            val = Path(val).expanduser()
+            val.mkdir(parents=True, exist_ok=True)
+
         self.env[key] = val
 
         if permanent:
