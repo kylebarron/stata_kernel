@@ -4,6 +4,7 @@ import platform
 
 from pathlib import Path
 from textwrap import dedent
+from tempfile import TemporaryDirectory
 from configparser import ConfigParser, NoSectionError
 
 from .utils import find_path
@@ -77,9 +78,11 @@ class Config():
             except NoSectionError:
                 pass
 
-        cache_dir = Path(self.get('cache_directory',
-                                  '~/.stata_kernel_cache')).expanduser()
-        cache_dir.mkdir(parents=True, exist_ok=True)
+        cache_par_dir = Path(self.get('cache_directory',
+                                      '~/.stata_kernel_cache')).expanduser()
+        cache_par_dir.mkdir(parents=True, exist_ok=True)
+        self._cache_temp_dir = TemporaryDirectory(dir=str(cache_par_dir))
+        cache_dir = Path(self._cache_temp_dir.name)
 
         stata_path = self.get('stata_path', find_path())
         if not stata_path:
