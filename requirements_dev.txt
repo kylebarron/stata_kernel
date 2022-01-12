@@ -9,3 +9,4 @@ pytest==3.7.1
 tox==2.9.1
 wheel==0.30.0
 yapf==0.20.2
+lxml==4.6.3
