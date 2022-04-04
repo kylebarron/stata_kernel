@@ -2,7 +2,7 @@
 name = "stata_kernel"
 version = "1.12.3"
 description = "A Jupyter kernel for Stata. Works with Windows, macOS, and Linux."
-authors = ["Kyle Barron <kylebarron2@gmail.com>", "Mauricio Caceres"]
+authors = ["Kyle Barron <kylebarron2@gmail.com>", "Mauricio Caceres Bravo <mauricio.caceres.bravo@gmail.com>"]
 license = "GPLv3"
 classifiers = [
     'Development Status :: 3 - Alpha',
