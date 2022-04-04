@@ -13,7 +13,7 @@ indent_style = space
 indent_size = 4
 
 # 2 space indentation
-[*.{js,R,r}]
+[*.{js,R,r,yml,json}]
 indent_size = 2
 
 # Tab indentation (no size specified)
