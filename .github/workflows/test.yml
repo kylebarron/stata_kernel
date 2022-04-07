@@ -35,4 +35,4 @@ jobs:
       - name: Run tests
         # TODO: We should be running other tests and not just these two files
         run: |
-          python -m pytest tests/test_mata_lexer.py tests/test_stata_lexer.py
+          poetry run pytest tests/test_mata_lexer.py tests/test_stata_lexer.py
