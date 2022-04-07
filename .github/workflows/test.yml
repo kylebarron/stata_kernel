@@ -24,13 +24,15 @@ jobs:
         with:
           python-version: ${{ matrix.python-version }}
 
+      - name: Set up Poetry
+        uses: snok/install-poetry@v1
+
       - name: Install dependencies
         run: |
-          pip install -r requirements.txt -r requirements_dev.txt
-          python -m stata_kernel.install
+          poetry install
+          poetry run python -m stata_kernel.install
 
       - name: Run tests
         # TODO: We should be running other tests and not just these two files
         run: |
-          python -m pytest tests/test_mata_lexer.py tests/test_stata_lexer.py
-          python setup.py install
+          poetry run pytest tests/test_mata_lexer.py tests/test_stata_lexer.py
