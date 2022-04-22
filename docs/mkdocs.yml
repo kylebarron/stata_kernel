@@ -34,6 +34,7 @@ nav:
         - Jupyter QtConsole: 'using_jupyter/qtconsole.md'
         - Jupyter Console: 'using_jupyter/console.md'
         - Remote Servers: 'using_jupyter/remote.md'
+        - Emacs Org Mode: 'using_jupyter/emacs-org-mode.md'
     - Using the Stata Kernel:
         - Introduction: 'using_stata_kernel/intro.md'
         - Configuration: 'using_stata_kernel/configuration.md'
