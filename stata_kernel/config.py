@@ -63,6 +63,9 @@ class Config():
         _global_path = os.environ.get(GLOBAL_PATH_ENVVAR_NAME, GLOBAL_PATH)
         _user_path = os.environ.get(USER_PATH_ENVVAR_NAME, USER_PATH)
 
+        if not os.path.isfile(_user_path):
+            raise Exception(f"Configuration file {_user_path} does not exist")
+
         global_config = ConfigParser()
         global_config.read(_global_path)
 
