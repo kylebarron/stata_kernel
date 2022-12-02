@@ -7,6 +7,7 @@ If you're unsure which to use, choose [JupyterLab](lab.md).
 - [JupyterLab](lab.md): This is an interactive web-based editor that improves upon the classic Notebook by making it easy to work with several files at the same time in the same window. Users familiar with RStudio may like this.
 - [Hydrogen for Atom](atom.md): This is a plugin for the Atom text editor that displays results in line with your code. It's my personal favorite.
 - [Jupyter Notebook](notebook.md): This is the classic interactive web-based editor.
+- [Euporie](euporie.md): Euporie is a terminal based interactive computing environment for Jupyter.
 - [Nteract](nteract.md): This is a desktop application to work with Jupyter Notebook files. Some may prefer it to the classic web interface of Jupyter Notebooks.
 - [Jupyter Console](console.md): This is an enhanced REPL that lives in the console.
 - [Jupyter QtConsole](qtconsole.md): An enhanced console that additionally supports graphs and other rich-text displays.
