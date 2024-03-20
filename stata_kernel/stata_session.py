@@ -301,10 +301,12 @@ class StataSession():
         # Stata issues a note when saving graphs on disk, including the path.
         # The beginning of this note will be captured by g_exp.
         #     - Stata < 17 reports this note within parentheses,
-        #     - Stata   17 reports this note without, hence the \(?
-        # The minimum linesize in Stata is 40 characters.
+        #     - Stata   17 reports this note without
+        # Upsettingly, it seems pexpect goes with the shortest match
+        # (?). Hence we add the leading parentheses as needed.
+        #
+        # NB: The minimum linesize in Stata is 40 characters.
         g_exp = r'\(?file {}'.format(self.cache_dir_str[:34])
-
         more = r'^--more--'
         eol = r'\r?\n'
         expect_list = [md5Prompt, error_re, g_exp, more, eol, pexpect.EOF]
@@ -332,6 +334,7 @@ class StataSession():
                 if g_path[0] is None:
                     res = None
                     continue
+
                 if ((config.get('graph_format') == 'svg')
                         and config.get('graph_svg_redundancy', 'True')) or (
                             (config.get('graph_format') == 'png')
@@ -348,6 +351,7 @@ class StataSession():
                     code_lines = code_lines[1:]
                 if display:
                     self.kernel.send_image(g_path)
+
             if match_index == 3:
                 self.send_break(child=child, md5=md5)
                 child.expect(md5Prompt, timeout=None)
@@ -416,6 +420,9 @@ class StataSession():
         # the beginning of `(file ... not found)` of Stata 17 looks identical
         # to the `(file ... written)` of Stata < 16 (both captured by g_exp)
         # distinguish them by looking at the end of the output
+        if res[-1] == ')' and res[0] != '(':
+            res = '(' + res
+
         regex = r'^\((note: )?file {}/graph\d+\.({}) not found\)'.format(
                     self.cache_dir_str, '|'.join(self.kernel.graph_formats))
         if re.search(regex, res):
