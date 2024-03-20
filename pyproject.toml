@@ -36,6 +36,7 @@ pygments = "^2.2"
 pexpect = "^4.6.0"
 requests = "^2.19.1"
 jupyter-client = "^5.2.3"
+jupyter-core = "4.6.0"
 IPython = "^6.5.0"
 ipykernel = "^4.8.2"
 packaging = "^17.1"
@@ -50,6 +51,7 @@ yapf = ">=0.20.2"
 pytest = ">=3.7.1"
 # importlib-metadata==0.23
 # jupyter_kernel_test==0.3.0
+# pytest=6.2.5
 
 [build-system]
 requires = ["poetry-core>=1.0.0"]
