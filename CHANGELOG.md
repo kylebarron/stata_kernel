@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.14.0] - 2025-08-27
+
+- %help works by passing user-agent via headers (#426).
+- Graphics work for Stata 17+ (#428).
+- Use `importlib.resources` insteadof `pkg_resources` (#420).
+- Autocompletions work on notebooks (pass empty 'metadata' field internally).
+
 ## [1.12.3] - 2021-02-25
 
 - Simplify kernel installation for conda environments

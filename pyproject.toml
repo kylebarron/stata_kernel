@@ -57,3 +57,17 @@ jupyter_kernel_test = "0.3.0"
 [build-system]
 requires = ["poetry-core>=1.0.0"]
 build-backend = "poetry.core.masonry.api"
+
+[tool.bumpver]
+current_version = "1.13.0"
+version_pattern = "MAJOR.MINOR.PATCH"
+commit = true
+tag = true
+commit_message = "bump version {old_version} → {new_version}"
+tag_message = "{new_version}"
+
+[tool.bumpver.file_patterns]
+"setup.cfg" = ['current_version = {version}']
+"stata_kernel/kernel.py" = ["implementation_version = '{version}'"]
+"stata_kernel/__init__.py" = ["__version__ = '{version}'"]
+"pyproject.toml" = ['version = "{version}"']
