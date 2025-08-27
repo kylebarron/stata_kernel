@@ -116,7 +116,7 @@ class StataSession():
         self.do(dedent(init_cmd), md5='finished_init_cmd', display=False)
         try:
             rc, res = self.do(
-            'di "`c(stata_version)\'"\n`done\'', md5='done', display=False)
+                'di "`c(stata_version)\'"\n`done\'', md5='done', display=False)
             self.stata_version = res
             isold = int(res[:2]) < 15
             if (platform.system() == 'Windows') and isold:
@@ -625,7 +625,7 @@ class StataSession():
         if self.mata_open:
             strfmt = 'stata(`"{0}"\')'
             return '\n'.join([
-                strfmt.format(l) if l else l for l in line.split('\n')])
+                strfmt.format(ll) if ll else ll for ll in line.split('\n')])
         else:
             return line
 
