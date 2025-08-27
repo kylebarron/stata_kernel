@@ -1,6 +1,8 @@
 import os
 import re
-import requests
+import json
+import urllib
+import urllib.request
 import platform
 
 from shutil import which
@@ -11,8 +13,8 @@ from packaging import version
 
 def check_stata_kernel_updated_version(stata_kernel_version):
     try:
-        r = requests.get('https://pypi.org/pypi/stata-kernel/json')
-        pypi_v = r.json()['info']['version']
+        r = urllib.request.urlopen('https://pypi.org/pypi/stata-kernel/json')
+        pypi_v = json.load(r)['info']['version']
         if version.parse(pypi_v) > version.parse(stata_kernel_version):
             msg = """\
                 NOTE: A newer version of stata_kernel exists. Run
@@ -22,7 +24,7 @@ def check_stata_kernel_updated_version(stata_kernel_version):
                 to install the latest version.
                 """
             return dedent(msg)
-    except requests.exceptions.RequestException:
+    except (urllib.error.HTTPError, urllib.error.URLError):
         return
 
 
@@ -46,10 +48,7 @@ def find_path():
 def win_find_path():
     import winreg
     reg = winreg.ConnectRegistry(None, winreg.HKEY_CLASSES_ROOT)
-    subkeys = [
-        r'Stata16Do\shell\do\command', r'Stata15Do\shell\do\command',
-        r'Stata14Do\shell\do\command', r'Stata13Do\shell\do\command',
-        r'Stata12Do\shell\do\command']
+    subkeys = [rf'Stata{ver}Do\shell\do\command' for ver in [12, 13, 14, 15, 16, 17, 18, 19]]
 
     fpath = ''
     for subkey in subkeys:

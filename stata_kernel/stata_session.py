@@ -9,7 +9,7 @@ from time import sleep
 # from timeit import default_timer
 from pathlib import Path
 from textwrap import dedent
-from pkg_resources import resource_filename
+from importlib.resources import files
 
 from .utils import check_stata_kernel_updated_version
 from .config import config
@@ -97,8 +97,7 @@ class StataSession():
         # Stata
         # -----
 
-        adofile = resource_filename(
-            'stata_kernel', 'ado/_StataKernelCompletions.ado')
+        adofile = files('stata_kernel').joinpath('ado/_StataKernelCompletions.ado')
         adodir = Path(adofile).resolve().parent
         init_cmd = """\
             adopath + `"{0}"\'
@@ -424,7 +423,7 @@ class StataSession():
             res = '(' + res
 
         regex = r'^\((note: )?file {}/graph\d+\.({}) not found\)'.format(
-                    self.cache_dir_str, '|'.join(self.kernel.graph_formats))
+            self.cache_dir_str, '|'.join(self.kernel.graph_formats))
         if re.search(regex, res):
             return None
         else:
