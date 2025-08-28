@@ -1,6 +1,6 @@
 # stata_kernel
 
-[![Build Status](https://travis-ci.org/kylebarron/stata_kernel.svg?branch=master)](https://travis-ci.org/kylebarron/stata_kernel) [![Downloads](https://pepy.tech/badge/stata-kernel)](https://pepy.tech/project/stata-kernel) [![Downloads/Month](https://pepy.tech/badge/stata-kernel/month)](https://pepy.tech/project/stata-kernel)
+[![Buid Status](https://github.com/kylebarron/stata_kernel/actions/workflows/test.yml/badge.svg)](https://github.com/kylebarron/stata_kernel/actions/workflows/test.yml) [![Downloads](https://pepy.tech/badge/stata-kernel)](https://pepy.tech/project/stata-kernel) [![Downloads/Month](https://pepy.tech/badge/stata-kernel/month)](https://pepy.tech/project/stata-kernel)
 
 `stata_kernel` is a Jupyter kernel for Stata; It works on Windows, macOS, and
 Linux.
