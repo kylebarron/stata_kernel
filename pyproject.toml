@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "stata_kernel"
-version = "1.14.1"
+version = "1.14.2"
 description = "A Jupyter kernel for Stata. Works with Windows, macOS, and Linux."
 authors = [
     "Kyle Barron <kylebarron2@gmail.com>",
@@ -26,6 +26,7 @@ classifiers = [
 keywords = ["stata"]
 repository = "https://github.com/kylebarron/stata_kernel"
 documentation = "https://kylebarron.dev/stata_kernel/"
+readme = "README.md"
 
 [tool.poetry.dependencies]
 python = "^3.9.0"
@@ -59,12 +60,13 @@ requires = ["poetry-core>=1.8.1"]
 build-backend = "poetry.core.masonry.api"
 
 [tool.bumpver]
-current_version = "1.14.1"
+current_version = "1.14.2"
 version_pattern = "MAJOR.MINOR.PATCH"
 commit = true
 tag = true
 commit_message = "bump version {old_version} → {new_version}"
-tag_message = "{new_version}"
+tag_message = "bump version {old_version} → {new_version}"
+tag_template = "v{new_version}"
 
 [tool.bumpver.file_patterns]
 "setup.cfg" = ['current_version = {version}']
