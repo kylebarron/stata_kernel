@@ -1,6 +1,7 @@
 from utils import StataKernelTestFramework
 from stata_kernel.config import Config
 
+
 class TestKernelCompletions(StataKernelTestFramework):
 
     # samples for the autocompletion functionality
@@ -26,10 +27,10 @@ class TestKernelCompletions(StataKernelTestFramework):
             'text': '%set au',
             'matches': {x for x in Config().all_settings if x.startswith('au')}
         }
-    ] # yapf: disable
+    ]  # yapf: disable
 
     def test_stata_global_completion(self):
-        code = f"""\
+        code = """\
             global abcd "helloworld"
             global abdef "foo"
             global aef "bar"
@@ -114,7 +115,6 @@ class TestKernelCompletions(StataKernelTestFramework):
         text = 'use "${datadir}/c'
         matches = {'${datadir}/completions.py', '${datadir}/code_manager.py', '${datadir}/config.py'}
         self._test_completion(text, matches, exact=False)
-
 
     def test_stata_varlist_completion(self):
         self._run()

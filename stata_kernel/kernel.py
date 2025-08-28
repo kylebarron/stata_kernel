@@ -10,7 +10,7 @@ from pathlib import Path
 from textwrap import dedent
 from datetime import datetime
 from xml.etree import ElementTree as ET
-from pkg_resources import resource_filename
+from importlib.resources import files
 from ipykernel.kernelbase import Kernel
 
 from .config import config
@@ -22,7 +22,7 @@ from .stata_magics import StataMagics
 
 class StataKernel(Kernel):
     implementation = 'stata_kernel'
-    implementation_version = '1.13.0'
+    implementation_version = '1.14.0'
     language = 'stata'
     language_info = {
         'name': 'stata',
@@ -38,13 +38,12 @@ class StataKernel(Kernel):
     def __init__(self, *args, **kwargs):
         # Copy syntax highlighting files
         from_paths = [
-            Path(resource_filename('stata_kernel', 'pygments/stata.py')),
-            Path(resource_filename('stata_kernel', 'codemirror/stata.js'))]
+            Path(files('stata_kernel').joinpath('pygments/stata.py')),
+            Path(files('stata_kernel').joinpath('codemirror/stata.js'))]
         to_paths = [
-            Path(resource_filename('pygments', 'lexers/stata.py')),
+            Path(files('pygments').joinpath('lexers/stata.py')),
             Path(
-                resource_filename(
-                    'notebook',
+                files('notebook').joinpath(
                     'static/components/codemirror/mode/stata/stata.js'))]
 
         for from_path, to_path in zip(from_paths, to_paths):
@@ -355,6 +354,7 @@ class StataKernel(Kernel):
             self.sc_delimit_mode, self.stata.mata_mode)
 
         return {
+            'metadata': {},
             'status': 'ok',
             'cursor_start': pos,
             'cursor_end': cursor_pos,
@@ -400,7 +400,7 @@ class StataKernel(Kernel):
                     fh.seek(pos + 1, os.SEEK_SET)
                     fh.truncate()
 
-    def do_inspect(self, code, cursor_pos, detail_level=0):
+    def do_inspect(self, code, cursor_pos, detail_level=0, metadata={}):
         inspect_keyword = re.compile(
             r'\b(?P<keyword>\w+)\(?\s*$', flags=re.MULTILINE).search
 
@@ -445,6 +445,6 @@ class StataKernel(Kernel):
             'found': found,
             # data can be empty if nothing is found
             'data': data,
-            'metadata': {}}
+            'metadata': metadata}
 
         return content

@@ -1,11 +1,13 @@
 import sys
 import re
 import urllib
+import urllib.request
 import pandas as pd
+from fake_useragent import UserAgent
 from textwrap import dedent
 from bs4 import BeautifulSoup as bs
 from argparse import ArgumentParser, SUPPRESS
-from pkg_resources import resource_filename
+from importlib.resources import files
 
 from .config import config
 from .code_manager import CodeManager
@@ -196,14 +198,11 @@ class StataMagics():
     # 'time',
     # 'timeit'
 
-    csshelp_default = resource_filename(
-        'stata_kernel', 'css/_StataKernelHelpDefault.css')
-    help_kernel_html = resource_filename('stata_kernel', 'docs/index.html')
-    help_kernel_plain = resource_filename('stata_kernel', 'docs/index.txt')
-    help_magics_html = resource_filename(
-        'stata_kernel', 'docs/using_stata_kernel/magics.html')
-    help_magics_plain = resource_filename(
-        'stata_kernel', 'docs/using_stata_kernel/magics.txt')
+    csshelp_default = files('stata_kernel').joinpath('css/_StataKernelHelpDefault.css')
+    help_kernel_html = files('stata_kernel').joinpath('docs/index.html')
+    help_kernel_plain = files('stata_kernel').joinpath('docs/index.txt')
+    help_magics_html = files('stata_kernel').joinpath('docs/using_stata_kernel/magics.html')
+    help_magics_plain = files('stata_kernel').joinpath('docs/using_stata_kernel/magics.txt')
 
     def __init__(self, kernel):
         self.quit_early = None
@@ -601,8 +600,11 @@ class StataMagics():
             return ''
 
         cmd = scode.replace(" ", "_")
+        url = self.html_help.format(cmd)
         try:
-            reply = urllib.request.urlopen(self.html_help.format(cmd))
+            headers = {'User-Agent': UserAgent().random}
+            req = urllib.request.Request(url, headers=headers)
+            reply = urllib.request.urlopen(req)
             html = reply.read().decode("utf-8")
             soup = bs(html, 'html.parser')
 

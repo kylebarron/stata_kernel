@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "stata_kernel"
-version = "1.13.0"
+version = "1.14.0"
 description = "A Jupyter kernel for Stata. Works with Windows, macOS, and Linux."
 authors = [
     "Kyle Barron <kylebarron2@gmail.com>",
@@ -19,28 +19,32 @@ classifiers = [
     'Operating System :: Microsoft :: Windows',
     'Operating System :: POSIX :: Linux',
     'Operating System :: Unix',
-    'Programming Language :: Python :: 3.6',
-    'Programming Language :: Python :: 3.7',
-    'Programming Language :: Python :: 3.8',
     'Programming Language :: Python :: 3.9',
+    'Programming Language :: Python :: 3.10',
+    'Programming Language :: Python :: 3.11',
 ]
 keywords = ["stata"]
 repository = "https://github.com/kylebarron/stata_kernel"
 documentation = "https://kylebarron.dev/stata_kernel/"
 
 [tool.poetry.dependencies]
-python = "^3.6.1"
+python = "^3.9.0"
 beautifulsoup4 = "^4.6.3"
-pandas = "^1.0"
+pandas = ">=1.0"
+numpy = ">=1.22.0"
 pygments = "^2.2"
 pexpect = "^4.6.0"
-requests = "^2.19.1"
-jupyter-client = "^5.2.3"
-IPython = "^7.16.3"
-ipykernel = "^4.8.2"
 packaging = "^17.1"
 pillow = ">=5.2.0"
 pywin32 = { version = ">=223", platform = "Windows" }
+fake-useragent = "^2.0.0"
+IPython = "^7.34"
+ipykernel = "^4.8.2"
+jupyter-client = "^6.1.12"
+jupyter-core = "^5.8.1"
+notebook = "^6.5.7"
+nbclient = "^0.8"
+setuptools = "<81"
 
 [tool.poetry.dev-dependencies]
 bumpversion = "^0.6"
@@ -48,9 +52,22 @@ mkdocs-material = ">=3.0.3"
 mkdocs = ">=1.0"
 yapf = ">=0.20.2"
 pytest = ">=3.7.1"
-# importlib-metadata==0.23
-# jupyter_kernel_test==0.3.0
+jupyter_kernel_test = "0.3.0"
 
 [build-system]
-requires = ["poetry-core>=1.1.10"]
+requires = ["poetry-core>=1.8.1"]
 build-backend = "poetry.core.masonry.api"
+
+[tool.bumpver]
+current_version = "1.14.0"
+version_pattern = "MAJOR.MINOR.PATCH"
+commit = true
+tag = true
+commit_message = "bump version {old_version} → {new_version}"
+tag_message = "{new_version}"
+
+[tool.bumpver.file_patterns]
+"setup.cfg" = ['current_version = {version}']
+"stata_kernel/kernel.py" = ["implementation_version = '{version}'"]
+"stata_kernel/__init__.py" = ["__version__ = '{version}'"]
+"pyproject.toml" = ['version = "{version}"']

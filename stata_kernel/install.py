@@ -7,7 +7,7 @@ import platform
 from shutil import copyfile
 from pathlib import Path
 from textwrap import dedent
-from pkg_resources import resource_filename
+from importlib.resources import files
 from IPython.utils.tempdir import TemporaryDirectory
 from jupyter_client.kernelspec import KernelSpecManager
 
@@ -31,7 +31,7 @@ def install_my_kernel_spec(user=True, prefix=None):
             json.dump(kernel_json, f, sort_keys=True)
 
         # Copy logo to tempdir to be installed with kernelspec
-        logo_path = resource_filename('stata_kernel', 'docs/logo-64x64.png')
+        logo_path = files('stata_kernel').joinpath('docs/logo-64x64.png')
         copyfile(logo_path, os.path.join(td, 'logo-64x64.png'))
 
         print('Installing Jupyter kernel spec')

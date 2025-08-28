@@ -9,7 +9,7 @@ from time import sleep
 # from timeit import default_timer
 from pathlib import Path
 from textwrap import dedent
-from pkg_resources import resource_filename
+from importlib.resources import files
 
 from .utils import check_stata_kernel_updated_version
 from .config import config
@@ -97,8 +97,7 @@ class StataSession():
         # Stata
         # -----
 
-        adofile = resource_filename(
-            'stata_kernel', 'ado/_StataKernelCompletions.ado')
+        adofile = files('stata_kernel').joinpath('ado/_StataKernelCompletions.ado')
         adodir = Path(adofile).resolve().parent
         init_cmd = """\
             adopath + `"{0}"\'
@@ -117,7 +116,7 @@ class StataSession():
         self.do(dedent(init_cmd), md5='finished_init_cmd', display=False)
         try:
             rc, res = self.do(
-            'di "`c(stata_version)\'"\n`done\'', md5='done', display=False)
+                'di "`c(stata_version)\'"\n`done\'', md5='done', display=False)
             self.stata_version = res
             isold = int(res[:2]) < 15
             if (platform.system() == 'Windows') and isold:
@@ -424,7 +423,7 @@ class StataSession():
             res = '(' + res
 
         regex = r'^\((note: )?file {}/graph\d+\.({}) not found\)'.format(
-                    self.cache_dir_str, '|'.join(self.kernel.graph_formats))
+            self.cache_dir_str, '|'.join(self.kernel.graph_formats))
         if re.search(regex, res):
             return None
         else:
@@ -626,7 +625,7 @@ class StataSession():
         if self.mata_open:
             strfmt = 'stata(`"{0}"\')'
             return '\n'.join([
-                strfmt.format(l) if l else l for l in line.split('\n')])
+                strfmt.format(ll) if ll else ll for ll in line.split('\n')])
         else:
             return line
 

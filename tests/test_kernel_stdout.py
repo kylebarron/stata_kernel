@@ -1,5 +1,6 @@
 from utils import StataKernelTestFramework
 
+
 class TestKernelStdout(StataKernelTestFramework):
     # Code in the kernel's language to write "hello, world" to stdout
     code_hello_world = 'display "hello, world"'
@@ -33,7 +34,7 @@ class TestKernelStdout(StataKernelTestFramework):
         Programs with more than 10 lines should not show line continuation
         numbers
         """
-        code = f"""\
+        code = """\
             cap program drop helloworld
             program helloworld
                 di "helloworld"

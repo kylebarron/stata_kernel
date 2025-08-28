@@ -1,5 +1,6 @@
 from utils import StataKernelTestFramework
 
+
 class TestKernelDisplayData(StataKernelTestFramework):
     # Samples of code which should generate a rich display output, and
     # the expected MIME type
