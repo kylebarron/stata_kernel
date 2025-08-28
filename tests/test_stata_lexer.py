@@ -230,6 +230,7 @@ class TestCommentsFromStataList(object):
             (Token.Text, '\n')]
         assert tokens == expected
 
+
 class TestMultilineComments(object):
     def test_multiline_comment_across_empty_whitespace_lines(self):
         """
@@ -266,6 +267,7 @@ class TestMultilineComments(object):
             (Token.Text, 'a'),
             (Token.Text, '\n')]
         assert tokens == expected
+
 
 class TestLineContinuationComments(object):
     def test1(self):
@@ -339,6 +341,7 @@ class TestLineContinuationComments(object):
             (Token.Text, '\n')]
         assert tokens == expected
 
+
 class TestSingleLineComments(object):
     def test1(self):
         code = 'di//*\n*/1'
@@ -361,6 +364,7 @@ class TestSingleLineComments(object):
             (Token.Comment.Single, '//'),
             (Token.Text, '\n')]
         assert tokens == expected
+
 
 class TestStrings(object):
     def test_multiline_comment_inside_string(self):
@@ -402,6 +406,7 @@ class TestStrings(object):
             (Token.Text, '"'),
             (Token.Text, '\n')]
         assert tokens == expected
+
 
 class TestBlocks(object):
     def test_cap_chunk(self):
@@ -520,6 +525,7 @@ class TestBlocks(object):
             (Token.TextBlock, '{'),
             (Token.TextBlock, '\n')]
         assert tokens == expected
+
 
 class TestSemicolonDelimitComments(object):
     def test_inline_comment(self):
@@ -724,74 +730,74 @@ class TestSemicolonDelimitComments(object):
 
 class TestIsComplete(object):
     @pytest.mark.parametrize(
-    'code,complete',
-    [
-     ('//', True),
-     ('// sdfsa', True),
-     ('/// sdfsa', False),
-     ('/// \n', False),
-     ('/// \n\n', True),
-     ('/* \n\n', False),
-     ('/* \n\n*/', True),
-     ]) # yapf: disable
+        'code,complete',
+        [
+            ('//',        True),
+            ('// sdfsa',  True),
+            ('/// sdfsa', False),
+            ('/// \n',    False),
+            ('/// \n\n',  True),
+            ('/* \n\n',   False),
+            ('/* \n\n*/', True),
+        ])  # yapf: disable
     def test_is_comment_complete(self, code, complete):
         assert CodeManager(code, False).is_complete == complete
 
     @pytest.mark.parametrize(
-    'code,complete',
-    [
-     ('//', True),
-     ('// sdfsa', True),
-     ('/// sdfsa', False),
-     ('/// \n', False),
-     ('/// \n\n', True),
-     ('/// \n;', True),
-     ('/// \n\n;', True),
-     ('/* \n\n', False),
-     ('/* \n\n*/', True),
-     ('/* \n\n*/ di hi;', True),
-     ('/* \n\n*/;', True),
-     ]) # yapf: disable
+        'code,complete',
+        [
+            ('//',               True),
+            ('// sdfsa',         True),
+            ('/// sdfsa',        False),
+            ('/// \n',           False),
+            ('/// \n\n',         True),
+            ('/// \n;',          True),
+            ('/// \n\n;',        True),
+            ('/* \n\n',          False),
+            ('/* \n\n*/',        True),
+            ('/* \n\n*/ di hi;', True),
+            ('/* \n\n*/;',       True),
+        ])  # yapf: disable
     def test_is_comment_complete_in_sc_delimit_block(self, code, complete):
         assert CodeManager(code, True).is_complete == complete
 
     @pytest.mark.parametrize(
-    'code,complete',
-    [
-     ('di 1', True),
-     (';', True),
-     ('foreach i in 1 ', True),
-     ('foreach i in 1 {', False),
-     ('foreach i in 1 2 {\nif {\n }', False),
-     ('disp "hi"; // also hangs', True),
-     ('disp "hi" // also hangs', True),
-     ('if "0" == "1" {', False), # issue 139
-     ('if "0" == "1" {\ndi "hi"\n}', True), # issue 139
-     ]) # yapf: disable
+        'code,complete',
+        [
+            ('di 1',                         True),
+            (';',                            True),
+            ('foreach i in 1 ',              True),
+            ('foreach i in 1 {',             False),
+            ('foreach i in 1 2 {\nif {\n }', False),
+            ('disp "hi"; // also hangs',     True),
+            ('disp "hi" // also hangs',      True),
+            ('if "0" == "1" {',              False),  # issue 139
+            ('if "0" == "1" {\ndi "hi"\n}',  True),   # issue 139
+        ])  # yapf: disable
     def test_is_block_complete(self, code, complete):
         assert CodeManager(code, False).is_complete == complete
 
     @pytest.mark.parametrize(
-    'code,complete',
-    [
-     ('di 1', False),
-     ('di 1;', True),
-     ('di "{" 1;', True),
-     ('di "}" 1;', True),
-     (';', True),
-     ('foreach i in 1 2 3 4', False),
-     ('foreach i in 1 2 3 4 {', False),
-     ('foreach i in 1 2 3 4 {;', False),
-     ('foreach i in 1 2 {;\nif {\n }', False),
-     ('foreach i in 1 2 {;\nif {;\n };', False),
-     ('foreach i in 1 2 {;\nif {;\n };\n};', True),
-     ('foreach i in 1 2 {;if {; };};', True),
-     ('disp "hi"; // also hangs', True),
-     ('disp "hi" // also hangs', False),
-     ('if "0" == "1" {;', False), # issue 139
-     ('if "0" == "1" {;\ndi "hi";\n};', True), # issue 139
-     ('if "0" == "1" {;di "hi";};', True), # issue 139
-     ]) # yapf: disable
+        'code,complete',
+        [
+            ('di 1',                                False),
+            ('di 1;',                               True),
+            ('di "{" 1;',                           True),
+            ('di "}" 1;',                           True),
+            (';',                                   True),
+            ('foreach i in 1 2 3 4',                False),
+            ('foreach i in 1 2 3 4 {',              False),
+            ('foreach i in 1 2 3 4 {;',             False),
+            ('foreach i in 1 2 {;\nif {\n }',       False),
+            ('foreach i in 1 2 {;\nif {;\n };',     False),
+            ('foreach i in 1 2 {;\nif {;\n };\n};', True),
+            ('foreach i in 1 2 {;if {; };};',       True),
+            ('disp "hi"; // also hangs',            True),
+            ('disp "hi" // also hangs',             False),
+            ('if "0" == "1" {;',                    False),  # issue 139
+            ('if "0" == "1" {;\ndi "hi";\n};',      True),   # issue 139
+            ('if "0" == "1" {;di "hi";};',          True),   # issue 139
+        ])  # yapf: disable
     def test_is_block_complete_in_sc_delimit_block(self, code, complete):
         assert CodeManager(code, True).is_complete == complete
 
