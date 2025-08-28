@@ -65,7 +65,7 @@ version_pattern = "MAJOR.MINOR.PATCH"
 commit = true
 tag = true
 commit_message = "bump version {old_version} → {new_version}"
-tag_message = "v{new_version}"
+tag_message = "bump version {old_version} → {new_version}"
 tag_template = "v{new_version}"
 
 [tool.bumpver.file_patterns]
