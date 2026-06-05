@@ -45,7 +45,6 @@ jupyter-client = ">=6.1.12,<9.0.0"
 jupyter-core = "^5.8.1"
 notebook = ">=6.5.7,<8.0.0"
 nbclient = ">=0.8"
-setuptools = "<81"
 jupyterlab-stata-highlight3 = "^0.1.6"
 
 [tool.poetry.dev-dependencies]
