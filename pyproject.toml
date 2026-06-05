@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "stata_kernel"
-version = "1.14.2"
+version = "1.14.3"
 description = "A Jupyter kernel for Stata. Works with Windows, macOS, and Linux."
 authors = [
     "Kyle Barron <kylebarron2@gmail.com>",
@@ -48,7 +48,7 @@ nbclient = ">=0.8"
 jupyterlab-stata-highlight3 = "^0.1.6"
 
 [tool.poetry.dev-dependencies]
-bumpversion = "^0.6"
+bump2version = "^1.0.1"
 mkdocs-material = ">=3.0.3"
 mkdocs = ">=1.0"
 yapf = ">=0.20.2"
@@ -60,7 +60,7 @@ requires = ["poetry-core>=1.8.1"]
 build-backend = "poetry.core.masonry.api"
 
 [tool.bumpver]
-current_version = "1.14.2"
+current_version = "1.14.3"
 version_pattern = "MAJOR.MINOR.PATCH"
 commit = true
 tag = true
