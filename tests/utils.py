@@ -11,7 +11,7 @@ class StataKernelTestFramework(jupyter_kernel_test.KernelTests):
     def _test_completion(self, text, matches=None, exact=True):
         msg_id = self.kc.complete(text)
         reply  = self.kc.get_shell_msg()
-        jupyter_kernel_test.messagespec.validate_message(
+        jupyter_kernel_test.msgspec_v5.validate_message(
             reply, 'complete_reply', msg_id)
         if matches is not None:
             if exact:
